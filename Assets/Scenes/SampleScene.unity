@@ -550,7 +550,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &839820887
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -597,7 +597,7 @@ MonoBehaviour:
       - 0
       globalNormalsAngle: 0
       flipNormals: 0
-    vertexPathUpToDate: 1
+    vertexPathUpToDate: 0
     vertexPathMaxAngleError: 0.3
     vertexPathMinVertexSpacing: 0.01
     showTransformTool: 1
@@ -793,7 +793,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1056768817}
   - component: {fileID: 1056768816}
-  - component: {fileID: 1056768818}
   m_Layer: 0
   m_Name: spawner
   m_TagString: Untagged
@@ -814,7 +813,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   numFishMinMax: {x: 3, y: 8}
-  fishPrefab: {fileID: 2872672046286969615, guid: a4bc788bfca178c4fafc04da95b8ca18, type: 3}
+  fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
   radiusMinMax: {x: 0, y: 0}
   swimAnimationMinMax: {x: 1, y: 3}
 --- !u!4 &1056768817
@@ -832,22 +831,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1056768818
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1056768815}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 33aabe1a2dec93349b06e6e5dc51bc06, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pathCreator: {fileID: 839820888}
-  endOfPathInstruction: 2
-  speed: 5
-  lookAtObj: {fileID: 0}
 --- !u!1 &1324348501
 GameObject:
   m_ObjectHideFlags: 0
