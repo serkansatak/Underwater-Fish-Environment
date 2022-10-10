@@ -8,6 +8,7 @@ public class Spawner : MonoBehaviour
     [SerializeField] GameObject fishPrefab;
     [SerializeField] Vector2 radiusMinMax;
     [SerializeField] Vector2 swimAnimationMinMax;
+
     Camera main_cam;
     Texture2D screenshotTex;
     List<GameObject> fish_inst;
@@ -15,13 +16,13 @@ public class Spawner : MonoBehaviour
 
     public Vector3 GetRandomPositionInCamera(Camera cam)
     {
-        Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(12.5f, 17.5f)));
+        Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(5f, 24f)));
         return world_pos;
     }
 
-    void SaveCameraRGB(Camera cam, string filename)
+    void SaveCameraRGB(Camera cam)
     {
-
+        string filename = "Assets/Scripts/data/img_" + Time.frameCount.ToString() + ".png";
         RenderTexture rt = RenderTexture.GetTemporary(cam.pixelWidth, cam.pixelHeight, 24);
         cam.targetTexture = rt;
 
@@ -41,44 +42,40 @@ public class Spawner : MonoBehaviour
         System.IO.File.WriteAllBytes(filename, bytes);
     }
 
-    
-    // Start is called before the first frame update
-    void Start()
+    void add_fog()
     {
-        main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
-        screenshotTex = new Texture2D(main_cam.pixelWidth, main_cam.pixelHeight, TextureFormat.RGB24, false);
-        //Fog
         RenderSettings.fogMode = FogMode.ExponentialSquared;
-        Color rnd_col = new Color(Random.value, Random.value, Random.value, Random.value);
-        
+        //Color rnd_col = new Color(Random.value, Random.value, Random.value, Random.value);
         Color rnd_fog_color = new Color(
-                Random.Range(135f, 225f)/255, 
-                Random.Range(150f, 250f)/255, 
-                Random.Range(115f, 185f)/255,
-                Random.Range(120f, 200f)/255);
-
+                Random.Range(162f, 198f)/255, 
+                Random.Range(180f, 220f)/255, 
+                Random.Range(135f, 165f)/255,
+                Random.Range(144f, 176f)/255);
         RenderSettings.fogColor = rnd_fog_color;
         RenderSettings.fogDensity = Random.Range(0.01f, 0.05f);
         RenderSettings.fog = true;
+    }
 
-        //For each fish Instantiate the fish prefab in a unitSphere with a certain radius give it an initial orientation (currently just rotate it 90 degrees to be parallel to the camera)
+    void instantiate_fish()
+    {
+        fish_inst = new List<GameObject>();
         int numberOfFish = (int)Random.Range(numFishMinMax.x, numFishMinMax.y);
-
         for (int i = 0; i < numberOfFish; i++)
-        {
-            float radius = Random.Range(radiusMinMax.x, radiusMinMax.y);
+        {   
+            //float radius = Random.Range(radiusMinMax.x, radiusMinMax.y);
             Vector3 rnd_pos = GetRandomPositionInCamera(main_cam);
             GameObject currFish = Instantiate(fishPrefab, rnd_pos, Quaternion.identity);
-
-            currFish.GetComponent<Animator>().SetFloat("SpeedFish", Random.Range(swimAnimationMinMax.x, swimAnimationMinMax.y));
             currFish.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-45f, 45f));
             //currFish.transform.rotation = Random.rotation;
             currFish.transform.parent = transform; // Parent the fish to the moverObj
-            currFish.transform.localScale = Vector3.one * Random.Range(0.5f, 0.7f);
+            currFish.transform.localScale = Vector3.one * Random.Range(0.4f, 0.8f);
+            currFish.GetComponent<Animator>().SetFloat("SpeedFish", Random.Range(swimAnimationMinMax.x, swimAnimationMinMax.y));
 
             currFish.name = "fish_" + i.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
             currFish.GetComponentInChildren<fishName>().fishN = "fish_" + i.ToString();
+            fish_inst.Add(currFish);
 
+            //Visual randomisation
             SkinnedMeshRenderer renderer = currFish.GetComponentInChildren<SkinnedMeshRenderer>();
             float rnd_color_seed = Random.Range(75.0f, 225.0f);
             Color rnd_albedo_v2 = new Color(
@@ -91,9 +88,32 @@ public class Spawner : MonoBehaviour
             renderer.material.SetFloat("_Metalic/_Glossiness", Random.Range(0.1f, 0.5f));
 
         }
+    }
 
-        string filename = "Assets/Scripts/data/img_" + Time.frameCount.ToString() + ".png";
-        SaveCameraRGB(main_cam, filename);
+    void clean_up()
+    {
+        foreach (GameObject go in fish_inst)
+        {
+            Destroy(go);
+        }
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        //SET UP VARIABLES
+        main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
+        screenshotTex = new Texture2D(main_cam.pixelWidth, main_cam.pixelHeight, TextureFormat.RGB24, false);
+        //Fog
+        add_fog();
+        
+    }
+
+    void Update()
+    {
+        instantiate_fish();
+        SaveCameraRGB(main_cam);
+        clean_up();
     }
 
     /*
