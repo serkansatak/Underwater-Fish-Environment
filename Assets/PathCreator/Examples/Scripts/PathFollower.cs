@@ -33,7 +33,7 @@ namespace PathCreation.Examples
                 //If you uncomment the transform.rotation line the mover will rotate as it moves.
                 transform.position = pathCreator.path.GetPointAtDistance(distanceTravelled, endOfPathInstruction);
                 //transform.rotation = pathCreator.path.GetRotationAtDistance(distanceTravelled, endOfPathInstruction);
-                transform.LookAt(lookAtObj.transform);
+                //transform.LookAt(lookAtObj.transform);
             }
         }
 
