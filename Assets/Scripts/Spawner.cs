@@ -1,6 +1,12 @@
+//CAPTURE GAMEVIEW 
+//TODO - Distractors 
+//TODO - Colliders
+//TODO - Swimming poses 
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+using System.Text;
 
 public class Spawner : MonoBehaviour
 {
@@ -10,8 +16,12 @@ public class Spawner : MonoBehaviour
     [SerializeField] Vector2 swimAnimationMinMax;
 
     Camera main_cam;
-    Texture2D screenshotTex;
+    Camera backgroud_cam;
+    //Texture2D screenshotTex;
+
     List<GameObject> fish_inst;
+    string datasetDir;
+    string gt_txt;
     
 
     public Vector3 GetRandomPositionInCamera(Camera cam)
@@ -20,21 +30,27 @@ public class Spawner : MonoBehaviour
         return world_pos;
     }
 
-    void SaveCameraRGB(Camera cam)
+    void SaveCameraRGB()
     {
-        string filename = "Assets/Scripts/data/img_" + Time.frameCount.ToString() + ".png";
-        RenderTexture rt = RenderTexture.GetTemporary(cam.pixelWidth, cam.pixelHeight, 24);
-        cam.targetTexture = rt;
-
-        cam.Render();
+        string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
+        RenderTexture rt = RenderTexture.GetTemporary(main_cam.pixelWidth, main_cam.pixelHeight, 24);
+        
+        backgroud_cam.targetTexture = rt;
         RenderTexture.active = rt;
-        screenshotTex.Reinitialize(cam.pixelWidth, cam.pixelHeight);
-        screenshotTex.ReadPixels(new Rect(0, 0, cam.pixelWidth, cam.pixelHeight), 0, 0);
+        backgroud_cam.Render();
+        
+        
+        main_cam.targetTexture = rt;
+        RenderTexture.active = rt;
+        main_cam.Render();
 
-        cam.targetTexture = null;
+        Texture2D screenshotTex = new Texture2D(main_cam.pixelWidth, main_cam.pixelHeight, TextureFormat.RGB24, false);
+        //screenshotTex.Reinitialize(main_cam.pixelWidth, main_cam.pixelHeight);
+        screenshotTex.ReadPixels(new Rect(0, 0, main_cam.pixelWidth, main_cam.pixelHeight), 0, 0);
+
+        //main_cam.targetTexture = null;
         RenderTexture.active = null; // JC: added to avoid errors
         RenderTexture.ReleaseTemporary(rt);
-
         rt = null;
         Destroy(rt);
 
@@ -42,7 +58,7 @@ public class Spawner : MonoBehaviour
         System.IO.File.WriteAllBytes(filename, bytes);
     }
 
-    void add_fog()
+    void AddFog()
     {
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         //Color rnd_col = new Color(Random.value, Random.value, Random.value, Random.value);
@@ -56,7 +72,8 @@ public class Spawner : MonoBehaviour
         RenderSettings.fog = true;
     }
 
-    void instantiate_fish()
+    //TODO - Add pose within Unity Sphere for some images in order to simulate flocks
+    void InstantiateFish()
     {
         fish_inst = new List<GameObject>();
         int numberOfFish = (int)Random.Range(numFishMinMax.x, numFishMinMax.y);
@@ -90,7 +107,7 @@ public class Spawner : MonoBehaviour
         }
     }
 
-    void clean_up()
+    void CleanUp()
     {
         foreach (GameObject go in fish_inst)
         {
@@ -98,22 +115,135 @@ public class Spawner : MonoBehaviour
         }
     }
 
+    Vector4 GetBoundingBoxInCamera(GameObject go, Camera cam)
+    {
+        Vector3[] verts = GetMeshVertices(go);
+
+        //Debug.Log("Verts length " + verts.Length);
+        for (int i = 0; i < verts.Length; i++)
+        {
+            //Debug.Log("verts[" + i + "] " + verts[i]);
+            verts[i] = cam.WorldToScreenPoint(verts[i]);
+        }
+
+        Vector2 min = verts[0];
+        Vector2 max = verts[0];
+        foreach (Vector2 v in verts)
+        {
+            min = Vector2.Min(min, v);
+            max = Vector2.Max(max, v);
+        }
+
+        min.y = Screen.height - min.y;
+        max.y = Screen.height - max.y;
+        if (min.y > max.y)
+        {
+            float temp = max.y;
+            max.y = min.y;
+            min.y = temp;
+        }
+
+        int min_x, min_y, max_x, max_y;
+        min_x = (int)min.x;
+        min_y = (int)min.y;
+        max_x = (int)max.x;
+        max_y = (int)max.y;
+
+        return new Vector4(min_x, min_y, max_x, max_y);
+    }
+
+    Vector3[] GetMeshVertices(GameObject go)
+    {
+        SkinnedMeshRenderer skinMesh = go.GetComponentInChildren<SkinnedMeshRenderer>();
+        Mesh bakedMesh = new Mesh();
+        skinMesh.BakeMesh(bakedMesh);
+        //https://docs.unity3d.com/ScriptReference/SkinnedMeshRenderer.BakeMesh.html
+        //skinMesh.BakeMesh(bakedMesh, true);
+        Vector3[] verts_local = bakedMesh.vertices;
+
+        Application.Quit();
+        for (int j = 0; j < verts_local.Length; j++)
+        {
+            verts_local[j] = go.transform.TransformPoint(verts_local[j]);
+        }
+        return verts_local;
+    }
+
+    //TODO - add ID
+    void SaveAnnotation(Vector4 bbox)
+    {
+        string frame = Time.frameCount.ToString();
+        string id = "-1";
+        string left = bbox.x.ToString();
+        string top = bbox.y.ToString();
+
+        //float widthf = bbox.z-bbox.x;
+        //float heightf = bbox.w-bbox.y;
+        //Debug.Log("FLOAT widthf " + widthf + " heightf " + heightf);
+
+        int width = (int)Mathf.Round(bbox.z-bbox.x);
+        int height = (int)Mathf.Round(bbox.w-bbox.y);
+
+        string confidence = "1";
+        string class_id = "1";
+        string visibility = "1";
+
+        string annotation = frame + ","
+            + id + ","
+            + left + ","
+            + top + ","
+            + width.ToString() + ","
+            + height.ToString() + ","
+            + confidence + ","
+            + class_id + ","
+            + visibility + ","
+            + "\n";
+        
+        //string line = maskObjects[i].name.Split('_')[0] + " " + bboxs[i].x.ToString() + " " + bboxs[i].y.ToString() + " " + bboxs[i].z.ToString() + " " + bboxs[i].w.ToString() + "\n";
+        using (StreamWriter writer = new StreamWriter(gt_txt, true))
+        {
+            writer.Write(annotation);
+        }
+        //Debug.Log(annotation);
+    }
+
+    void Awake()
+    {
+        datasetDir = "data";
+        System.IO.Directory.CreateDirectory(datasetDir);
+        gt_txt = Path.Combine(datasetDir + "/gt.csv");
+        //Debug.Log(gt_txt);
+
+        if (File.Exists(gt_txt))
+        {
+            File.Delete(gt_txt);
+        }
+
+    }
+
     // Start is called before the first frame update
     void Start()
     {
         //SET UP VARIABLES
         main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
-        screenshotTex = new Texture2D(main_cam.pixelWidth, main_cam.pixelHeight, TextureFormat.RGB24, false);
+        backgroud_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
+        //screenshotTex = new Texture2D(main_cam.pixelWidth, main_cam.pixelHeight, TextureFormat.RGB24, false);
         //Fog
-        add_fog();
-        
+        AddFog(); 
     }
 
     void Update()
     {
-        instantiate_fish();
-        SaveCameraRGB(main_cam);
-        clean_up();
+        InstantiateFish();
+        foreach (GameObject go in fish_inst)
+        {
+            Vector4 bounds = GetBoundingBoxInCamera(go, main_cam);
+            SaveAnnotation(bounds);
+            //Debug.Log("Bounds" + bounds);
+        }
+        //SaveCameraRGB(main_cam);
+        SaveCameraRGB();
+        CleanUp();
     }
 
     /*
