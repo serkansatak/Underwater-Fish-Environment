@@ -16,7 +16,7 @@ public class Spawner : MonoBehaviour
     [SerializeField] Vector2 swimAnimationMinMax;
 
     Camera main_cam;
-    Camera backgroud_cam;
+    Camera background_cam;
     //Texture2D screenshotTex;
 
     List<GameObject> fish_inst;
@@ -30,16 +30,33 @@ public class Spawner : MonoBehaviour
         return world_pos;
     }
 
-    void SaveCameraRGB()
+    void SaveBackground()
+    {
+        string filename = datasetDir + "/" + Time.frameCount.ToString() + "_bg.png";
+        RenderTexture rt = RenderTexture.GetTemporary(background_cam.pixelWidth, background_cam.pixelHeight, 24);
+        background_cam.targetTexture = rt;
+        RenderTexture.active = rt;
+        background_cam.Render();
+
+        Texture2D screenshotTex = new Texture2D(background_cam.pixelWidth, background_cam.pixelHeight, TextureFormat.RGB24, false);
+        //screenshotTex.Reinitialize(main_cam.pixelWidth, main_cam.pixelHeight);
+        screenshotTex.ReadPixels(new Rect(0, 0, background_cam.pixelWidth, background_cam.pixelHeight), 0, 0);
+
+        background_cam.targetTexture = null;
+        RenderTexture.active = null; // JC: added to avoid errors
+        RenderTexture.ReleaseTemporary(rt);
+        rt = null;
+        Destroy(rt);
+
+        byte[] bytes = screenshotTex.EncodeToPNG();
+        System.IO.File.WriteAllBytes(filename, bytes);
+
+    }
+
+    void SaveRGB()
     {
         string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
         RenderTexture rt = RenderTexture.GetTemporary(main_cam.pixelWidth, main_cam.pixelHeight, 24);
-        
-        backgroud_cam.targetTexture = rt;
-        RenderTexture.active = rt;
-        backgroud_cam.Render();
-        
-        
         main_cam.targetTexture = rt;
         RenderTexture.active = rt;
         main_cam.Render();
@@ -48,7 +65,7 @@ public class Spawner : MonoBehaviour
         //screenshotTex.Reinitialize(main_cam.pixelWidth, main_cam.pixelHeight);
         screenshotTex.ReadPixels(new Rect(0, 0, main_cam.pixelWidth, main_cam.pixelHeight), 0, 0);
 
-        //main_cam.targetTexture = null;
+        main_cam.targetTexture = null;
         RenderTexture.active = null; // JC: added to avoid errors
         RenderTexture.ReleaseTemporary(rt);
         rt = null;
@@ -56,6 +73,35 @@ public class Spawner : MonoBehaviour
 
         byte[] bytes = screenshotTex.EncodeToPNG();
         System.IO.File.WriteAllBytes(filename, bytes);
+    }
+
+    void SaveCameraView()
+    {
+        Camera cam1 = background_cam;
+        Camera cam2 = main_cam;
+        string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
+        
+        RenderTexture backgroudTexture = new RenderTexture(Screen.width, Screen.height, 16);
+        cam1.targetTexture = backgroudTexture;
+        RenderTexture.active = backgroudTexture;
+        cam1.Render();
+
+        RenderTexture fishTexture = new RenderTexture(Screen.width, Screen.height, 16);
+        cam2.targetTexture = fishTexture;
+        RenderTexture.active = fishTexture;
+        cam2.Render();
+
+        Texture2D renderedTexture = new Texture2D(Screen.width, Screen.height);
+        renderedTexture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
+        RenderTexture.active = null;
+        byte[] byteArray = renderedTexture.EncodeToPNG();
+        System.IO.File.WriteAllBytes(filename, byteArray);
+    }
+
+    void SaveImage()
+    {
+        string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
+        ScreenCapture.CaptureScreenshot(filename);
     }
 
     void AddFog()
@@ -210,7 +256,12 @@ public class Spawner : MonoBehaviour
     void Awake()
     {
         datasetDir = "data";
-        System.IO.Directory.CreateDirectory(datasetDir);
+        if (System.IO.Directory.Exists(datasetDir))
+        {
+            System.IO.Directory.Delete(datasetDir, true);
+            System.IO.Directory.CreateDirectory(datasetDir);
+        }
+
         gt_txt = Path.Combine(datasetDir + "/gt.csv");
         //Debug.Log(gt_txt);
 
@@ -226,7 +277,7 @@ public class Spawner : MonoBehaviour
     {
         //SET UP VARIABLES
         main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
-        backgroud_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
+        background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
         //screenshotTex = new Texture2D(main_cam.pixelWidth, main_cam.pixelHeight, TextureFormat.RGB24, false);
         //Fog
         AddFog(); 
@@ -234,6 +285,7 @@ public class Spawner : MonoBehaviour
 
     void Update()
     {
+        Debug.Log("Iteration " + Time.frameCount.ToString());
         InstantiateFish();
         foreach (GameObject go in fish_inst)
         {
@@ -242,7 +294,12 @@ public class Spawner : MonoBehaviour
             //Debug.Log("Bounds" + bounds);
         }
         //SaveCameraRGB(main_cam);
-        SaveCameraRGB();
+        //SaveCameraRGB();
+        //SaveCameraView();
+        //SaveImage();
+        SaveRGB();
+        SaveBackground();
+        
         CleanUp();
     }
 
