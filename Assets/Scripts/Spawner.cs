@@ -38,7 +38,8 @@ public class Spawner : MonoBehaviour
 
     public Vector3 GetRandomPositionInCamera(Camera cam)
     {
-        Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(5f, 24f)));
+        Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.8f), UnityEngine.Random.Range(0.1f, 0.8f), UnityEngine.Random.Range(5f, 24f)));
+        
         return world_pos;
     }
 
@@ -187,6 +188,7 @@ public class Spawner : MonoBehaviour
 
     void randomizeFog()
     {
+        RenderSettings.fog = false;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         //Color rnd_col = new Color(Random.value, Random.value, Random.value, Random.value);
         RenderSettings.fogColor = fogColor;
@@ -365,10 +367,10 @@ public class Spawner : MonoBehaviour
     {
         Debug.Log("Iteration " + Time.frameCount.ToString());
         generateFogColor();
-        Debug.Log("Fog color " + fogColor*100);
         randomizeBackgroundColor();
         randomizeFog(); 
         InstantiateFish();
+
         foreach (GameObject go in fish_inst)
         {
             Vector4 bounds = GetBoundingBoxInCamera(go, main_cam);
