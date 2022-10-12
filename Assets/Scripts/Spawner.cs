@@ -2,6 +2,7 @@
 //TODO - Distractors 
 //TODO - Colliders
 //TODO - Swimming poses 
+//https://forum.unity.com/threads/capture-overlay-ugui-camera-to-texture.1007156/
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -30,32 +31,29 @@ public class Spawner : MonoBehaviour
         return world_pos;
     }
 
-    void SaveBackground()
+    Texture2D GetBackgroundTexture()
     {
-        string filename = datasetDir + "/" + Time.frameCount.ToString() + "_bg.png";
         RenderTexture rt = RenderTexture.GetTemporary(background_cam.pixelWidth, background_cam.pixelHeight, 24);
         background_cam.targetTexture = rt;
         RenderTexture.active = rt;
         background_cam.Render();
 
-        Texture2D screenshotTex = new Texture2D(background_cam.pixelWidth, background_cam.pixelHeight, TextureFormat.RGB24, false);
+        Texture2D bgTex = new Texture2D(background_cam.pixelWidth, background_cam.pixelHeight, TextureFormat.RGB24, false);
         //screenshotTex.Reinitialize(main_cam.pixelWidth, main_cam.pixelHeight);
-        screenshotTex.ReadPixels(new Rect(0, 0, background_cam.pixelWidth, background_cam.pixelHeight), 0, 0);
+        bgTex.ReadPixels(new Rect(0, 0, background_cam.pixelWidth, background_cam.pixelHeight), 0, 0);
 
         background_cam.targetTexture = null;
         RenderTexture.active = null; // JC: added to avoid errors
         RenderTexture.ReleaseTemporary(rt);
         rt = null;
         Destroy(rt);
-
-        byte[] bytes = screenshotTex.EncodeToPNG();
-        System.IO.File.WriteAllBytes(filename, bytes);
+        return bgTex;
 
     }
 
-    void SaveRGB()
+    Texture2D GetFishTexture()
     {
-        string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
+        //string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
         RenderTexture rt = RenderTexture.GetTemporary(main_cam.pixelWidth, main_cam.pixelHeight, 24);
         main_cam.targetTexture = rt;
         RenderTexture.active = rt;
@@ -71,8 +69,9 @@ public class Spawner : MonoBehaviour
         rt = null;
         Destroy(rt);
 
-        byte[] bytes = screenshotTex.EncodeToPNG();
-        System.IO.File.WriteAllBytes(filename, bytes);
+        //byte[] bytes = screenshotTex.EncodeToPNG();
+        //System.IO.File.WriteAllBytes(filename, bytes);
+        return screenshotTex;
     }
 
     void SaveCameraView()
@@ -102,6 +101,77 @@ public class Spawner : MonoBehaviour
     {
         string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
         ScreenCapture.CaptureScreenshot(filename);
+    }
+
+    void SaveView()
+    {
+        Camera cam;
+        cam = background_cam;
+        RenderTexture rt_bg = RenderTexture.GetTemporary(cam.pixelWidth, cam.pixelHeight, 24);
+        cam.targetTexture = rt_bg;
+        RenderTexture.active = rt_bg;
+        cam.Render();
+        Texture2D screenshotTex_bg = new Texture2D(cam.pixelWidth, cam.pixelHeight, TextureFormat.RGB24, false);
+        screenshotTex_bg.ReadPixels(new Rect(0, 0, cam.pixelWidth, cam.pixelHeight), 0, 0);
+
+        cam.targetTexture = null;
+        RenderTexture.active = null; // JC: added to avoid errors
+        RenderTexture.ReleaseTemporary(rt_bg);
+        rt_bg = null;
+        Destroy(rt_bg);
+
+        cam = main_cam;
+        RenderTexture rt = RenderTexture.GetTemporary(cam.pixelWidth, cam.pixelHeight, 24);
+        Graphics.Blit(screenshotTex_bg, rt);
+        cam.targetTexture = rt;
+        RenderTexture.active = rt;
+        cam.Render();
+        Texture2D screenshotTex = new Texture2D(cam.pixelWidth, cam.pixelHeight, TextureFormat.RGB24, false);
+        screenshotTex.ReadPixels(new Rect(0, 0, cam.pixelWidth, cam.pixelHeight), 0, 0);
+
+        cam.targetTexture = null;
+        RenderTexture.active = null; // JC: added to avoid errors
+        RenderTexture.ReleaseTemporary(rt);
+        rt = null;
+        Destroy(rt);
+
+        byte[] bytes = screenshotTex.EncodeToPNG();
+        string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
+        System.IO.File.WriteAllBytes(filename, bytes);
+
+
+    }
+
+    Texture2D CombineTextures(Texture2D _textureA, Texture2D _textureB)
+	{
+		//Create new textures
+		Texture2D textureResult = new Texture2D(_textureA.width, _textureA.height);
+		//create clone form texture
+		textureResult.SetPixels(_textureA.GetPixels());
+		//Now copy texture B in texutre A
+		for (int x = 0; x<_textureB.width; x++)
+		{
+			for (int y = 0; y<_textureB.height; y++)
+			{
+				Color c = _textureB.GetPixel(x, y);
+				if (c.a > 0.0f) //Is not transparent
+				{
+					//Copy pixel colot in TexturaA
+					textureResult.SetPixel(x, y, c);
+				}
+			}
+		}
+		//Apply colors
+		textureResult.Apply();
+		return textureResult;
+	}
+
+    void SaveTexture(Texture2D tex)
+    {
+        string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
+        byte[] bytes = tex.EncodeToPNG();
+        System.IO.File.WriteAllBytes(filename, bytes);
+        
     }
 
     void AddFog()
@@ -165,10 +235,8 @@ public class Spawner : MonoBehaviour
     {
         Vector3[] verts = GetMeshVertices(go);
 
-        //Debug.Log("Verts length " + verts.Length);
         for (int i = 0; i < verts.Length; i++)
         {
-            //Debug.Log("verts[" + i + "] " + verts[i]);
             verts[i] = cam.WorldToScreenPoint(verts[i]);
         }
 
@@ -194,24 +262,23 @@ public class Spawner : MonoBehaviour
         min_y = (int)min.y;
         max_x = (int)max.x;
         max_y = (int)max.y;
-
+        //Vector4 (x, y, z, w)
         return new Vector4(min_x, min_y, max_x, max_y);
     }
 
     Vector3[] GetMeshVertices(GameObject go)
     {
-        SkinnedMeshRenderer skinMesh = go.GetComponentInChildren<SkinnedMeshRenderer>();
+        SkinnedMeshRenderer skinMeshRend = go.GetComponentInChildren<SkinnedMeshRenderer>();
         Mesh bakedMesh = new Mesh();
-        skinMesh.BakeMesh(bakedMesh);
-        //https://docs.unity3d.com/ScriptReference/SkinnedMeshRenderer.BakeMesh.html
-        //skinMesh.BakeMesh(bakedMesh, true);
+        skinMeshRend.BakeMesh(bakedMesh, true);
         Vector3[] verts_local = bakedMesh.vertices;
+        Transform rendererOwner = skinMeshRend.transform;
 
-        Application.Quit();
         for (int j = 0; j < verts_local.Length; j++)
         {
-            verts_local[j] = go.transform.TransformPoint(verts_local[j]);
+            verts_local[j] = rendererOwner.localToWorldMatrix.MultiplyPoint3x4(verts_local[j]);
         }
+        
         return verts_local;
     }
 
@@ -297,9 +364,13 @@ public class Spawner : MonoBehaviour
         //SaveCameraRGB();
         //SaveCameraView();
         //SaveImage();
-        SaveRGB();
-        SaveBackground();
-        
+        //SaveRGB();
+        //SaveBackground();
+        //SaveView();
+        //Texture2D bg = GetBackgroundTexture();
+        Texture2D fish = GetFishTexture();
+        //Texture2D combined = CombineTextures(fish, bg);
+        SaveTexture(fish);
         CleanUp();
     }
 

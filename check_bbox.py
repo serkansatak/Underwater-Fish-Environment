@@ -16,13 +16,13 @@ def read_annotations():
 
 def draw_rectangles(img, annotations):
     for i in range(0,np.shape(annotations)[0]):
-        min_x = int(annotations[i, 3])
-        min_y = int(annotations[i, 2])
-        max_x = int(annotations[i, 3] + annotations[i, 5])
-        max_y = int(annotations[i, 2] + annotations[i, 4])
+        min_x = int(annotations[i, 2])
+        min_y = int(annotations[i, 3])
+        max_x = int(annotations[i, 2] + annotations[i, 4])
+        max_y = int(annotations[i, 3] + annotations[i, 5])
         color = (rnd.randint(0,255), rnd.randint(0,255), rnd.randint(0,255))
-        print("min " + str((min_x, min_y)))
-        print("max " + str((max_x, max_y)))
+        #print("min " + str((min_x, min_y)))
+        #print("max " + str((max_x, max_y)))
         cv.rectangle(img, (min_x, min_y), (max_x, max_y), color, 2)
     cv.imshow("test", img)
     cv.waitKey(0)
