@@ -5,10 +5,21 @@ using UnityEngine;
 public class mover : MonoBehaviour
 {
     [SerializeField] GameObject fishPrefab;
-    GameObject Fish;
+    //GameObject Fish;
     Camera main_cam;
     Vector3[] verts;
     float speed;
+    float action;
+
+    public class DynamicGameObject
+    {
+        public GameObject go;
+        //0 for going straight, 1 for turning
+        public int activity;
+        public float speed; 
+    }
+
+    List<DynamicGameObject> go_list;
 
 
     Vector3 GetRandomPositionInCamera(Camera cam)
@@ -61,26 +72,79 @@ public class mover : MonoBehaviour
         return vec;
     }
 
+    void turn(GameObject go)
+    {
+        Debug.Log("Turning, Time Delta " + Time.deltaTime.ToString());
+        go.transform.Rotate(0, Time.deltaTime*Random.Range(10f, 100f), 0 );
+    }
+
+    void go_straight(GameObject go)
+    {
+        Quaternion rot = go.transform.rotation;
+        Vector3 test = new Vector3(1f, 0f, 0f);
+        speed = Random.Range(0.5f, 1.5f);
+        go.transform.position += rot*test*Time.deltaTime*speed;
+
+    }
+
 
     // Start is called before the first frame update
     void Start()
     {
         main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
-        speed = Random.Range(0.5f, 1.8f);
-        Fish = spawn_fish();
+        //speed = Random.Range(0.5f, 1.8f);
+        //GameObject fish_1 = spawn_fish();
+        go_list = new List<DynamicGameObject>();
+        
+        for (int i = 0; i < 4; i++)
+        {
+            DynamicGameObject dgo = new DynamicGameObject();
+            speed = Random.Range(0.5f, 2.0f);
+            GameObject go = spawn_fish();
+            dgo.go = go;
+            dgo.activity = 0;
+            dgo.speed = speed;
+            go_list.Add(dgo);   
+        }
+        Debug.Log("List length " + go_list.Count.ToString());
+    }
+
+    void assign_activity(DynamicGameObject dgo)
+    {
+        if(Random.value > 0.75)
+        {
+            dgo.activity = 1;
+        } else {
+            dgo.activity = 0;
+        }
     }
 
     // Update is called once per frame
     void Update()
     {   
-        Quaternion rot = Fish.transform.rotation;
-        Vector3 test = new Vector3(1f, 0f, 0f);
-        if (Time.frameCount == 30){
-            speed = Random.Range(0.5f, 1.8f);
-            Debug.Log(speed);
+        
+        if (Time.frameCount%240 == 0)
+        {
+           foreach (var dgo in go_list)
+           {
+            assign_activity(dgo);
+           }
         }
 
-        Fish.transform.position += rot*test*Time.deltaTime*speed;
+        foreach (var dgo in go_list)
+        {
+            if (dgo.activity == 0){
+                go_straight(dgo.go);
+            } else {
+                turn(dgo.go);
+            }
+        }
+
+        /*Quaternion rot = Fish.transform.rotation;
+        Vector3 test = new Vector3(1f, 0f, 0f);
+        //turn(Fish);
+        //Fish.transform.Rotate(0, Time.deltaTime*Random.Range(1), 0 );
+        Fish.transform.position += rot*test*Time.deltaTime*speed;*/
             
     }
 }
