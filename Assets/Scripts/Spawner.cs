@@ -23,6 +23,17 @@ public class Spawner : MonoBehaviour
     List<GameObject> fish_inst;
     string datasetDir;
     string gt_txt;
+    Color fogColor;
+
+    void generateFogColor()
+    {
+        //181, 202, 147, 161
+        fogColor = new Color(
+            Random.Range(171f, 191f)/255,  
+            Random.Range(192f, 212f)/255, 
+            Random.Range(137f, 157f)/255,
+            Random.Range(151f, 171f)/255);
+    }
     
 
     public Vector3 GetRandomPositionInCamera(Camera cam)
@@ -174,18 +185,19 @@ public class Spawner : MonoBehaviour
         
     }
 
-    void AddFog()
+    void randomizeFog()
     {
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         //Color rnd_col = new Color(Random.value, Random.value, Random.value, Random.value);
-        Color rnd_fog_color = new Color(
-                Random.Range(162f, 198f)/255, 
-                Random.Range(180f, 220f)/255, 
-                Random.Range(135f, 165f)/255,
-                Random.Range(144f, 176f)/255);
-        RenderSettings.fogColor = rnd_fog_color;
+        RenderSettings.fogColor = fogColor;
         RenderSettings.fogDensity = Random.Range(0.01f, 0.05f);
         RenderSettings.fog = true;
+    }
+
+    void randomizeBackgroundColor(){
+        GameObject bg = GameObject.Find("backgroundTransparent");
+        MeshRenderer bg_renderer = bg.GetComponent<MeshRenderer>();
+        bg_renderer.material.color = fogColor;
     }
 
     //TODO - Add pose within Unity Sphere for some images in order to simulate flocks
@@ -278,7 +290,7 @@ public class Spawner : MonoBehaviour
         {
             verts_local[j] = rendererOwner.localToWorldMatrix.MultiplyPoint3x4(verts_local[j]);
         }
-        
+
         return verts_local;
     }
 
@@ -347,12 +359,15 @@ public class Spawner : MonoBehaviour
         background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
         //screenshotTex = new Texture2D(main_cam.pixelWidth, main_cam.pixelHeight, TextureFormat.RGB24, false);
         //Fog
-        AddFog(); 
     }
 
     void Update()
     {
         Debug.Log("Iteration " + Time.frameCount.ToString());
+        generateFogColor();
+        Debug.Log("Fog color " + fogColor*100);
+        randomizeBackgroundColor();
+        randomizeFog(); 
         InstantiateFish();
         foreach (GameObject go in fish_inst)
         {
