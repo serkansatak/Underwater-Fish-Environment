@@ -1,17 +1,13 @@
-from os import read
-from re import A
-from unittest.main import MAIN_EXAMPLES
+import os
 import cv2 as cv
 import numpy as np
 import random as rnd
 
-def read_annotations():
+def read_annotations(img_no):
     annotations = np.genfromtxt("data/gt.csv", delimiter=",")
-    #print(annotations)
-    #print(np.shape(annotations))
-    annotations = annotations[annotations[:,0] == 1]
     annotations = annotations[:, :-1]
-    print(annotations)
+    annotations = annotations[annotations[:,0] == img_no]
+    #print(annotations)
     return annotations
 
 def draw_rectangles(img, annotations):
@@ -29,9 +25,17 @@ def draw_rectangles(img, annotations):
     return 0
 
 if __name__=="__main__":
-    annotations = read_annotations()
-    img = cv.imread("data/1.png")
+    images = os.listdir("data")
+    images.remove("gt.csv")
+    for image in images:
+        img = cv.imread("data/"+image)
+        img_no = int(image[:-4])
+        annotations = read_annotations(img_no)
+        draw_rectangles(img, annotations)
+
+        
+    
+    
     #cv.imshow("test", img)
     #cv.waitKey(0)
-    draw_rectangles(img, annotations)
 
