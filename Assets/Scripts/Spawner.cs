@@ -5,21 +5,25 @@
 //https://forum.unity.com/threads/capture-overlay-ugui-camera-to-texture.1007156/
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.IO;
 using System.Text;
+using UnityEngine;
+using UnityEngine.Video;
 
 public class Spawner : MonoBehaviour
 {
     [SerializeField] Vector2 numFishMinMax;
     [SerializeField] GameObject fishPrefab;
-    [SerializeField] Vector2 radiusMinMax;
+    //[SerializeField] Vector2 radiusMinMax;
     [SerializeField] Vector2 swimAnimationMinMax;
 
     Camera main_cam;
     Camera background_cam;
     Color fogColor;
+    VideoPlayer vp;
 
+    string videoDir = "Assets/videos";
+    string[] videoFiles;
     string datasetDir = "BrackishMOT_Synth";
     string imageFolder;
     string gtFolder;
@@ -56,7 +60,7 @@ public class Spawner : MonoBehaviour
         return world_pos;
     }
 
-    Texture2D GetFishTexture()
+    /*Texture2D GetFishTexture()
     {
         //string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
         RenderTexture rt = RenderTexture.GetTemporary(main_cam.pixelWidth, main_cam.pixelHeight, 24);
@@ -77,28 +81,27 @@ public class Spawner : MonoBehaviour
         //byte[] bytes = screenshotTex.EncodeToPNG();
         //System.IO.File.WriteAllBytes(filename, bytes);
         return screenshotTex;
-    }
+    }*/
 
-    void SaveTexture(Texture2D tex)
+    //void SaveTexture(Texture2D tex)
+    void SaveImage()
     {   
         string filename;
         sequence_image += 1;
-        if (Time.frameCount > 99999){
+        if (sequence_image > 99999){
             filename = imageFolder + "/" + sequence_image.ToString() + ".png";
-        } else if (Time.frameCount > 9999) {
+        } else if (sequence_image > 9999) {
             filename = imageFolder + "/0" + sequence_image.ToString() + ".png";
-        } else if (Time.frameCount > 999) {
+        } else if (sequence_image > 999) {
             filename = imageFolder + "/00" + sequence_image.ToString() + ".png";
-        } else if (Time.frameCount > 99) {
+        } else if (sequence_image > 99) {
             filename = imageFolder + "/000" + sequence_image.ToString() + ".png";
-        } else if (Time.frameCount > 9) {
+        } else if (sequence_image > 9) {
             filename = imageFolder + "/0000" + sequence_image.ToString() + ".png";
         } else {
             filename = imageFolder + "/00000" + sequence_image.ToString() + ".png";
         }
-        //string filename = imageFolder + "/" + Time.frameCount.ToString() + ".png";
-        byte[] bytes = tex.EncodeToPNG();
-        System.IO.File.WriteAllBytes(filename, bytes);
+        ScreenCapture.CaptureScreenshot(filename);
         
     }
 
@@ -309,7 +312,7 @@ public class Spawner : MonoBehaviour
     }
 
     void addNewSequence()
-    {
+    {   
         sequence_number += 1;
         sequence_image = 0;
         string new_sequence = datasetDir + "/" + datasetDir + "-" + sequence_number.ToString();
@@ -329,9 +332,19 @@ public class Spawner : MonoBehaviour
         gtFile = gtFolder + "/gt.txt";
 
         sequence_length = (int) Random.Range(90f, 180f);
+        Debug.Log("Sequence Number " + sequence_number.ToString() + " Sequence Length " + sequence_length.ToString());
         // int[] temp = new int[]{90, 120, 150, 180};
         //int randomIndex = Random.Range(0, temp.Length);
         //sequence_length = temp[randomIndex];
+    }
+
+    void randomizeVideo()
+    {
+        //vp.Stop();
+        string random_file = videoFiles[Random.Range(0, videoFiles.Length)];
+        //Debug.Log(files[Random.Range(0,files.Length)]);
+        vp.url = random_file;
+        vp.Prepare();
     }
 
     void Awake()
@@ -345,6 +358,10 @@ public class Spawner : MonoBehaviour
         } else {
              System.IO.Directory.CreateDirectory(datasetDir);
         }
+
+        videoFiles = System.IO.Directory.GetFiles(videoDir,"*.avi");
+        vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
+        vp.Prepare();
     }
     
     // Start is called before the first frame update
@@ -364,38 +381,56 @@ public class Spawner : MonoBehaviour
 
     void Update()
     {
-
-        if (Time.frameCount%15 == 0)
-        {
-           foreach (DynamicGameObject dgo in dgo_list)
-           {
-            updateActivity(dgo);
-           }
-        }
-
-        foreach (DynamicGameObject dgo in dgo_list)
-        {
-            if (dgo.activity == 0){
-                goStraight(dgo);
-            } else {
-                Turn(dgo);
-            }
-            Vector4 bounds = GetBoundingBoxInCamera(dgo.go, main_cam);
-            SaveAnnotation(bounds, dgo.id);
-            Debug.Log("Bounds" + bounds);
-        }
-
-        Texture2D fish = GetFishTexture();
-        SaveTexture(fish);
-
         if (sequence_image == sequence_length)
-        {
+        {      
             CleanUp();
+            randomizeVideo();
             generateFogColor();
             randomizeBackgroundColor();
             randomizeFog(); 
             InstantiateFish();
             addNewSequence();
+        } 
+
+        if(vp.isPlaying)
+        {
+            if (Time.frameCount%15 == 0)
+            {
+            foreach (DynamicGameObject dgo in dgo_list)
+            {
+                updateActivity(dgo);
+            }
+            }
+
+            foreach (DynamicGameObject dgo in dgo_list)
+            {
+                if (dgo.activity == 0){
+                    goStraight(dgo);
+                } else {
+                    Turn(dgo);
+                }
+                Vector4 bounds = GetBoundingBoxInCamera(dgo.go, main_cam);
+                SaveAnnotation(bounds, dgo.id);
+                //Debug.Log("Bounds" + bounds);
+            }
+
+            SaveImage();
         }
     }
+
+
+    /*void LateUpdate()
+    {
+        if (sequence_image == sequence_length)
+        {      
+            CleanUp();
+            randomizeVideo();
+            generateFogColor();
+            randomizeBackgroundColor();
+            randomizeFog(); 
+            InstantiateFish();
+            addNewSequence();
+        }    
+
+    }*/
 }

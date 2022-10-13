@@ -9,14 +9,13 @@ public class SetVideoBackground : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
-        /*
         string path = "Assets\\videos";
+        
         string[] files = System.IO.Directory.GetFiles(path,"*.avi");
         string random_file = files[Random.Range(0, files.Length)];
         Debug.Log(files[Random.Range(0,files.Length)]);
         transform.GetComponent<VideoPlayer>().url = random_file;
-        */
-        transform.GetComponent<VideoPlayer>().url = "Assets/videos/converted/video_1_conv.ogv";
+        //transform.GetComponent<VideoPlayer>().url = "Assets/videos/converted/video_1_conv.ogv";
     }
 
 }
