@@ -31,11 +31,12 @@ public class Spawner : MonoBehaviour
     //Texture2D screenshotTex;
     //List<GameObject> fish_inst;
 
-    string datasetDir = "BrackishMOT_Synt";
+    string datasetDir = "BrackishMOT_Synth";
     string imageFolder;
     string gtFolder;
     string gtFile;
     int sequence_number = 0;
+    int sequence_image;
 
     public class DynamicGameObject
     {
@@ -89,8 +90,23 @@ public class Spawner : MonoBehaviour
     }
 
     void SaveTexture(Texture2D tex)
-    {
-        string filename = imageFolder + "/" + Time.frameCount.ToString() + ".png";
+    {   
+        string filename;
+        sequence_image += 1;
+        if (Time.frameCount > 99999){
+            filename = imageFolder + "/" + sequence_image.ToString() + ".png";
+        } else if (Time.frameCount > 9999) {
+            filename = imageFolder + "/0" + sequence_image.ToString() + ".png";
+        } else if (Time.frameCount > 999) {
+            filename = imageFolder + "/00" + sequence_image.ToString() + ".png";
+        } else if (Time.frameCount > 99) {
+            filename = imageFolder + "/000" + sequence_image.ToString() + ".png";
+        } else if (Time.frameCount > 9) {
+            filename = imageFolder + "/0000" + sequence_image.ToString() + ".png";
+        } else {
+            filename = imageFolder + "/00000" + sequence_image.ToString() + ".png";
+        }
+        //string filename = imageFolder + "/" + Time.frameCount.ToString() + ".png";
         byte[] bytes = tex.EncodeToPNG();
         System.IO.File.WriteAllBytes(filename, bytes);
         
@@ -333,6 +349,7 @@ public class Spawner : MonoBehaviour
     void addNewSequence()
     {
         sequence_number += 1;
+        sequence_image = 0;
         string new_sequence = datasetDir + "/" + datasetDir + "-" + sequence_number.ToString();
         
         //Debug.Log(gt_txt);
@@ -350,14 +367,7 @@ public class Spawner : MonoBehaviour
         System.IO.Directory.CreateDirectory(imageFolder);
         System.IO.Directory.CreateDirectory(gtFolder);
 
-        //gtFile = Path.Combine(datasetDir + "gt_txt");
         gtFile = gtFolder + "/gt.txt";
-        /*if (File.Exists(gtFile))
-        {
-            File.Delete(gtFile);
-        } else {
-            File.Create(gtFile);
-        }*/
     }
 
     void Awake()
@@ -403,7 +413,7 @@ public class Spawner : MonoBehaviour
         */
         
         
-        if (Time.frameCount%120 == 0)
+        if (Time.frameCount%15 == 0)
         {
            foreach (DynamicGameObject dgo in dgo_list)
            {
