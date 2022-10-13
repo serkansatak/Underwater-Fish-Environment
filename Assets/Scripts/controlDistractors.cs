@@ -23,22 +23,40 @@ public class controlDistractors : MonoBehaviour
 
     public Vector3 GetRandomRespawnPosition()
     {
-        float x = Random.Range(-49, 43);
-        //float x = Random.Range(-59, -49);
-        float y = Random.Range (-20, 22);
-        //float y = Random.Range (-30, -20);
-        float z = Random. Range (0, 24);
+        float x, y, z;
+
+        if (current_direction.x < 0){
+            //x = Random.Range(45, 50);
+            x = 43f;
+        } else {
+            //x = Random.Range(-60, -55);
+            x = -49f;
+        }
+
+        /*if (current_direction.y > 0) {
+            y = Random.Range(25, 30);
+        } else {
+            y = Random.Range(-30, -25);
+        }*/
+        y = Random.Range (-20, 22);
+        z = Random. Range (0, 24);
+        /*if (current_direction.z > 0) {
+            z = Random.Range(-20, -15);
+        } else {
+            z = Random.Range(30, 35);
+        }*/
         return new Vector3(x, y, z);
     }
 
    
     void Awake()
     {
-        current_direction = new Vector3 (Random.value, Random.value, Random.value);
+        //current_direction = new Vector3 (Random.value, Random.value, Random.value);
+        current_direction = new Vector3 (Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
         current_direction.Normalize();
-        if (Random.value > 0.5f){
+        /*if (Random.value > 0.5f){
             current_direction = current_direction * -1;
-        }
+        }*/
         number_of_distractors = (int) Random.Range(500, 1000);
 
         main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
@@ -49,11 +67,13 @@ public class controlDistractors : MonoBehaviour
         Spawner.DynamicGameObject dgo = new Spawner.DynamicGameObject();
         dgo.speed = Random.Range(1, 5);
         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        //sphere.transform.position = GetRandomStartingPosition();
         if (respawn == false) {
             sphere.transform.position = GetRandomStartingPosition();
         } else {
-            sphere.transform.positon = GetRandomRespawnPosition()
-        };
+            sphere.transform.position = GetRandomRespawnPosition();
+        }
+
         sphere.transform.parent = transform;
         sphere.transform.localScale = Vector3.one * Random.Range(0.1f, 0.5f);
         dgo.go = sphere;
@@ -108,8 +128,13 @@ public class controlDistractors : MonoBehaviour
             Spawner.DynamicGameObject distractor = distractors_list[i];
             //Quaternion rot = distractor.go.transform.rotation;
             distractor.go.transform.position += current_direction*Time.deltaTime*distractor.speed;
-            Vector3 position = main_cam.WorldToViewportPoint(distractor.go.transform.position);
-            if (position.x > 1f || position.x < 0f || position.y > 1f || position.y < 0f )
+            //Vector3 position = main_cam.WorldToViewportPoint(distractor.go.transform.position);
+            /*if (position.x > 1.5f || position.x < 0f || 
+                position.y > 1.5f || position.y < 0f ||
+                distractor.go.transform.position.z > 25f || distractor.go.transform.position.z < -10f )*/
+            if (distractor.go.transform.position.x > 45f || distractor.go.transform.position.x < -55f || 
+                distractor.go.transform.position.y > 25f || distractor.go.transform.position.y < -25f ||
+                distractor.go.transform.position.z > 25f || distractor.go.transform.position.z < -10f )
             {
                 distractors_list.RemoveAt(i);
                 Destroy(distractor.go);
