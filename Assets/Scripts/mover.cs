@@ -72,20 +72,35 @@ public class mover : MonoBehaviour
         return vec;
     }
 
-    void turn(GameObject go)
+    void turn(DynamicGameObject dgo)
     {
         Debug.Log("Turning, Time Delta " + Time.deltaTime.ToString());
-        go.transform.Rotate(0, Time.deltaTime*Random.Range(10f, 100f), 0 );
+        dgo.go.transform.Rotate(0, Time.deltaTime*dgo.speed, 0 );
     }
 
-    void go_straight(GameObject go)
+    void go_straight(DynamicGameObject dgo)
     {
-        Quaternion rot = go.transform.rotation;
+        dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", dgo.speed);
+        Quaternion rot = dgo.go.transform.rotation;
         Vector3 test = new Vector3(1f, 0f, 0f);
-        speed = Random.Range(0.5f, 1.5f);
-        go.transform.position += rot*test*Time.deltaTime*speed;
-
+        //speed = Random.Range(0.5f, 1.5f);
+        dgo.go.transform.position += rot*test*Time.deltaTime*dgo.speed;
     }
+
+    void assign_activity(DynamicGameObject dgo)
+    {
+        if(Random.value > 0.75 || Random.value < 0.25)
+        {
+            dgo.activity = 1;
+            //Rot speed
+            dgo.speed = Random.Range(10f, 100f);
+        } else {
+            dgo.activity = 0;
+            //Linear speed
+            dgo.speed = Random.Range(0.5f, 2f);
+        }   
+    }
+
 
 
     // Start is called before the first frame update
@@ -109,21 +124,12 @@ public class mover : MonoBehaviour
         Debug.Log("List length " + go_list.Count.ToString());
     }
 
-    void assign_activity(DynamicGameObject dgo)
-    {
-        if(Random.value > 0.75)
-        {
-            dgo.activity = 1;
-        } else {
-            dgo.activity = 0;
-        }
-    }
 
     // Update is called once per frame
     void Update()
     {   
         
-        if (Time.frameCount%240 == 0)
+        if (Time.frameCount%60 == 0)
         {
            foreach (var dgo in go_list)
            {
@@ -134,9 +140,9 @@ public class mover : MonoBehaviour
         foreach (var dgo in go_list)
         {
             if (dgo.activity == 0){
-                go_straight(dgo.go);
+                go_straight(dgo);
             } else {
-                turn(dgo.go);
+                turn(dgo);
             }
         }
 

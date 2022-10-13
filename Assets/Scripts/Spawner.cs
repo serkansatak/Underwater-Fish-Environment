@@ -18,12 +18,34 @@ public class Spawner : MonoBehaviour
 
     Camera main_cam;
     Camera background_cam;
+    
+    struct CameraBoundsInWorld
+    {
+        public Vector3 topLeft;
+        public Vector3 topRight;
+        public Vector3 bottomLeft;
+        public Vector3 bottomRight;
+    }
+    CameraBoundsInWorld bounds;
+
     //Texture2D screenshotTex;
 
     List<GameObject> fish_inst;
     string datasetDir;
     string gt_txt;
     Color fogColor;
+
+    public class DynamicGameObject
+    {
+        public GameObject go;
+        public int id;
+        public int previous_activity; //used to prevent fish from turning twice in a row 
+        public int activity; //0 for going straight, 1 for turning
+        public float speed;
+        //public bool distractor;
+    }
+    List<DynamicGameObject> dgo_list;
+
 
     void generateFogColor()
     {
@@ -35,32 +57,10 @@ public class Spawner : MonoBehaviour
             Random.Range(151f, 171f)/255);
     }
     
-
     public Vector3 GetRandomPositionInCamera(Camera cam)
     {
         Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.8f), UnityEngine.Random.Range(0.1f, 0.8f), UnityEngine.Random.Range(5f, 24f)));
-        
         return world_pos;
-    }
-
-    Texture2D GetBackgroundTexture()
-    {
-        RenderTexture rt = RenderTexture.GetTemporary(background_cam.pixelWidth, background_cam.pixelHeight, 24);
-        background_cam.targetTexture = rt;
-        RenderTexture.active = rt;
-        background_cam.Render();
-
-        Texture2D bgTex = new Texture2D(background_cam.pixelWidth, background_cam.pixelHeight, TextureFormat.RGB24, false);
-        //screenshotTex.Reinitialize(main_cam.pixelWidth, main_cam.pixelHeight);
-        bgTex.ReadPixels(new Rect(0, 0, background_cam.pixelWidth, background_cam.pixelHeight), 0, 0);
-
-        background_cam.targetTexture = null;
-        RenderTexture.active = null; // JC: added to avoid errors
-        RenderTexture.ReleaseTemporary(rt);
-        rt = null;
-        Destroy(rt);
-        return bgTex;
-
     }
 
     Texture2D GetFishTexture()
@@ -85,98 +85,6 @@ public class Spawner : MonoBehaviour
         //System.IO.File.WriteAllBytes(filename, bytes);
         return screenshotTex;
     }
-
-    void SaveCameraView()
-    {
-        Camera cam1 = background_cam;
-        Camera cam2 = main_cam;
-        string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
-        
-        RenderTexture backgroudTexture = new RenderTexture(Screen.width, Screen.height, 16);
-        cam1.targetTexture = backgroudTexture;
-        RenderTexture.active = backgroudTexture;
-        cam1.Render();
-
-        RenderTexture fishTexture = new RenderTexture(Screen.width, Screen.height, 16);
-        cam2.targetTexture = fishTexture;
-        RenderTexture.active = fishTexture;
-        cam2.Render();
-
-        Texture2D renderedTexture = new Texture2D(Screen.width, Screen.height);
-        renderedTexture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
-        RenderTexture.active = null;
-        byte[] byteArray = renderedTexture.EncodeToPNG();
-        System.IO.File.WriteAllBytes(filename, byteArray);
-    }
-
-    void SaveImage()
-    {
-        string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
-        ScreenCapture.CaptureScreenshot(filename);
-    }
-
-    void SaveView()
-    {
-        Camera cam;
-        cam = background_cam;
-        RenderTexture rt_bg = RenderTexture.GetTemporary(cam.pixelWidth, cam.pixelHeight, 24);
-        cam.targetTexture = rt_bg;
-        RenderTexture.active = rt_bg;
-        cam.Render();
-        Texture2D screenshotTex_bg = new Texture2D(cam.pixelWidth, cam.pixelHeight, TextureFormat.RGB24, false);
-        screenshotTex_bg.ReadPixels(new Rect(0, 0, cam.pixelWidth, cam.pixelHeight), 0, 0);
-
-        cam.targetTexture = null;
-        RenderTexture.active = null; // JC: added to avoid errors
-        RenderTexture.ReleaseTemporary(rt_bg);
-        rt_bg = null;
-        Destroy(rt_bg);
-
-        cam = main_cam;
-        RenderTexture rt = RenderTexture.GetTemporary(cam.pixelWidth, cam.pixelHeight, 24);
-        Graphics.Blit(screenshotTex_bg, rt);
-        cam.targetTexture = rt;
-        RenderTexture.active = rt;
-        cam.Render();
-        Texture2D screenshotTex = new Texture2D(cam.pixelWidth, cam.pixelHeight, TextureFormat.RGB24, false);
-        screenshotTex.ReadPixels(new Rect(0, 0, cam.pixelWidth, cam.pixelHeight), 0, 0);
-
-        cam.targetTexture = null;
-        RenderTexture.active = null; // JC: added to avoid errors
-        RenderTexture.ReleaseTemporary(rt);
-        rt = null;
-        Destroy(rt);
-
-        byte[] bytes = screenshotTex.EncodeToPNG();
-        string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
-        System.IO.File.WriteAllBytes(filename, bytes);
-
-
-    }
-
-    Texture2D CombineTextures(Texture2D _textureA, Texture2D _textureB)
-	{
-		//Create new textures
-		Texture2D textureResult = new Texture2D(_textureA.width, _textureA.height);
-		//create clone form texture
-		textureResult.SetPixels(_textureA.GetPixels());
-		//Now copy texture B in texutre A
-		for (int x = 0; x<_textureB.width; x++)
-		{
-			for (int y = 0; y<_textureB.height; y++)
-			{
-				Color c = _textureB.GetPixel(x, y);
-				if (c.a > 0.0f) //Is not transparent
-				{
-					//Copy pixel colot in TexturaA
-					textureResult.SetPixel(x, y, c);
-				}
-			}
-		}
-		//Apply colors
-		textureResult.Apply();
-		return textureResult;
-	}
 
     void SaveTexture(Texture2D tex)
     {
@@ -205,22 +113,24 @@ public class Spawner : MonoBehaviour
     //TODO - Add pose within Unity Sphere for some images in order to simulate flocks
     void InstantiateFish()
     {
-        fish_inst = new List<GameObject>();
+        //fish_inst = new List<GameObject>();
+        dgo_list = new List<DynamicGameObject>();
         int numberOfFish = (int)Random.Range(numFishMinMax.x, numFishMinMax.y);
         for (int i = 0; i < numberOfFish; i++)
         {   
             //float radius = Random.Range(radiusMinMax.x, radiusMinMax.y);
+            DynamicGameObject dgo = new DynamicGameObject();
             Vector3 rnd_pos = GetRandomPositionInCamera(main_cam);
             GameObject currFish = Instantiate(fishPrefab, rnd_pos, Quaternion.identity);
             currFish.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-45f, 45f));
             //currFish.transform.rotation = Random.rotation;
             currFish.transform.parent = transform; // Parent the fish to the moverObj
             currFish.transform.localScale = Vector3.one * Random.Range(0.4f, 0.8f);
-            currFish.GetComponent<Animator>().SetFloat("SpeedFish", Random.Range(swimAnimationMinMax.x, swimAnimationMinMax.y));
-
+            float speed = Random.Range(swimAnimationMinMax.x, swimAnimationMinMax.y);
+            currFish.GetComponent<Animator>().SetFloat("SpeedFish", speed);
             currFish.name = "fish_" + i.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
             currFish.GetComponentInChildren<fishName>().fishN = "fish_" + i.ToString();
-            fish_inst.Add(currFish);
+            //fish_inst.Add(currFish);
 
             //Visual randomisation
             SkinnedMeshRenderer renderer = currFish.GetComponentInChildren<SkinnedMeshRenderer>();
@@ -233,49 +143,91 @@ public class Spawner : MonoBehaviour
             renderer.material.color = rnd_albedo_v2;
             renderer.material.SetFloat("_Metalic", Random.Range(0.1f, 0.5f));
             renderer.material.SetFloat("_Metalic/_Glossiness", Random.Range(0.1f, 0.5f));
-
+            
+            dgo.go = currFish;
+            dgo.id = i;
+            dgo.activity = 0;
+            dgo.speed = speed;
+            dgo_list.Add(dgo);
         }
     }
 
     void CleanUp()
     {
-        foreach (GameObject go in fish_inst)
+        foreach (DynamicGameObject dgo in dgo_list)
         {
-            Destroy(go);
+            Destroy(dgo.go);
         }
+    }
+
+    bool isWithinTheView(GameObject go)
+    {
+        
+        Vector3 viewPos = main_cam.WorldToViewportPoint(go.transform.position);
+        if (viewPos.x <= 0 ||  viewPos.x >= 0.9 ){
+            return false;
+        }
+        if (viewPos.y <= 0 ||  viewPos.y >= 0.9 ){
+            return false;
+        }
+        if (viewPos.z >  26f){
+            return false;
+        }
+        return true;
+        /*if (go.transform.position.z < bounds.topRight.z && go.transform.position.z < bounds.bottomLeft.z &&
+        go.transform.position.x > bounds.bottomLeft.x && go.transform.position.y > bounds.bottomLeft.y &&
+        go.transform.position.x < bounds.topRight.x && go.transform.position.y < bounds.topRight.y )
+        {
+            return true;
+        } else {
+            return false;
+        }*/
     }
 
     Vector4 GetBoundingBoxInCamera(GameObject go, Camera cam)
     {
-        Vector3[] verts = GetMeshVertices(go);
-
-        for (int i = 0; i < verts.Length; i++)
-        {
-            verts[i] = cam.WorldToScreenPoint(verts[i]);
-        }
-
-        Vector2 min = verts[0];
-        Vector2 max = verts[0];
-        foreach (Vector2 v in verts)
-        {
-            min = Vector2.Min(min, v);
-            max = Vector2.Max(max, v);
-        }
-
-        min.y = Screen.height - min.y;
-        max.y = Screen.height - max.y;
-        if (min.y > max.y)
-        {
-            float temp = max.y;
-            max.y = min.y;
-            min.y = temp;
-        }
-
         int min_x, min_y, max_x, max_y;
-        min_x = (int)min.x;
-        min_y = (int)min.y;
-        max_x = (int)max.x;
-        max_y = (int)max.y;
+        bool withinTheView = isWithinTheView(go);
+        Debug.Log("Within the view " + withinTheView.ToString());
+
+        if (withinTheView)
+        { 
+            Vector3[] verts = GetMeshVertices(go);
+
+            for (int i = 0; i < verts.Length; i++)
+            {
+                verts[i] = cam.WorldToScreenPoint(verts[i]);
+            }
+
+            Vector2 min = verts[0];
+            Vector2 max = verts[0];
+            foreach (Vector2 v in verts)
+            {
+                min = Vector2.Min(min, v);
+                max = Vector2.Max(max, v);
+            }
+
+            min.y = Screen.height - min.y;
+            max.y = Screen.height - max.y;
+            if (min.y > max.y)
+            {
+                float temp = max.y;
+                max.y = min.y;
+                min.y = temp;
+            }
+
+            min_x = (int)min.x;
+            min_y = (int)min.y;
+            max_x = (int)max.x;
+            max_y = (int)max.y;
+            
+        } else {
+            min_x = -1;
+            min_y = -1;
+            max_x = -1;
+            max_y = -1;
+        }
+
         //Vector4 (x, y, z, w)
         return new Vector4(min_x, min_y, max_x, max_y);
     }
@@ -297,45 +249,49 @@ public class Spawner : MonoBehaviour
     }
 
     //TODO - add ID
-    void SaveAnnotation(Vector4 bbox)
-    {
-        string frame = Time.frameCount.ToString();
-        string id = "-1";
-        string left = bbox.x.ToString();
-        string top = bbox.y.ToString();
-
-        //float widthf = bbox.z-bbox.x;
-        //float heightf = bbox.w-bbox.y;
-        //Debug.Log("FLOAT widthf " + widthf + " heightf " + heightf);
-
-        int width = (int)Mathf.Round(bbox.z-bbox.x);
-        int height = (int)Mathf.Round(bbox.w-bbox.y);
-
-        string confidence = "1";
-        string class_id = "1";
-        string visibility = "1";
-
-        string annotation = frame + ","
-            + id + ","
-            + left + ","
-            + top + ","
-            + width.ToString() + ","
-            + height.ToString() + ","
-            + confidence + ","
-            + class_id + ","
-            + visibility + ","
-            + "\n";
-        
-        //string line = maskObjects[i].name.Split('_')[0] + " " + bboxs[i].x.ToString() + " " + bboxs[i].y.ToString() + " " + bboxs[i].z.ToString() + " " + bboxs[i].w.ToString() + "\n";
-        using (StreamWriter writer = new StreamWriter(gt_txt, true))
+    void SaveAnnotation(Vector4 bbox, int go_id)
+    {   
+        if (bbox.x != -1 && bbox.y != -1 && bbox.z != -1 && bbox.w != -1 )
         {
-            writer.Write(annotation);
+            string frame = Time.frameCount.ToString();
+            string id = go_id.ToString();
+            string left = bbox.x.ToString();
+            string top = bbox.y.ToString();
+
+            //float widthf = bbox.z-bbox.x;
+            //float heightf = bbox.w-bbox.y;
+            //Debug.Log("FLOAT widthf " + widthf + " heightf " + heightf);
+
+            int width = (int)Mathf.Round(bbox.z-bbox.x);
+            int height = (int)Mathf.Round(bbox.w-bbox.y);
+
+            string confidence = "1";
+            string class_id = "1";
+            string visibility = "1";
+
+            string annotation = frame + ","
+                + id + ","
+                + left + ","
+                + top + ","
+                + width.ToString() + ","
+                + height.ToString() + ","
+                + confidence + ","
+                + class_id + ","
+                + visibility + ","
+                + "\n";
+            
+            //string line = maskObjects[i].name.Split('_')[0] + " " + bboxs[i].x.ToString() + " " + bboxs[i].y.ToString() + " " + bboxs[i].z.ToString() + " " + bboxs[i].w.ToString() + "\n";
+            using (StreamWriter writer = new StreamWriter(gt_txt, true))
+            {
+                writer.Write(annotation);
+            }
         }
         //Debug.Log(annotation);
     }
 
     void Awake()
     {
+
         datasetDir = "data";
         if (System.IO.Directory.Exists(datasetDir))
         {
@@ -350,100 +306,92 @@ public class Spawner : MonoBehaviour
         {
             File.Delete(gt_txt);
         }
-
     }
 
+    void updateActivity(DynamicGameObject dgo)
+    {
+        if(Random.value > 0.75 || Random.value < 0.25)
+        {
+            dgo.activity = 1;
+            dgo.speed = Random.Range(10f, 100f);
+        } else {
+            dgo.activity = 0;
+            dgo.speed = Random.Range(0.5f, 2f);
+        }   
+    }
+
+    void Turn(DynamicGameObject dgo)
+    {
+        //Debug.Log("Turning, Time Delta " + Time.deltaTime.ToString());
+        dgo.go.transform.Rotate(0, Time.deltaTime*dgo.speed, 0 );
+    }
+
+    void goStraight(DynamicGameObject dgo)
+    {
+        dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", dgo.speed);
+        Quaternion rot = dgo.go.transform.rotation;
+        Vector3 test = new Vector3(1f, 0f, 0f);
+        //speed = Random.Range(0.5f, 1.5f);
+        dgo.go.transform.position += rot*test*Time.deltaTime*dgo.speed;
+    }
+
+    
+    
     // Start is called before the first frame update
     void Start()
     {
-        //SET UP VARIABLES
+        //SET UP CONSTANT VARIABLES
         main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
         background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
+        //getWorldBounds();
         //screenshotTex = new Texture2D(main_cam.pixelWidth, main_cam.pixelHeight, TextureFormat.RGB24, false);
         //Fog
+        
+        generateFogColor();
+        randomizeBackgroundColor();
+        randomizeFog(); 
+        InstantiateFish();
     }
 
     void Update()
     {
+        /*
         Debug.Log("Iteration " + Time.frameCount.ToString());
         generateFogColor();
         randomizeBackgroundColor();
         randomizeFog(); 
         InstantiateFish();
+        */
 
-        foreach (GameObject go in fish_inst)
+        if (Time.frameCount%60 == 0)
         {
-            Vector4 bounds = GetBoundingBoxInCamera(go, main_cam);
-            SaveAnnotation(bounds);
-            //Debug.Log("Bounds" + bounds);
+           foreach (DynamicGameObject dgo in dgo_list)
+           {
+            updateActivity(dgo);
+           }
         }
-        //SaveCameraRGB(main_cam);
-        //SaveCameraRGB();
-        //SaveCameraView();
-        //SaveImage();
-        //SaveRGB();
-        //SaveBackground();
-        //SaveView();
-        //Texture2D bg = GetBackgroundTexture();
-        Texture2D fish = GetFishTexture();
-        //Texture2D combined = CombineTextures(fish, bg);
-        SaveTexture(fish);
-        CleanUp();
-    }
 
-    /*
-
-             foreach (Transform childObject in transform)
+        foreach (DynamicGameObject dgo in dgo_list)
         {
-            // First we get the Mesh attached to the child object
-            Mesh mesh = childObject.gameObject.GetComponent<SkinnedMeshRenderer>().mesh;
- 
-            // If we've found a mesh we can use it to add a collider
-            if (mesh != null)
-            {                      
-                // Add a new MeshCollider to the child object
-                MeshCollider meshCollider = childObject.gameObject.AddComponent<MeshCollider>();
- 
-                // Finaly we set the Mesh in the MeshCollider
-                meshCollider.sharedMesh = mesh;
+            
+            if (dgo.activity == 0){
+                goStraight(dgo);
+            } else {
+                Turn(dgo);
             }
+
+            Vector4 bounds = GetBoundingBoxInCamera(dgo.go, main_cam);
+            SaveAnnotation(bounds, dgo.id);
+            Debug.Log("Bounds" + bounds);
         }
 
-    [SerializeField] GameObject fishPrefab;
-    [SerializeField] Vector2 numFishMinMax;
-    [SerializeField] Vector2 swimAnimationMinMax;
-    // Start is called before the first frame update7
-
-    public Vector3 GetRandomPositionInCamera(Camera cam)
-    {
-        Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(12.5f, 17.5f)));
-        return world_pos;
+        Texture2D fish = GetFishTexture();
+        SaveTexture(fish);
+        //if (Time.frameCount%600 == 0) {reset}
+         
+        if (Time.frameCount == 600)
+        {
+            CleanUp();
+        }
     }
-
-    void Awake()
-    {
-        //Random fish
-        Camera cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
-        GameObject currFish = Instantiate(fishPrefab, GetRandomPositionInCamera(cam), Random.rotation);
-        currFish.transform.localScale = new Vector3(Random.value, Random.value, Random.value);
-        currFish.GetComponent<Animator>().SetFloat("SpeedFish", Random.Range(swimAnimationMinMax.x, swimAnimationMinMax.y));
-        currFish.transform.parent = transform;
-
-        //Fog
-        RenderSettings.fogMode = FogMode.ExponentialSquared;
-        Color rnd_col = new Color(Random.value, Random.value, Random.value, Random.value);
-        RenderSettings.fogColor = rnd_col;
-        RenderSettings.fogDensity = Random.Range(0.01f, 0.03f);
-        RenderSettings.fog = true;
-
-
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-    */
 }
