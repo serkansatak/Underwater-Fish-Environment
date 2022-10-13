@@ -18,22 +18,24 @@ public class Spawner : MonoBehaviour
 
     Camera main_cam;
     Camera background_cam;
-    
-    struct CameraBoundsInWorld
+    Color fogColor;
+
+    /*struct CameraBoundsInWorld
     {
         public Vector3 topLeft;
         public Vector3 topRight;
         public Vector3 bottomLeft;
         public Vector3 bottomRight;
     }
-    CameraBoundsInWorld bounds;
-
+    CameraBoundsInWorld bounds;*/
     //Texture2D screenshotTex;
+    //List<GameObject> fish_inst;
 
-    List<GameObject> fish_inst;
-    string datasetDir;
-    string gt_txt;
-    Color fogColor;
+    string datasetDir = "BrackishMOT_Synt";
+    string imageFolder;
+    string gtFolder;
+    string gtFile;
+    int sequence_number = 0;
 
     public class DynamicGameObject
     {
@@ -49,7 +51,7 @@ public class Spawner : MonoBehaviour
 
     void generateFogColor()
     {
-        //181, 202, 147, 161
+        //Base values 181, 202, 147, 161
         fogColor = new Color(
             Random.Range(171f, 191f)/255,  
             Random.Range(192f, 212f)/255, 
@@ -88,7 +90,7 @@ public class Spawner : MonoBehaviour
 
     void SaveTexture(Texture2D tex)
     {
-        string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
+        string filename = imageFolder + "/" + Time.frameCount.ToString() + ".png";
         byte[] bytes = tex.EncodeToPNG();
         System.IO.File.WriteAllBytes(filename, bytes);
         
@@ -281,7 +283,7 @@ public class Spawner : MonoBehaviour
                 + "\n";
             
             //string line = maskObjects[i].name.Split('_')[0] + " " + bboxs[i].x.ToString() + " " + bboxs[i].y.ToString() + " " + bboxs[i].z.ToString() + " " + bboxs[i].w.ToString() + "\n";
-            using (StreamWriter writer = new StreamWriter(gt_txt, true))
+            using (StreamWriter writer = new StreamWriter(gtFile, true))
             {
                 writer.Write(annotation);
             }
@@ -289,35 +291,28 @@ public class Spawner : MonoBehaviour
         //Debug.Log(annotation);
     }
 
-    void Awake()
-    {
-
-        datasetDir = "data";
-        if (System.IO.Directory.Exists(datasetDir))
-        {
-            System.IO.Directory.Delete(datasetDir, true);
-            System.IO.Directory.CreateDirectory(datasetDir);
-        }
-
-        gt_txt = Path.Combine(datasetDir + "/gt.csv");
-        //Debug.Log(gt_txt);
-
-        if (File.Exists(gt_txt))
-        {
-            File.Delete(gt_txt);
-        }
-    }
-
     void updateActivity(DynamicGameObject dgo)
     {
-        if(Random.value > 0.75 || Random.value < 0.25)
+        /*if(Random.value > 0.75 || Random.value < 0.25)
         {
             dgo.activity = 1;
             dgo.speed = Random.Range(10f, 100f);
         } else {
             dgo.activity = 0;
             dgo.speed = Random.Range(0.5f, 2f);
-        }   
+        }*/
+
+        dgo.previous_activity = dgo.activity;
+
+        if(Random.value > 0.5 && dgo.previous_activity != 1)
+        {
+            dgo.activity = 1;
+            dgo.speed = Random.Range(10f, 100f);
+        } else {
+            dgo.activity = 0;
+            dgo.speed = Random.Range(1f, 3f);
+        }
+
     }
 
     void Turn(DynamicGameObject dgo)
@@ -335,7 +330,49 @@ public class Spawner : MonoBehaviour
         dgo.go.transform.position += rot*test*Time.deltaTime*dgo.speed;
     }
 
-    
+    void addNewSequence()
+    {
+        sequence_number += 1;
+        string new_sequence = datasetDir + "/" + datasetDir + "-" + sequence_number.ToString();
+        
+        //Debug.Log(gt_txt);
+
+        if (System.IO.Directory.Exists(new_sequence))
+        {
+            System.IO.Directory.Delete(new_sequence, true);
+            System.IO.Directory.CreateDirectory(new_sequence);
+        } else {
+            System.IO.Directory.CreateDirectory(new_sequence);
+        }
+
+        imageFolder = new_sequence + "/img1";
+        gtFolder = new_sequence + "/gt";
+        System.IO.Directory.CreateDirectory(imageFolder);
+        System.IO.Directory.CreateDirectory(gtFolder);
+
+        //gtFile = Path.Combine(datasetDir + "gt_txt");
+        gtFile = gtFolder + "/gt.txt";
+        /*if (File.Exists(gtFile))
+        {
+            File.Delete(gtFile);
+        } else {
+            File.Create(gtFile);
+        }*/
+    }
+
+    void Awake()
+    {
+        //Setup folder structure
+
+        //Create a parent folder, remove the old one if it exists
+        if (System.IO.Directory.Exists(datasetDir))
+        {
+            System.IO.Directory.Delete(datasetDir, true);
+            System.IO.Directory.CreateDirectory(datasetDir);
+        } else {
+             System.IO.Directory.CreateDirectory(datasetDir);
+        }
+    }
     
     // Start is called before the first frame update
     void Start()
@@ -351,6 +388,8 @@ public class Spawner : MonoBehaviour
         randomizeBackgroundColor();
         randomizeFog(); 
         InstantiateFish();
+
+        addNewSequence();
     }
 
     void Update()
@@ -362,13 +401,15 @@ public class Spawner : MonoBehaviour
         randomizeFog(); 
         InstantiateFish();
         */
-
-        if (Time.frameCount%60 == 0)
+        
+        
+        if (Time.frameCount%120 == 0)
         {
            foreach (DynamicGameObject dgo in dgo_list)
            {
             updateActivity(dgo);
            }
+           addNewSequence();
         }
 
         foreach (DynamicGameObject dgo in dgo_list)
@@ -387,11 +428,12 @@ public class Spawner : MonoBehaviour
 
         Texture2D fish = GetFishTexture();
         SaveTexture(fish);
+        /*
         //if (Time.frameCount%600 == 0) {reset}
-         
-        if (Time.frameCount == 600)
+        if (Time.frameCount == 300)
         {
             CleanUp();
         }
+        */
     }
 }
