@@ -37,6 +37,8 @@ public class Spawner : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
+    int sequence_length;
+    //int[] sequence_length = [30, 60, 90];
 
     public class DynamicGameObject
     {
@@ -351,8 +353,6 @@ public class Spawner : MonoBehaviour
         sequence_number += 1;
         sequence_image = 0;
         string new_sequence = datasetDir + "/" + datasetDir + "-" + sequence_number.ToString();
-        
-        //Debug.Log(gt_txt);
 
         if (System.IO.Directory.Exists(new_sequence))
         {
@@ -366,8 +366,12 @@ public class Spawner : MonoBehaviour
         gtFolder = new_sequence + "/gt";
         System.IO.Directory.CreateDirectory(imageFolder);
         System.IO.Directory.CreateDirectory(gtFolder);
-
         gtFile = gtFolder + "/gt.txt";
+
+        //
+        int[] temp = new int[]{90, 120, 150, 180};
+        int randomIndex = Random.Range(0, temp.Length);
+        sequence_length = temp[randomIndex];
     }
 
     void Awake()
@@ -398,7 +402,6 @@ public class Spawner : MonoBehaviour
         randomizeBackgroundColor();
         randomizeFog(); 
         InstantiateFish();
-
         addNewSequence();
     }
 
@@ -419,7 +422,7 @@ public class Spawner : MonoBehaviour
            {
             updateActivity(dgo);
            }
-           addNewSequence();
+           //addNewSequence();
         }
 
         foreach (DynamicGameObject dgo in dgo_list)
@@ -438,12 +441,17 @@ public class Spawner : MonoBehaviour
 
         Texture2D fish = GetFishTexture();
         SaveTexture(fish);
-        /*
-        //if (Time.frameCount%600 == 0) {reset}
-        if (Time.frameCount == 300)
+
+        if (sequence_image == sequence_length)
         {
             CleanUp();
+            
+            generateFogColor();
+            randomizeBackgroundColor();
+            randomizeFog(); 
+            InstantiateFish();
+            addNewSequence();
         }
-        */
+        
     }
 }
