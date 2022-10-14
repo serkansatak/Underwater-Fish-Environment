@@ -174,7 +174,7 @@ public class Spawner : MonoBehaviour
             return false;
         }
 
-        if (go.transform.position.z > 26f || go.transform.position.z < -10f){
+        if (go.transform.position.z > 34f || go.transform.position.z < -10f){
             return false;
         }
         
@@ -249,6 +249,16 @@ public class Spawner : MonoBehaviour
     {   
         if (bbox.x != -1 && bbox.y != -1 && bbox.z != -1 && bbox.w != -1 )
         {   
+            if (bbox.x < 0)
+            {
+                bbox.x = 0;
+            }
+
+            if (bbox.y < 0)
+            {
+                bbox.y = 0;
+            }
+
             string frame = sequence_image.ToString();
             string id = go_id.ToString();
             string left = bbox.x.ToString();
@@ -395,21 +405,29 @@ public class Spawner : MonoBehaviour
         if(vp.isPlaying)
         {
             sequence_image += 1;
-            if (Time.frameCount%15 == 0)
-            {
             foreach (DynamicGameObject dgo in dgo_list)
             {
-                updateActivity(dgo);
-            }
-            }
+                if (Time.frameCount%20 == 0)
+                {
+                    updateActivity(dgo);
+                }
 
-            foreach (DynamicGameObject dgo in dgo_list)
-            {
                 if (dgo.activity == 0){
                     goStraight(dgo);
                 } else {
                     Turn(dgo);
                 }
+            }
+        }
+    }
+
+
+    void LateUpdate()
+    {
+        if(vp.isPlaying)
+        {
+            foreach (DynamicGameObject dgo in dgo_list)
+            {
                 Vector4 bounds = GetBoundingBoxInCamera(dgo.go, main_cam);
                 SaveAnnotation(bounds, dgo.id);
                 //Debug.Log("Bounds" + bounds);
@@ -417,20 +435,4 @@ public class Spawner : MonoBehaviour
             SaveImage();
         }
     }
-
-
-    /*void LateUpdate()
-    {
-        if (sequence_image == sequence_length)
-        {      
-            CleanUp();
-            randomizeVideo();
-            generateFogColor();
-            randomizeBackgroundColor();
-            randomizeFog(); 
-            InstantiateFish();
-            addNewSequence();
-        }    
-
-    }*/
 }

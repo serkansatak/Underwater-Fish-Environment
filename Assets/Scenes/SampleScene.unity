@@ -812,7 +812,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b01b80a84826ede09a85e12e88b657b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numFishMinMax: {x: 5, y: 50}
+  numFishMinMax: {x: 5, y: 10}
   fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
   swimAnimationMinMax: {x: 1, y: 2}
 --- !u!4 &1056768817
@@ -1132,7 +1132,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1857786240
 MonoBehaviour:
   m_ObjectHideFlags: 0

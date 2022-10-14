@@ -76,7 +76,7 @@ crashlytics-build.properties
 data
 *.zip
 BrackishMOT_Synth/*
-fish_synth_Data/*
+fish_synth_Data
 ProjectSettings
 UnityPlayer.so
 fish_synth_BurstDebugInformation_DoNotShip
