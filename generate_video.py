@@ -45,6 +45,7 @@ if __name__=="__main__":
     for image in images:
         images_ordered.append( int(image.replace(".png", "")) )
     images_ordered.sort()
+    print("Number of images in the sequence ", len(images_ordered))
 
     for img_no in images_ordered:
         img_name = str(img_no)
