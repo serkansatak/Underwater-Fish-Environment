@@ -9,6 +9,8 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Video;
+using UnityEngine.Animations.Rigging;
+
 
 public class Spawner : MonoBehaviour
 {
@@ -60,34 +62,9 @@ public class Spawner : MonoBehaviour
         return world_pos;
     }
 
-    /*Texture2D GetFishTexture()
-    {
-        //string filename = datasetDir + "/" + Time.frameCount.ToString() + ".png";
-        RenderTexture rt = RenderTexture.GetTemporary(main_cam.pixelWidth, main_cam.pixelHeight, 24);
-        main_cam.targetTexture = rt;
-        RenderTexture.active = rt;
-        main_cam.Render();
-
-        Texture2D screenshotTex = new Texture2D(main_cam.pixelWidth, main_cam.pixelHeight, TextureFormat.RGB24, false);
-        //screenshotTex.Reinitialize(main_cam.pixelWidth, main_cam.pixelHeight);
-        screenshotTex.ReadPixels(new Rect(0, 0, main_cam.pixelWidth, main_cam.pixelHeight), 0, 0);
-
-        main_cam.targetTexture = null;
-        RenderTexture.active = null; // JC: added to avoid errors
-        RenderTexture.ReleaseTemporary(rt);
-        rt = null;
-        Destroy(rt);
-
-        //byte[] bytes = screenshotTex.EncodeToPNG();
-        //System.IO.File.WriteAllBytes(filename, bytes);
-        return screenshotTex;
-    }*/
-
-    //void SaveTexture(Texture2D tex)
     void SaveImage()
     {   
         string filename;
-        sequence_image += 1;
         if (sequence_image > 99999){
             filename = imageFolder + "/" + sequence_image.ToString() + ".png";
         } else if (sequence_image > 9999) {
@@ -170,15 +147,30 @@ public class Spawner : MonoBehaviour
 
     bool isWithinTheView(GameObject go)
     {
-        
-        Vector3 viewPos = main_cam.WorldToViewportPoint(go.transform.position);
-        if (viewPos.x <= 0 ||  viewPos.x >= 0.9 ){
+        //Animator ani = go.GetComponent<Animator>();
+        Vector3 headPosition = go.transform.Find("Armature/Bone").transform.position;
+        Vector3 tailPosition = go.transform.Find("Armature/Bone/Bone.001/Bone.002/Bone.003/Bone.004").transform.position;
+        Vector3 viewPosHead = main_cam.WorldToViewportPoint(headPosition);
+        Vector3 viewPosTail = main_cam.WorldToViewportPoint(tailPosition);
+        /*
+        GameObject sphere;
+        sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        sphere.transform.position = head_position;
+        sphere.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+        sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        sphere.transform.position = tail_position;
+        sphere.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+        */
+
+        if (viewPosHead.x <= 0 ||  viewPosHead.x >= 1 ||  
+            viewPosTail.x <= 0 ||  viewPosTail.x >= 1 ){
             return false;
         }
-        if (viewPos.y <= 0 ||  viewPos.y >= 0.9 ){
+        if (viewPosHead.y <= 0 ||  viewPosHead.y >= 1 ||  
+            viewPosTail.y <= 0 ||  viewPosTail.y >= 1 ){
             return false;
         }
-        if (viewPos.z >  26f){
+        if (go.transform.position.z >  26f){
             return false;
         }
         return true;
@@ -252,7 +244,7 @@ public class Spawner : MonoBehaviour
     {   
         if (bbox.x != -1 && bbox.y != -1 && bbox.z != -1 && bbox.w != -1 )
         {
-            string frame = Time.frameCount.ToString();
+            string frame = sequence_image.ToString();
             string id = go_id.ToString();
             string left = bbox.x.ToString();
             string top = bbox.y.ToString();
@@ -343,7 +335,8 @@ public class Spawner : MonoBehaviour
         //vp.Stop();
         string random_file = videoFiles[Random.Range(0, videoFiles.Length)];
         //Debug.Log(files[Random.Range(0,files.Length)]);
-        vp.url = random_file;
+        //vp.url = random_file;
+        vp.url = "Assets/videos/converted/video_1_conv.ogv";
         vp.Prepare();
     }
 
@@ -361,7 +354,8 @@ public class Spawner : MonoBehaviour
 
         videoFiles = System.IO.Directory.GetFiles(videoDir,"*.avi");
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
-        vp.Prepare();
+        //vp.Prepare();
+        //Screen.SetResolution(960, 544, true);
     }
     
     // Start is called before the first frame update
@@ -372,6 +366,7 @@ public class Spawner : MonoBehaviour
         background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
 
         //Set up a first scene
+        randomizeVideo();
         generateFogColor();
         randomizeBackgroundColor();
         randomizeFog(); 
@@ -394,6 +389,7 @@ public class Spawner : MonoBehaviour
 
         if(vp.isPlaying)
         {
+            sequence_image += 1;
             if (Time.frameCount%15 == 0)
             {
             foreach (DynamicGameObject dgo in dgo_list)
@@ -413,7 +409,6 @@ public class Spawner : MonoBehaviour
                 SaveAnnotation(bounds, dgo.id);
                 //Debug.Log("Bounds" + bounds);
             }
-
             SaveImage();
         }
     }
