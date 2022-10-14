@@ -32,7 +32,7 @@ public class Spawner : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
-    int sequence_length;
+    int sequence_length = 100;
 
     public class DynamicGameObject
     {
@@ -58,7 +58,7 @@ public class Spawner : MonoBehaviour
     
     public Vector3 GetRandomPositionInCamera(Camera cam)
     {
-        Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.8f), UnityEngine.Random.Range(0.1f, 0.8f), UnityEngine.Random.Range(5f, 24f)));
+        Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.8f), UnityEngine.Random.Range(0.1f, 0.8f), UnityEngine.Random.Range(20f, 30f)));
         return world_pos;
     }
 
@@ -88,7 +88,7 @@ public class Spawner : MonoBehaviour
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         //Color rnd_col = new Color(Random.value, Random.value, Random.value, Random.value);
         RenderSettings.fogColor = fogColor;
-        RenderSettings.fogDensity = Random.Range(0.01f, 0.05f);
+        RenderSettings.fogDensity = Random.Range(0.005f, 0.02f);
         RenderSettings.fog = true;
     }
 
@@ -162,17 +162,22 @@ public class Spawner : MonoBehaviour
         sphere.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
         */
 
-        if (viewPosHead.x <= 0 ||  viewPosHead.x >= 1 ||  
-            viewPosTail.x <= 0 ||  viewPosTail.x >= 1 ){
+        /*if (viewPosHead.x <= 0 ||  viewPosHead.x >= 1 ||  
+            viewPosTail.x <= 0 ||  viewPosTail.x >= 1 ){*/
+        if (viewPosHead.x <= 0 && viewPosTail.x <= 0 ||  
+            viewPosHead.x >= 1 && viewPosTail.x >= 1 ){
             return false;
         }
-        if (viewPosHead.y <= 0 ||  viewPosHead.y >= 1 ||  
-            viewPosTail.y <= 0 ||  viewPosTail.y >= 1 ){
+        
+        if (viewPosHead.y <= 0 && viewPosTail.y <= 0 ||  
+            viewPosHead.y >= 1 && viewPosTail.y >= 1 ){
             return false;
         }
-        if (go.transform.position.z >  26f){
+
+        if (go.transform.position.z > 26f || go.transform.position.z < -10f){
             return false;
         }
+        
         return true;
     }
 
@@ -243,7 +248,7 @@ public class Spawner : MonoBehaviour
     void SaveAnnotation(Vector4 bbox, int go_id)
     {   
         if (bbox.x != -1 && bbox.y != -1 && bbox.z != -1 && bbox.w != -1 )
-        {
+        {   
             string frame = sequence_image.ToString();
             string id = go_id.ToString();
             string left = bbox.x.ToString();
@@ -323,7 +328,7 @@ public class Spawner : MonoBehaviour
         System.IO.Directory.CreateDirectory(gtFolder);
         gtFile = gtFolder + "/gt.txt";
 
-        sequence_length = (int) Random.Range(90f, 180f);
+        //sequence_length = (int) Random.Range(90f, 180f);
         Debug.Log("Sequence Number " + sequence_number.ToString() + " Sequence Length " + sequence_length.ToString());
         // int[] temp = new int[]{90, 120, 150, 180};
         //int randomIndex = Random.Range(0, temp.Length);

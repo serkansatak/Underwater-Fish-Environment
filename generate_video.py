@@ -3,11 +3,7 @@ import cv2 as cv
 import numpy as np
 import os
 import random as rnd
-
-idx = 1
-imgFolder = "BrackishMOT_Synth/BrackishMOT_Synth-" + str(idx) + "/img1"
-gtFile = "BrackishMOT_Synth/BrackishMOT_Synth-" + str(idx) + "/gt/gt.txt"
-#outputFile = "annotatedVideos/video-" + str(idx) + ".avi"
+import sys
 
 def read_annotations(img_no):
     #print(img_no)
@@ -36,6 +32,11 @@ def draw_rectangles(img, annotations):
     return img
 
 if __name__=="__main__":
+    idx = sys.argv[1]
+    imgFolder = "BrackishMOT_Synth/BrackishMOT_Synth-" + str(idx) + "/img1"
+    gtFile = "BrackishMOT_Synth/BrackishMOT_Synth-" + str(idx) + "/gt/gt.txt"
+    #outputFile = "annotatedVideos/video-" + str(idx) + ".avi"
+
     images = os.listdir(imgFolder)
     images_ordered = []
     img_array = []
