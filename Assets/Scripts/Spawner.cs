@@ -471,6 +471,7 @@ public class Spawner : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Application.targetFrameRate = 15;
         //Set up constant variables
         main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
         background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
