@@ -799,7 +799,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b01b80a84826ede09a85e12e88b657b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numFishMinMax: {x: 5, y: 10}
+  numFishMinMax: {x: 5, y: 50}
   fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
   swimAnimationMinMax: {x: 1, y: 2}
   mat: {fileID: 2100000, guid: 57cb8209be86bd249aab3f39532926c5, type: 2}

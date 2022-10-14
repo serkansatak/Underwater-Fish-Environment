@@ -19,6 +19,8 @@ public class Spawner : MonoBehaviour
     //[SerializeField] Vector2 radiusMinMax;
     [SerializeField] Vector2 swimAnimationMinMax;
 
+    int[] control_vector = new int[]{0, 1, 1};
+
     Camera main_cam;
     Camera background_cam;
     Color fogColor;
@@ -34,6 +36,13 @@ public class Spawner : MonoBehaviour
     int sequence_image;
     int sequence_length = 100;
 
+    int img_height = 544;
+    int img_width = 960;
+    RenderTexture screenRenderTexture;
+    Texture2D screenshotTex;
+
+    Mesh bakedMesh;
+
     public class DynamicGameObject
     {
         public GameObject go;
@@ -43,13 +52,13 @@ public class Spawner : MonoBehaviour
         public float speed;
         //public bool distractor;
     }
-    List<DynamicGameObject> dgo_list;
+    List<DynamicGameObject> dgo_list = new List<DynamicGameObject>();
 
     //controlDistractors distractor_control;
     //GameObject distractor_obj;
     //controlDistractors distractor_control;
     int number_of_distractors;
-    List<Spawner.DynamicGameObject> distractors_list; 
+    List<DynamicGameObject> distractors_list = new List<DynamicGameObject>(); 
     Vector3 current_direction;
     [SerializeField] Material mat;
 
@@ -71,11 +80,11 @@ public class Spawner : MonoBehaviour
     {
         getNewCurrentDirection();
         number_of_distractors = (int) Random.Range(500, 1000);
-        distractors_list = new List<Spawner.DynamicGameObject>(); 
+        //distractors_list = new List<DynamicGameObject>(); 
 
         for (int i = 0; i < number_of_distractors; i++)
         {
-            Spawner.DynamicGameObject dgo = new Spawner.DynamicGameObject();
+            DynamicGameObject dgo = new DynamicGameObject();
             dgo.speed = Random.Range(1, 10);
             GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphere.transform.position = GetRandomPosition();
@@ -97,13 +106,13 @@ public class Spawner : MonoBehaviour
         }
     }
 
-    public void updateDistractors()
+    void updateDistractors()
     {
         //int distractors_to_create = 0;
 
         for (int i = distractors_list.Count - 1; i >= 0; i--)
         {
-            Spawner.DynamicGameObject distractor = distractors_list[i];
+            DynamicGameObject distractor = distractors_list[i];
             distractor.go.transform.position += current_direction*Time.deltaTime*distractor.speed;
             if (distractor.go.transform.position.x > 45f || distractor.go.transform.position.x < -55f || 
                 distractor.go.transform.position.y > 25f || distractor.go.transform.position.y < -25f ||
@@ -116,21 +125,7 @@ public class Spawner : MonoBehaviour
 
             }
         }
-
-        /*for (int i = 0; i < distractors_to_create; i++)
-        {
-            generateDistractor(true);
-        }*/
     }
-
-    /*public void CleanUp()
-    {
-        foreach (Spawner.DynamicGameObject dgo in distractors_list)
-        {
-            Destroy(dgo.go);
-        }
-        distractors_list.Clear();
-    }*/
 
     void generateFogColor()
     {
@@ -148,7 +143,7 @@ public class Spawner : MonoBehaviour
         return world_pos;
     }
 
-    void SaveImage()
+    /*void SaveImage()
     {   
         string filename;
         if (sequence_image > 99999){
@@ -165,7 +160,44 @@ public class Spawner : MonoBehaviour
             filename = imageFolder + "/00000" + sequence_image.ToString() + ".png";
         }
         ScreenCapture.CaptureScreenshot(filename);
+    }*/
+
+    void SaveCameraView()
+    {
+        //Camera cam1 = background_cam;
+        //Camera cam2 = main_cam;
+        string filename;
+        if (sequence_image > 99999){
+            filename = imageFolder + "/" + sequence_image.ToString() + ".png";
+        } else if (sequence_image > 9999) {
+            filename = imageFolder + "/0" + sequence_image.ToString() + ".png";
+        } else if (sequence_image > 999) {
+            filename = imageFolder + "/00" + sequence_image.ToString() + ".png";
+        } else if (sequence_image > 99) {
+            filename = imageFolder + "/000" + sequence_image.ToString() + ".png";
+        } else if (sequence_image > 9) {
+            filename = imageFolder + "/0000" + sequence_image.ToString() + ".png";
+        } else {
+            filename = imageFolder + "/00000" + sequence_image.ToString() + ".png";
+        }
+        //string filename = dataDir + "/" + Time.frameCount.ToString() + ".png";
         
+        screenRenderTexture = RenderTexture.GetTemporary(img_width, img_height, 24);
+        main_cam.targetTexture = screenRenderTexture;
+        main_cam.Render();
+        RenderTexture.active = screenRenderTexture;
+
+        //Texture2D screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
+        screenshotTex.ReadPixels(new Rect(0, 0, img_width, img_height), 0, 0);
+
+        RenderTexture.active = null; // JC: added to avoid errors
+        RenderTexture.ReleaseTemporary(screenRenderTexture);
+        screenRenderTexture = null;
+        Destroy(screenRenderTexture);
+
+        byte[] byteArray = screenshotTex.EncodeToPNG();
+        System.IO.File.WriteAllBytes(filename, byteArray);
+        //Destroy(screenshotTex);
     }
 
     void randomizeFog()
@@ -187,7 +219,7 @@ public class Spawner : MonoBehaviour
     //TODO - Add pose within Unity Sphere for some images in order to simulate flocks
     void InstantiateFish()
     {
-        dgo_list = new List<DynamicGameObject>();
+        //dgo_list = new List<DynamicGameObject>();
         int numberOfFish = (int)Random.Range(numFishMinMax.x, numFishMinMax.y);
         for (int i = 0; i < numberOfFish; i++)
         {   
@@ -230,10 +262,13 @@ public class Spawner : MonoBehaviour
             Destroy(dgo.go);
         }
 
-        foreach (Spawner.DynamicGameObject dgo in distractors_list)
+        foreach (DynamicGameObject dgo in distractors_list)
         {
             Destroy(dgo.go);
         }
+
+        dgo_list.Clear();
+        distractors_list.Clear();
     }
 
     bool isWithinTheView(GameObject go)
@@ -323,7 +358,7 @@ public class Spawner : MonoBehaviour
     Vector3[] GetMeshVertices(GameObject go)
     {
         SkinnedMeshRenderer skinMeshRend = go.GetComponentInChildren<SkinnedMeshRenderer>();
-        Mesh bakedMesh = new Mesh();
+        //Mesh bakedMesh = new Mesh();
         skinMeshRend.BakeMesh(bakedMesh, true);
         Vector3[] verts_local = bakedMesh.vertices;
         Transform rendererOwner = skinMeshRend.transform;
@@ -393,8 +428,6 @@ public class Spawner : MonoBehaviour
             dgo.activity = 0;
             dgo.speed = Random.Range(1f, 2f);
         }
-
-        //updateDistractors();
     }
 
     void Turn(DynamicGameObject dgo)
@@ -462,6 +495,9 @@ public class Spawner : MonoBehaviour
 
         videoFiles = System.IO.Directory.GetFiles(videoDir,"*.avi");
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
+
+        bakedMesh = new Mesh();
+        screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
         //vp.Prepare();
         //Screen.SetResolution(960, 544, true);
         //distractor_control= transform.GetComponent<controlDistractors>();
@@ -475,10 +511,11 @@ public class Spawner : MonoBehaviour
         //Set up constant variables
         main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
         background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
+        background_cam.enabled = false;
 
         //Set up a first scene
         
-        randomizeVideo();
+        //randomizeVideo();
         generateFogColor();
         randomizeBackgroundColor();
         randomizeFog(); 
@@ -494,7 +531,7 @@ public class Spawner : MonoBehaviour
             CleanUp();
             //distractor_control.CleanUp();
 
-            randomizeVideo();
+            //randomizeVideo();
             generateFogColor();
             randomizeBackgroundColor();
             randomizeFog(); 
@@ -503,7 +540,7 @@ public class Spawner : MonoBehaviour
             addNewSequence();
         } 
 
-        if(vp.isPlaying)
+        if(vp.isPlaying || control_vector[0] == 0)
         {
             sequence_image += 1;
             foreach (DynamicGameObject dgo in dgo_list)
@@ -520,13 +557,14 @@ public class Spawner : MonoBehaviour
                     Turn(dgo);
                 }
             }
+            updateDistractors();
         }
     }
 
 
     void LateUpdate()
     {
-        if(vp.isPlaying)
+        if(vp.isPlaying || control_vector[0] == 0)
         {
             foreach (DynamicGameObject dgo in dgo_list)
             {
@@ -534,7 +572,8 @@ public class Spawner : MonoBehaviour
                 SaveAnnotation(bounds, dgo.id);
                 //Debug.Log("Bounds" + bounds);
             }
-            SaveImage();
+            //SaveImage();
+            SaveCameraView();
         }
     }
 }

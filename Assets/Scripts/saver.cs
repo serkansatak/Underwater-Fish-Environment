@@ -1,3 +1,4 @@
+//https://answers.unity.com/questions/1180994/combining-render-textures.html 
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,7 +11,11 @@ public class saver : MonoBehaviour
     Camera main_cam;
     Camera background_cam;
     VideoPlayer vp;
+    int img_height = 544;
+    int img_width = 960;
     string dataDir = "data";
+    string videoDir = "Assets/videos";
+    string[] videoFiles;
     
     Vector3 GetRandomPositionInCamera(Camera cam)
     {
@@ -99,7 +104,44 @@ public class saver : MonoBehaviour
         ScreenCapture.CaptureScreenshot(filename);
     }
 
+     void SaveCameraView()
+    {
+        //Camera cam1 = background_cam;
+        //Camera cam2 = main_cam;
+        string filename = dataDir + "/" + Time.frameCount.ToString() + ".png";
+        
+        RenderTexture screenRenderTexture = RenderTexture.GetTemporary(img_width, img_height, 24);
+        main_cam.targetTexture = screenRenderTexture;
+        //background_cam.targetTexture = screenRenderTexture;
+        //background_cam.Render();
+        main_cam.Render();
+        RenderTexture.active = screenRenderTexture;
 
+        Texture2D screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
+        //screenshotTex.Resize(Screen.width, Screen.height);
+        screenshotTex.ReadPixels(new Rect(0, 0, img_width, img_height), 0, 0);
+
+        //background_cam.targetTexture = null;
+        //main_cam.targetTexture = null;
+        RenderTexture.active = null; // JC: added to avoid errors
+        RenderTexture.ReleaseTemporary(screenRenderTexture);
+        screenRenderTexture = null;
+        Destroy(screenRenderTexture);
+
+        byte[] byteArray = screenshotTex.EncodeToPNG();
+        System.IO.File.WriteAllBytes(filename, byteArray);
+        Destroy(screenshotTex);
+    }
+
+    void randomizeVideo()
+    {
+        //vp.Stop();
+        string random_file = videoFiles[Random.Range(0, videoFiles.Length)];
+        //Debug.Log(files[Random.Range(0,files.Length)]);
+        vp.url = random_file;
+        //vp.url = "Assets/videos/converted/video_1_conv.ogv";
+        vp.Prepare();
+    }
 
 
     // Start is called before the first frame update
@@ -107,9 +149,13 @@ public class saver : MonoBehaviour
     {
         main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
         background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
+        background_cam.enabled = false;
+
         Fish = spawn_fish();
+
+        videoFiles = System.IO.Directory.GetFiles(videoDir,"*.avi");
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
-        vp.Prepare();
+        randomizeVideo();
 
         if (System.IO.Directory.Exists(dataDir))
         {
@@ -120,7 +166,9 @@ public class saver : MonoBehaviour
         }
     }
 
-    void Start(){}
+    void Start(){
+        
+    }
 
     // Update is called once per frame
     void Update()
@@ -128,7 +176,8 @@ public class saver : MonoBehaviour
         //GetBackgroundTexture();
         //GetFishTexture();
         if(vp.isPlaying){
-            SaveImage();
+            //SaveImage();
+            SaveCameraView();
         }
         
     }
