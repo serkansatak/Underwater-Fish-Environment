@@ -11,6 +11,7 @@ public class mover : MonoBehaviour
     float speed;
     float action;
     //float deltaTime;
+    float time_passed;
 
     public class DynamicGameObject
     {
@@ -25,7 +26,7 @@ public class mover : MonoBehaviour
         public Vector3 ang_speed;
         //public bool distractor;
     }
-    
+
     List<DynamicGameObject> go_list;
 
 
@@ -69,7 +70,7 @@ public class mover : MonoBehaviour
             dgo.activity = 1;
             float ang_speed = Random.Range(-180f, 180f);
             //float lin_speed = Mathf.Abs(ang_speed/10f);
-            float lin_speed = Random.Range(1f, 5f);
+            float lin_speed = Random.Range(2f, 5f);
             dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", lin_speed);
             dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
             dgo.ang_speed = new Vector3(0, ang_speed, 0);
@@ -78,7 +79,7 @@ public class mover : MonoBehaviour
         if(dgo.previous_activity == 1)
         {
             dgo.activity = 0;
-            float lin_speed = Random.Range(1f, 5f);
+            float lin_speed = Random.Range(2f, 5f);
             dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", lin_speed);
             dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
         }
@@ -99,6 +100,7 @@ public class mover : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Random.InitState(7);
         main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
         //speed = Random.Range(0.5f, 1.8f);
         //GameObject fish_1 = spawn_fish();
@@ -111,7 +113,7 @@ public class mover : MonoBehaviour
             GameObject go = spawn_fish();
             dgo.go = go;
             dgo.activity = 0;
-            float lin_speed = Random.Range(1f, 5f);
+            float lin_speed = Random.Range(2f, 5f);
             dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", lin_speed);
             dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
             //dgo.speed = speed;
@@ -124,14 +126,19 @@ public class mover : MonoBehaviour
     // Update is called once per frame
     void Update()
     {   
+        time_passed += Time.deltaTime;
+        Debug.Log("Time pass" + time_passed.ToString());
+
         //deltaTime = Time.fixedDeltaTime;
-        Debug.Log("Turning, Time Delta " + Time.deltaTime.ToString());
+        //Debug.Log("Turning, Time Delta " + Time.deltaTime.ToString());
         
         foreach (DynamicGameObject dgo in go_list)
         {
-            if (Time.frameCount%30 == 0)
-            {
-                if (Random.value > 0.5f) updateActivity(dgo);
+            //if (Time.frameCount%30 == 0)
+            if (time_passed > 1)
+            { 
+                if (dgo.activity == 1) updateActivity(dgo);
+                if (dgo.activity == 0 && Random.value > 0.75f) updateActivity(dgo);
             }
 
             if (dgo.activity == 0){
@@ -141,9 +148,7 @@ public class mover : MonoBehaviour
             }
         }
 
-
-        
-
+        if (time_passed > 1) time_passed = 0;
         /*Quaternion rot = Fish.transform.rotation;
         Vector3 test = new Vector3(1f, 0f, 0f);
         //turn(Fish);
@@ -151,4 +156,5 @@ public class mover : MonoBehaviour
         Fish.transform.position += rot*test*Time.deltaTime*speed;*/
             
     }
+
 }
