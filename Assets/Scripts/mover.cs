@@ -10,15 +10,22 @@ public class mover : MonoBehaviour
     Vector3[] verts;
     float speed;
     float action;
+    //float deltaTime;
 
     public class DynamicGameObject
     {
         public GameObject go;
-        //0 for going straight, 1 for turning
-        public int activity;
-        public float speed; 
+        public int id;
+        public int previous_activity; //used to prevent fish from turning twice in a row 
+        public int activity; //0 for going straight, 1 for turning
+        //public float lin_speed;
+        //public float ang_speed;
+        //public float speed;
+        public Vector3 lin_speed;
+        public Vector3 ang_speed;
+        //public bool distractor;
     }
-
+    
     List<DynamicGameObject> go_list;
 
 
@@ -54,53 +61,39 @@ public class mover : MonoBehaviour
         return currFish;
     }
 
-    Vector3 moving(GameObject go)
-    {
-        Vector3 vec = Vector3.forward;
-        if (Random.value > 0.5)
-        {
-            Debug.Log("Moving");
-            Quaternion rot = Quaternion.Euler(
-                Random.Range(-90f, 90f),
-                Random.Range(-90f, 90f),
-                Random.Range(-90f, 90f));
-            vec = rot * Vector3.forward;
-        } else {
-            Debug.Log("NotMoving");
-        }
 
-        return vec;
-    }
-
-    void turn(DynamicGameObject dgo)
+    void updateActivity(DynamicGameObject dgo)
     {
-        Debug.Log("Turning, Time Delta " + Time.deltaTime.ToString());
-        dgo.go.transform.Rotate(0, Time.deltaTime*dgo.speed, 0 );
-    }
-
-    void go_straight(DynamicGameObject dgo)
-    {
-        dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", dgo.speed);
-        Quaternion rot = dgo.go.transform.rotation;
-        Vector3 test = new Vector3(1f, 0f, 0f);
-        //speed = Random.Range(0.5f, 1.5f);
-        dgo.go.transform.position += rot*test*Time.deltaTime*dgo.speed;
-    }
-
-    void assign_activity(DynamicGameObject dgo)
-    {
-        if(Random.value > 0.75 || Random.value < 0.25)
+        if(dgo.previous_activity == 0)
         {
             dgo.activity = 1;
-            //Rot speed
-            dgo.speed = Random.Range(10f, 100f);
-        } else {
+            float ang_speed = Random.Range(-180f, 180f);
+            //float lin_speed = Mathf.Abs(ang_speed/10f);
+            float lin_speed = Random.Range(1f, 5f);
+            dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", lin_speed);
+            dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
+            dgo.ang_speed = new Vector3(0, ang_speed, 0);
+        }
+
+        if(dgo.previous_activity == 1)
+        {
             dgo.activity = 0;
-            //Linear speed
-            dgo.speed = Random.Range(0.5f, 2f);
-        }   
+            float lin_speed = Random.Range(1f, 5f);
+            dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", lin_speed);
+            dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
+        }
     }
 
+    void Turn(DynamicGameObject dgo)
+    {
+        dgo.go.transform.Rotate(dgo.ang_speed * Time.deltaTime);
+        dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * Time.fixedDeltaTime;
+    }
+
+    void goStraight(DynamicGameObject dgo)
+    {
+        dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * Time.fixedDeltaTime;
+    }
 
 
     // Start is called before the first frame update
@@ -111,14 +104,17 @@ public class mover : MonoBehaviour
         //GameObject fish_1 = spawn_fish();
         go_list = new List<DynamicGameObject>();
         
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 10; i++)
         {
             DynamicGameObject dgo = new DynamicGameObject();
-            speed = Random.Range(0.5f, 2.0f);
+            //speed = Random.Range(1.0f, 2.0f);
             GameObject go = spawn_fish();
             dgo.go = go;
             dgo.activity = 0;
-            dgo.speed = speed;
+            float lin_speed = Random.Range(1f, 5f);
+            dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", lin_speed);
+            dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
+            //dgo.speed = speed;
             go_list.Add(dgo);   
         }
         Debug.Log("List length " + go_list.Count.ToString());
@@ -128,23 +124,25 @@ public class mover : MonoBehaviour
     // Update is called once per frame
     void Update()
     {   
+        //deltaTime = Time.fixedDeltaTime;
+        Debug.Log("Turning, Time Delta " + Time.deltaTime.ToString());
         
-        if (Time.frameCount%60 == 0)
+        foreach (DynamicGameObject dgo in go_list)
         {
-           foreach (var dgo in go_list)
-           {
-            assign_activity(dgo);
-           }
-        }
+            if (Time.frameCount%30 == 0)
+            {
+                if (Random.value > 0.5f) updateActivity(dgo);
+            }
 
-        foreach (var dgo in go_list)
-        {
             if (dgo.activity == 0){
-                go_straight(dgo);
+                goStraight(dgo);
             } else {
-                turn(dgo);
+                Turn(dgo);
             }
         }
+
+
+        
 
         /*Quaternion rot = Fish.transform.rotation;
         Vector3 test = new Vector3(1f, 0f, 0f);

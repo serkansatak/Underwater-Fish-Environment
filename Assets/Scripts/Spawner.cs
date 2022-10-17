@@ -9,8 +9,6 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Video;
-using UnityEngine.Animations.Rigging;
-
 
 public class Spawner : MonoBehaviour
 {
@@ -19,7 +17,19 @@ public class Spawner : MonoBehaviour
     //[SerializeField] Vector2 radiusMinMax;
     [SerializeField] Vector2 swimAnimationMinMax;
 
-    int[] control_vector = new int[]{0, 1, 1};
+    //int[] control_vector = new int[]{0, 1, 1};
+    struct conditionsControl{
+        public int background;
+        public int fog;
+        public int distractors;
+
+        public conditionsControl(int c1, int c2, int c3){
+            this.background = c1;
+            this.fog = c2;
+            this.distractors = c3;
+        }
+    }
+    conditionsControl control = new conditionsControl(0, 0, 0);
 
     Camera main_cam;
     Camera background_cam;
@@ -34,6 +44,7 @@ public class Spawner : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
+    int sequence_goal = 2;
     int sequence_length = 100;
 
     int img_height = 544;
@@ -143,7 +154,7 @@ public class Spawner : MonoBehaviour
         return world_pos;
     }
 
-    /*void SaveImage()
+    void SaveImage()
     {   
         string filename;
         if (sequence_image > 99999){
@@ -160,7 +171,7 @@ public class Spawner : MonoBehaviour
             filename = imageFolder + "/00000" + sequence_image.ToString() + ".png";
         }
         ScreenCapture.CaptureScreenshot(filename);
-    }*/
+    }
 
     void SaveCameraView()
     {
@@ -447,28 +458,39 @@ public class Spawner : MonoBehaviour
     void addNewSequence()
     {   
         sequence_number += 1;
-        sequence_image = 0;
-        string new_sequence = datasetDir + "/" + datasetDir + "-" + sequence_number.ToString();
+        if (sequence_number != sequence_goal + 1){
+            sequence_image = 0;
+            string new_sequence = datasetDir + "/" + datasetDir + "-" + sequence_number.ToString();
 
-        if (System.IO.Directory.Exists(new_sequence))
-        {
-            System.IO.Directory.Delete(new_sequence, true);
-            System.IO.Directory.CreateDirectory(new_sequence);
-        } else {
-            System.IO.Directory.CreateDirectory(new_sequence);
+            if (System.IO.Directory.Exists(new_sequence))
+            {
+                System.IO.Directory.Delete(new_sequence, true);
+                System.IO.Directory.CreateDirectory(new_sequence);
+            } else {
+                System.IO.Directory.CreateDirectory(new_sequence);
+            }
+
+            imageFolder = new_sequence + "/img1";
+            gtFolder = new_sequence + "/gt";
+            System.IO.Directory.CreateDirectory(imageFolder);
+            System.IO.Directory.CreateDirectory(gtFolder);
+            gtFile = gtFolder + "/gt.txt";
+            string iniFile = new_sequence + "/seqinfo.ini";
+
+            string seqInfo = "[Sequence]\n" + 
+                "name = " + new_sequence.ToString() + "\n" +
+                "imdir = img1\n" +
+                "framerate = 15\n" +
+                "seqlength = " + sequence_length.ToString() + "\n" +
+                "imwidth = " + img_width.ToString() + "\n" +
+                "imheight = " + img_height.ToString() + "\n" +
+                "imext = .png";
+            
+            using (StreamWriter writer = new StreamWriter(iniFile, true))
+            {
+                writer.Write(seqInfo);
+            }
         }
-
-        imageFolder = new_sequence + "/img1";
-        gtFolder = new_sequence + "/gt";
-        System.IO.Directory.CreateDirectory(imageFolder);
-        System.IO.Directory.CreateDirectory(gtFolder);
-        gtFile = gtFolder + "/gt.txt";
-
-        //sequence_length = (int) Random.Range(90f, 180f);
-        Debug.Log("Sequence Number " + sequence_number.ToString() + " Sequence Length " + sequence_length.ToString());
-        // int[] temp = new int[]{90, 120, 150, 180};
-        //int randomIndex = Random.Range(0, temp.Length);
-        //sequence_length = temp[randomIndex];
     }
 
     void randomizeVideo()
@@ -484,6 +506,28 @@ public class Spawner : MonoBehaviour
     void Awake()
     {
         //Setup folder structure
+        //Create string describing generation conditions and append it to the base daatset folder name        
+        string controlString = "";
+        if (control.background == 1){
+            controlString += "_Background";
+        } else {
+            controlString += "_NoBackground";
+        }
+
+        if (control.fog == 1){
+            controlString += "_Fog";
+        } else {
+            controlString += "_NoFog";
+        }
+
+        if (control.distractors == 1){
+            controlString += "_Distractors";
+        } else {
+            controlString += "_NoDistractors";
+        }
+        datasetDir += controlString;
+
+
         //Create a parent folder, remove the old one if it exists
         if (System.IO.Directory.Exists(datasetDir))
         {
@@ -493,54 +537,50 @@ public class Spawner : MonoBehaviour
              System.IO.Directory.CreateDirectory(datasetDir);
         }
 
+        //Set up constant variables
+        main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
+        background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
+        if (control.background == 0) {
+            background_cam.enabled = false;
+        }
+
         videoFiles = System.IO.Directory.GetFiles(videoDir,"*.avi");
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
 
         bakedMesh = new Mesh();
         screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
-        //vp.Prepare();
-        //Screen.SetResolution(960, 544, true);
-        //distractor_control= transform.GetComponent<controlDistractors>();
-        //distractor_control = distractor_obj.AddComponent<controlDistractors>();
     }
     
     // Start is called before the first frame update
     void Start()
     {
-        Application.targetFrameRate = 15;
-        //Set up constant variables
-        main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
-        background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
-        background_cam.enabled = false;
-
         //Set up a first scene
-        
-        //randomizeVideo();
+        if (control.background == 1) randomizeVideo();
         generateFogColor();
         randomizeBackgroundColor();
-        randomizeFog(); 
-        generateDistractors();
+        if (control.fog == 1) randomizeFog();         
+        if (control.distractors == 1) generateDistractors();
         InstantiateFish();
         addNewSequence();
     }
 
+
     void Update()
-    {
+    {   
         if (sequence_image == sequence_length)
         {      
             CleanUp();
-            //distractor_control.CleanUp();
 
-            //randomizeVideo();
+            if (control.background == 1) randomizeVideo();
             generateFogColor();
             randomizeBackgroundColor();
-            randomizeFog(); 
-            generateDistractors();
+            if (control.fog == 1) randomizeFog();         
+            if (control.distractors == 1) generateDistractors();
             InstantiateFish();
             addNewSequence();
         } 
 
-        if(vp.isPlaying || control_vector[0] == 0)
+        if(vp.isPlaying || control.background == 0)
         {
             sequence_image += 1;
             foreach (DynamicGameObject dgo in dgo_list)
@@ -557,23 +597,41 @@ public class Spawner : MonoBehaviour
                     Turn(dgo);
                 }
             }
-            updateDistractors();
+            if (control.distractors == 1) updateDistractors();
         }
     }
 
 
     void LateUpdate()
     {
-        if(vp.isPlaying || control_vector[0] == 0)
-        {
-            foreach (DynamicGameObject dgo in dgo_list)
+
+        if (sequence_number == sequence_goal+1)
+        {  
+            Debug.Log("All sequences were generated");
+            UnityEditor.EditorApplication.isPlaying = false;
+
+        } else {
+
+            if(vp.isPlaying || control.background == 0)
             {
-                Vector4 bounds = GetBoundingBoxInCamera(dgo.go, main_cam);
-                SaveAnnotation(bounds, dgo.id);
-                //Debug.Log("Bounds" + bounds);
+                foreach (DynamicGameObject dgo in dgo_list)
+                {
+                    Vector4 bounds = GetBoundingBoxInCamera(dgo.go, main_cam);
+                    SaveAnnotation(bounds, dgo.id);
+                    //Debug.Log("Bounds" + bounds);
+                }
+
+                if (control.background == 1){
+                    SaveImage();
+                } else {
+                    SaveCameraView();
+                }
+
+                Debug.Log("Sequence Number " + sequence_number.ToString() 
+                + " Sequence Image " + sequence_image.ToString() 
+                + "/" + sequence_length.ToString());
             }
-            //SaveImage();
-            SaveCameraView();
         }
+
     }
 }
