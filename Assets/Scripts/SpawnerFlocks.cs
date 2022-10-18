@@ -53,12 +53,13 @@ public class SpawnerFlocks : MonoBehaviour
     int numberOfFishInTheFlock;
     int radiusMin = 3;
     int radiusMax = 9;
+    int fishID = 0;
 
     float maxLinSpeed = 5f;
     float minLinSpeed = 1f;
     float maxAngSpeed = 180f;
     float minAngSpeed = -180f;
-    float animationSpeed = 0.75f;
+    float animationSpeed = 1f;
 
 
     string rootDir;
@@ -265,7 +266,7 @@ public class SpawnerFlocks : MonoBehaviour
     }
 
     //TODO - Add pose within Unity Sphere for some images in order to simulate flocks
-    void InstantiateFish(int fishIteration)
+    void InstantiateFish()
     { 
         //float radius = Random.Range(radiusMinMax.x, radiusMinMax.y);
         DynamicGameObject dgo = new DynamicGameObject();
@@ -282,10 +283,8 @@ public class SpawnerFlocks : MonoBehaviour
         dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", animationSpeed);
         dgo.linSpeed = new Vector3(linSpeed, 0f, 0f);
 
-        dgo.go.name = "fish_" + fishIteration.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
-        dgo.go.GetComponentInChildren<fishName>().fishN = "fish_" + fishIteration.ToString();
-
-        
+        dgo.go.name = "fish_" + fishID.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
+        dgo.go.GetComponentInChildren<fishName>().fishN = "fish_" + fishID.ToString();
 
         //Visual randomisation
         SkinnedMeshRenderer renderer = dgo.go.GetComponentInChildren<SkinnedMeshRenderer>();
@@ -300,7 +299,8 @@ public class SpawnerFlocks : MonoBehaviour
         renderer.material.SetFloat("_Metalic/_Glossiness", Random.Range(0.1f, 0.5f));
         
         //dgo.go = currFish;
-        dgo.id = flock_list.Last().id;
+        dgo.id = fishID;
+        fishID += 1;
         dgo.activity = 0;
         //dgo.speed = speed;
         fish_list.Add(dgo);
@@ -315,7 +315,8 @@ public class SpawnerFlocks : MonoBehaviour
             dgo.go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             //sphere.transform.position = verts[i];
             //sphere.transform.localScale = Vector3.one * 0.1f;
-            dgo.go.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+            //dgo.go.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+            dgo.go.GetComponent<Renderer>().enabled = false;
             dgo.go.transform.parent = transform;
             dgo.go.transform.position = GetRandomPositionInCamera(mainCam);
             dgo.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-45f, 45f));
@@ -329,7 +330,7 @@ public class SpawnerFlocks : MonoBehaviour
             numberOfFishInTheFlock = (int)Random.Range(numberOfFishInTheFlockMin, numberOfFishInTheFlockMax);
             for (int j = 0; j < numberOfFishInTheFlock; j++)
             {
-                InstantiateFish(j);
+                InstantiateFish();
             }
         }
     }

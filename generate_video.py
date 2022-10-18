@@ -33,8 +33,9 @@ def draw_rectangles(img, annotations):
 
 if __name__=="__main__":
     idx = sys.argv[1]
-    imgFolder = "BrackishMOT_Synth/BrackishMOT_Synth-" + str(idx) + "/img1"
-    gtFile = "BrackishMOT_Synth/BrackishMOT_Synth-" + str(idx) + "/gt/gt.txt"
+    rootDir = "BrackishMOT_Synth_NoBackground_NoFog_NoDistractors/BrackishMOT_Synth"
+    imgFolder = rootDir + "/BrackishMOT_Synth-" + str(idx) + "/img1"
+    gtFile = rootDir + "/BrackishMOT_Synth-" + str(idx) + "/gt/gt.txt"
     #outputFile = "annotatedVideos/video-" + str(idx) + ".avi"
 
     images = os.listdir(imgFolder)
