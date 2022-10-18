@@ -7,15 +7,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Video;
 
-public class Spawner : MonoBehaviour
+public class SpawnerFlocks : MonoBehaviour
 {
-    [SerializeField] Vector2 numFishMinMax;
+    //[SerializeField] Vector2 numFishMinMax;
     [SerializeField] GameObject fishPrefab;
     //[SerializeField] Vector2 radiusMinMax;
-    [SerializeField] Vector2 swimAnimationMinMax;
+    //[SerializeField] Vector2 swimAnimationMinMax;
 
     //int[] control_vector = new int[]{0, 1, 1};
     struct conditionsControl{
@@ -31,35 +32,48 @@ public class Spawner : MonoBehaviour
     }
     conditionsControl control = new conditionsControl(0, 0, 0);
 
-    Camera main_cam;
-    Camera background_cam;
+    Camera mainCam;
+    Camera backgroundCam;
+    
     Color fogColor;
+    
     VideoPlayer vp;
+    string videoDir = "Assets/videos";
+    string[] videoFiles;
+
     int FPS = 15;
     float deltaTime;
     float timePassed;
+    
+    int numberOfFlocksMin = 1;
+    int numberOfFlocksMax = 10;
+    int numberOfFlocks;
+    int numberOfFishInTheFlockMin = 5;
+    int numberOfFishInTheFlockMax = 10;
+    int numberOfFishInTheFlock;
+    int radiusMin = 3;
+    int radiusMax = 9;
 
-    float max_lin_speed = 5f;
-    float min_lin_speed = 1f;
-    float max_ang_speed = 180f;
-    float min_ang_speed = -180f;
-    float animation_speed = 0.75f;
+    float maxLinSpeed = 5f;
+    float minLinSpeed = 1f;
+    float maxAngSpeed = 180f;
+    float minAngSpeed = -180f;
+    float animationSpeed = 0.75f;
 
-    string videoDir = "Assets/videos";
-    string[] videoFiles;
+
     string rootDir;
     string datasetDir = "BrackishMOT_Synth";
     string imageFolder;
     string gtFolder;
     string gtFile;
-    int sequence_number = 0;
-    int sequence_image;
-    int sequence_goal = 2;
-    //int sequence_length = 100;
-    int sequence_length = 50;
+    int sequenceNumber = 0;
+    int sequenceImage;
+    int sequenceGoal = 2;
+    //int sequenceLength = 100;
+    int sequenceLength = 50;
 
-    int img_height = 544;
-    int img_width = 960;
+    int imgHeight = 544;
+    int imgWidth = 960;
     RenderTexture screenRenderTexture;
     Texture2D screenshotTex;
 
@@ -69,19 +83,22 @@ public class Spawner : MonoBehaviour
     {
         public GameObject go;
         public int id; //used for fish only
-        public int previous_activity; //fish, used to prevent fish from turning twice in a row 
+        public int previousActivity; //fish, used to prevent fish from turning twice in a row 
         public int activity; //fish, 0 for going straight, 1 for turning
-        public Vector3 lin_speed; //used for fish
-        public Vector3 ang_speed; //used for fish
+        public Vector3 linSpeed; //used for fish
+        public Vector3 angSpeed; //used for fish
         public float speed; //used for distractors
         //public bool distractor;
     }
-    List<DynamicGameObject> dgo_list = new List<DynamicGameObject>();
 
-    int number_of_distractors;
+    List<DynamicGameObject> fish_list = new List<DynamicGameObject>(); //RENAME TO FISH LIST
+    List<DynamicGameObject> flock_list = new List<DynamicGameObject>();
     List<DynamicGameObject> distractors_list = new List<DynamicGameObject>(); 
-    Vector3 current_direction;
+
+    int numberOfDistractors;
+    Vector3 currentDirection;
     [SerializeField] Material mat;
+
 
     Vector3 GetRandomPosition()
     {
@@ -91,19 +108,35 @@ public class Spawner : MonoBehaviour
         return new Vector3(x, y, z);
     }
 
+    Vector3 GetRandomPositionInCamera(Camera cam)
+    {
+        Vector3 worldPos = cam.ViewportToWorldPoint( new Vector3(
+            UnityEngine.Random.Range(0.1f, 0.8f), 
+            UnityEngine.Random.Range(0.1f, 0.8f), 
+            UnityEngine.Random.Range(20f, 30f)));
+        return worldPos;
+    }
+
+    Vector3 GetRandomPositionInUnitSphere(Camera cam, Vector3 offset)
+    {
+        float radius = Random.Range(radiusMin, radiusMax);
+        Vector3 spherePos = Random.insideUnitSphere * radius + offset;
+        return spherePos;
+    }
+
     void getNewCurrentDirection()
     {
-        current_direction = new Vector3 (Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
-        current_direction.Normalize();
+        currentDirection = new Vector3 (Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
+        currentDirection.Normalize();
     }
 
     public void generateDistractors()
     {
         getNewCurrentDirection();
-        number_of_distractors = (int) Random.Range(500, 1000);
+        numberOfDistractors = (int) Random.Range(500, 1000);
         //distractors_list = new List<DynamicGameObject>(); 
 
-        for (int i = 0; i < number_of_distractors; i++)
+        for (int i = 0; i < numberOfDistractors; i++)
         {
             DynamicGameObject dgo = new DynamicGameObject();
             dgo.speed = Random.Range(1, 10);
@@ -134,7 +167,7 @@ public class Spawner : MonoBehaviour
         for (int i = distractors_list.Count - 1; i >= 0; i--)
         {
             DynamicGameObject distractor = distractors_list[i];
-            distractor.go.transform.position += current_direction*deltaTime*distractor.speed;
+            distractor.go.transform.position += currentDirection*deltaTime*distractor.speed;
             if (distractor.go.transform.position.x > 45f || distractor.go.transform.position.x < -55f || 
                 distractor.go.transform.position.y > 25f || distractor.go.transform.position.y < -25f ||
                 distractor.go.transform.position.z > 25f || distractor.go.transform.position.z < -10f )
@@ -157,62 +190,53 @@ public class Spawner : MonoBehaviour
             Random.Range(137f, 157f)/255,
             Random.Range(151f, 171f)/255);
     }
-    
-    public Vector3 GetRandomPositionInCamera(Camera cam)
-    {
-        Vector3 world_pos = cam.ViewportToWorldPoint( new Vector3(
-            UnityEngine.Random.Range(0.1f, 0.8f), 
-            UnityEngine.Random.Range(0.1f, 0.8f), 
-            UnityEngine.Random.Range(20f, 30f)));
-        return world_pos;
-    }
 
-    void SaveImage()
+    void SaveGameView()
     {   
         string filename;
-        if (sequence_image > 99999){
-            filename = imageFolder + "/" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 9999) {
-            filename = imageFolder + "/0" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 999) {
-            filename = imageFolder + "/00" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 99) {
-            filename = imageFolder + "/000" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 9) {
-            filename = imageFolder + "/0000" + sequence_image.ToString() + ".png";
+        if (sequenceImage > 99999){
+            filename = imageFolder + "/" + sequenceImage.ToString() + ".png";
+        } else if (sequenceImage > 9999) {
+            filename = imageFolder + "/0" + sequenceImage.ToString() + ".png";
+        } else if (sequenceImage > 999) {
+            filename = imageFolder + "/00" + sequenceImage.ToString() + ".png";
+        } else if (sequenceImage > 99) {
+            filename = imageFolder + "/000" + sequenceImage.ToString() + ".png";
+        } else if (sequenceImage > 9) {
+            filename = imageFolder + "/0000" + sequenceImage.ToString() + ".png";
         } else {
-            filename = imageFolder + "/00000" + sequence_image.ToString() + ".png";
+            filename = imageFolder + "/00000" + sequenceImage.ToString() + ".png";
         }
         ScreenCapture.CaptureScreenshot(filename);
     }
 
     void SaveCameraView()
     {
-        //Camera cam1 = background_cam;
-        //Camera cam2 = main_cam;
+        //Camera cam1 = backgroundCam;
+        //Camera cam2 = mainCam;
         string filename;
-        if (sequence_image > 99999){
-            filename = imageFolder + "/" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 9999) {
-            filename = imageFolder + "/0" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 999) {
-            filename = imageFolder + "/00" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 99) {
-            filename = imageFolder + "/000" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 9) {
-            filename = imageFolder + "/0000" + sequence_image.ToString() + ".png";
+        if (sequenceImage > 99999){
+            filename = imageFolder + "/" + sequenceImage.ToString() + ".png";
+        } else if (sequenceImage > 9999) {
+            filename = imageFolder + "/0" + sequenceImage.ToString() + ".png";
+        } else if (sequenceImage > 999) {
+            filename = imageFolder + "/00" + sequenceImage.ToString() + ".png";
+        } else if (sequenceImage > 99) {
+            filename = imageFolder + "/000" + sequenceImage.ToString() + ".png";
+        } else if (sequenceImage > 9) {
+            filename = imageFolder + "/0000" + sequenceImage.ToString() + ".png";
         } else {
-            filename = imageFolder + "/00000" + sequence_image.ToString() + ".png";
+            filename = imageFolder + "/00000" + sequenceImage.ToString() + ".png";
         }
         //string filename = dataDir + "/" + Time.frameCount.ToString() + ".png";
         
-        screenRenderTexture = RenderTexture.GetTemporary(img_width, img_height, 24);
-        main_cam.targetTexture = screenRenderTexture;
-        main_cam.Render();
+        screenRenderTexture = RenderTexture.GetTemporary(imgWidth, imgHeight, 24);
+        mainCam.targetTexture = screenRenderTexture;
+        mainCam.Render();
         RenderTexture.active = screenRenderTexture;
 
-        //Texture2D screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
-        screenshotTex.ReadPixels(new Rect(0, 0, img_width, img_height), 0, 0);
+        //Texture2D screenshotTex = new Texture2D(imgWidth, imgHeight, TextureFormat.RGB24, false);
+        screenshotTex.ReadPixels(new Rect(0, 0, imgWidth, imgHeight), 0, 0);
 
         RenderTexture.active = null; // JC: added to avoid errors
         RenderTexture.ReleaseTemporary(screenRenderTexture);
@@ -241,55 +265,83 @@ public class Spawner : MonoBehaviour
     }
 
     //TODO - Add pose within Unity Sphere for some images in order to simulate flocks
-    void InstantiateFish()
+    void InstantiateFish(int fishIteration)
+    { 
+        //float radius = Random.Range(radiusMinMax.x, radiusMinMax.y);
+        DynamicGameObject dgo = new DynamicGameObject();
+        Vector3 rnd_pos = GetRandomPositionInUnitSphere(mainCam, flock_list.Last().go.transform.position);
+        dgo.go = Instantiate(fishPrefab, rnd_pos, Quaternion.identity);
+        //dgo.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-45f, 45f));
+        dgo.go.transform.parent = flock_list.Last().go.transform; // Parent the fish to the moverObj
+        dgo.go.transform.localScale = Vector3.one * Random.Range(0.4f, 0.8f);
+        
+        /*float speed = Random.Range(swimAnimationMinMax.x, swimAnimationMinMax.y);
+        currFish.GetComponent<Animator>().SetFloat("SpeedFish", speed);*/
+        float linSpeed = Random.Range(minLinSpeed, maxLinSpeed);
+        //dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", );
+        dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", animationSpeed);
+        dgo.linSpeed = new Vector3(linSpeed, 0f, 0f);
+
+        dgo.go.name = "fish_" + fishIteration.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
+        dgo.go.GetComponentInChildren<fishName>().fishN = "fish_" + fishIteration.ToString();
+
+        
+
+        //Visual randomisation
+        SkinnedMeshRenderer renderer = dgo.go.GetComponentInChildren<SkinnedMeshRenderer>();
+        float rnd_color_seed = Random.Range(75.0f, 225.0f);
+        Color rnd_albedo = new Color(
+            rnd_color_seed/255, 
+            rnd_color_seed/255, 
+            rnd_color_seed/255,
+            Random.Range(0.0f, 1.0f));
+        renderer.material.color = rnd_albedo;
+        renderer.material.SetFloat("_Metalic", Random.Range(0.1f, 0.5f));
+        renderer.material.SetFloat("_Metalic/_Glossiness", Random.Range(0.1f, 0.5f));
+        
+        //dgo.go = currFish;
+        dgo.id = flock_list.Last().id;
+        dgo.activity = 0;
+        //dgo.speed = speed;
+        fish_list.Add(dgo);
+    }
+
+    void InstantiateFlocks()
     {
-        //dgo_list = new List<DynamicGameObject>();
-        int numberOfFish = (int)Random.Range(numFishMinMax.x, numFishMinMax.y);
-        for (int i = 0; i < numberOfFish; i++)
-        {   
-            //float radius = Random.Range(radiusMinMax.x, radiusMinMax.y);
+        numberOfFlocks = (int) Random.Range(numberOfFlocksMin, numberOfFlocksMax);
+        for (int i = 0; i < numberOfFlocks; i++)
+        {
             DynamicGameObject dgo = new DynamicGameObject();
-            Vector3 rnd_pos = GetRandomPositionInCamera(main_cam);
-            dgo.go = Instantiate(fishPrefab, rnd_pos, Quaternion.identity);
+            dgo.go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            //sphere.transform.position = verts[i];
+            //sphere.transform.localScale = Vector3.one * 0.1f;
+            dgo.go.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
+            dgo.go.transform.parent = transform;
+            dgo.go.transform.position = GetRandomPositionInCamera(mainCam);
             dgo.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-45f, 45f));
-            dgo.go.transform.parent = transform; // Parent the fish to the moverObj
-            dgo.go.transform.localScale = Vector3.one * Random.Range(0.4f, 0.8f);
-            
-            /*float speed = Random.Range(swimAnimationMinMax.x, swimAnimationMinMax.y);
-            currFish.GetComponent<Animator>().SetFloat("SpeedFish", speed);*/
-            float lin_speed = Random.Range(min_lin_speed, max_lin_speed);
-            //dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", );
-            dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", animation_speed);
-            dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
 
-            dgo.go.name = "fish_" + i.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
-            dgo.go.GetComponentInChildren<fishName>().fishN = "fish_" + i.ToString();
-
-            
-
-            //Visual randomisation
-            SkinnedMeshRenderer renderer = dgo.go.GetComponentInChildren<SkinnedMeshRenderer>();
-            float rnd_color_seed = Random.Range(75.0f, 225.0f);
-            Color rnd_albedo = new Color(
-                rnd_color_seed/255, 
-                rnd_color_seed/255, 
-                rnd_color_seed/255,
-                Random.Range(0.0f, 1.0f));
-            renderer.material.color = rnd_albedo;
-            renderer.material.SetFloat("_Metalic", Random.Range(0.1f, 0.5f));
-            renderer.material.SetFloat("_Metalic/_Glossiness", Random.Range(0.1f, 0.5f));
-            
-            //dgo.go = currFish;
             dgo.id = i;
             dgo.activity = 0;
-            //dgo.speed = speed;
-            dgo_list.Add(dgo);
+            float linSpeed = Random.Range(minLinSpeed, maxLinSpeed);
+            dgo.linSpeed = new Vector3(linSpeed, 0f, 0f);
+            flock_list.Add(dgo);
+
+            numberOfFishInTheFlock = (int)Random.Range(numberOfFishInTheFlockMin, numberOfFishInTheFlockMax);
+            for (int j = 0; j < numberOfFishInTheFlock; j++)
+            {
+                InstantiateFish(j);
+            }
         }
     }
 
     void CleanUp()
     {
-        foreach (DynamicGameObject dgo in dgo_list)
+        foreach (DynamicGameObject dgo in fish_list)
+        {
+            Destroy(dgo.go);
+        }
+
+        foreach (DynamicGameObject dgo in flock_list)
         {
             Destroy(dgo.go);
         }
@@ -299,7 +351,8 @@ public class Spawner : MonoBehaviour
             Destroy(dgo.go);
         }
 
-        dgo_list.Clear();
+        fish_list.Clear();
+        flock_list.Clear();
         distractors_list.Clear();
     }
 
@@ -308,20 +361,9 @@ public class Spawner : MonoBehaviour
         //Animator ani = go.GetComponent<Animator>();
         Vector3 headPosition = go.transform.Find("Armature/Bone").transform.position;
         Vector3 tailPosition = go.transform.Find("Armature/Bone/Bone.001/Bone.002/Bone.003/Bone.004").transform.position;
-        Vector3 viewPosHead = main_cam.WorldToViewportPoint(headPosition);
-        Vector3 viewPosTail = main_cam.WorldToViewportPoint(tailPosition);
-        /*
-        GameObject sphere;
-        sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        sphere.transform.position = head_position;
-        sphere.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
-        sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        sphere.transform.position = tail_position;
-        sphere.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
-        */
+        Vector3 viewPosHead = mainCam.WorldToViewportPoint(headPosition);
+        Vector3 viewPosTail = mainCam.WorldToViewportPoint(tailPosition);
 
-        /*if (viewPosHead.x <= 0 ||  viewPosHead.x >= 1 ||  
-            viewPosTail.x <= 0 ||  viewPosTail.x >= 1 ){*/
         if (viewPosHead.x <= 0 && viewPosTail.x <= 0 ||  
             viewPosHead.x >= 1 && viewPosTail.x >= 1 ){
             return false;
@@ -417,7 +459,7 @@ public class Spawner : MonoBehaviour
                 bbox.y = 0;
             }
 
-            string frame = sequence_image.ToString();
+            string frame = sequenceImage.ToString();
             string id = go_id.ToString();
             string left = bbox.x.ToString();
             string top = bbox.y.ToString();
@@ -449,72 +491,45 @@ public class Spawner : MonoBehaviour
         //Debug.Log(annotation);
     }
 
-    /*void updateActivity(DynamicGameObject dgo)
-    {
-        dgo.previous_activity = dgo.activity;
-        if(Random.value > 0.5 && dgo.previous_activity != 1)
-        {
-            dgo.activity = 1;
-            dgo.speed = Random.Range(10f, 100f);
-        } else {
-            dgo.activity = 0;
-            dgo.speed = Random.Range(1f, 2f);
-        }
-    }
-
-    void Turn(DynamicGameObject dgo)
-    {
-        //Debug.Log("Turning, Time Delta " + Time.deltaTime.ToString());
-        dgo.go.transform.Rotate(0, Time.deltaTime*dgo.speed, 0 );
-    }
-
-    void goStraight(DynamicGameObject dgo)
-    {
-        dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", dgo.speed);
-        Quaternion rot = dgo.go.transform.rotation;
-        Vector3 temp = new Vector3(1f, 0f, 0f);
-        dgo.go.transform.position += rot*temp*Time.deltaTime*dgo.speed;
-    }*/
-
     void updateActivity(DynamicGameObject dgo)
     {
-        if(dgo.previous_activity == 0)
+        if(dgo.previousActivity == 0)
         {
             dgo.activity = 1;
-            float ang_speed = Random.Range(min_ang_speed, max_ang_speed);
-            //float lin_speed = Mathf.Abs(ang_speed/10f);
-            float lin_speed = Random.Range(min_lin_speed, max_lin_speed);
-            //dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", lin_speed);
-            dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
-            dgo.ang_speed = new Vector3(0, ang_speed, 0);
+            float angSpeed = Random.Range(minAngSpeed, maxAngSpeed);
+            //float linSpeed = Mathf.Abs(angSpeed/10f);
+            float linSpeed = Random.Range(minLinSpeed, maxLinSpeed);
+            //dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", linSpeed);
+            dgo.linSpeed = new Vector3(linSpeed, 0f, 0f);
+            dgo.angSpeed = new Vector3(0, angSpeed, 0);
         }
 
-        if(dgo.previous_activity == 1)
+        if(dgo.previousActivity == 1)
         {
             dgo.activity = 0;
-            float lin_speed = Random.Range(min_lin_speed, max_lin_speed);
-            //dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", lin_speed);
-            dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
+            float linSpeed = Random.Range(minLinSpeed, maxLinSpeed);
+            //dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", linSpeed);
+            dgo.linSpeed = new Vector3(linSpeed, 0f, 0f);
         }
     }
 
     void Turn(DynamicGameObject dgo)
     {
-        dgo.go.transform.Rotate(dgo.ang_speed * deltaTime);
-        dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * deltaTime;
+        dgo.go.transform.Rotate(dgo.angSpeed * deltaTime);
+        dgo.go.transform.position += dgo.go.transform.rotation * dgo.linSpeed * deltaTime;
     }
 
     void goStraight(DynamicGameObject dgo)
     {
-        dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * deltaTime;
+        dgo.go.transform.position += dgo.go.transform.rotation * dgo.linSpeed * deltaTime;
     }
 
     void addNewSequence()
     {   
-        sequence_number += 1;
-        if (sequence_number != sequence_goal + 1){
-            sequence_image = 0;
-            string new_sequence = rootDir + "/" + datasetDir + "-" + sequence_number.ToString();
+        sequenceNumber += 1;
+        if (sequenceNumber != sequenceGoal + 1){
+            sequenceImage = 0;
+            string new_sequence = rootDir + "/" + datasetDir + "-" + sequenceNumber.ToString();
 
             if (System.IO.Directory.Exists(new_sequence))
             {
@@ -535,9 +550,9 @@ public class Spawner : MonoBehaviour
                 "name = " + new_sequence.ToString() + "\n" +
                 "imdir = img1\n" +
                 "framerate = " + FPS.ToString() + "\n" +
-                "seqlength = " + sequence_length.ToString() + "\n" +
-                "imwidth = " + img_width.ToString() + "\n" +
-                "imheight = " + img_height.ToString() + "\n" +
+                "seqlength = " + sequenceLength.ToString() + "\n" +
+                "imwidth = " + imgWidth.ToString() + "\n" +
+                "imheight = " + imgHeight.ToString() + "\n" +
                 "imext = .png";
             
             using (StreamWriter writer = new StreamWriter(iniFile, true))
@@ -593,17 +608,17 @@ public class Spawner : MonoBehaviour
         }
 
         //Set up constant variables
-        main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
-        background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
+        mainCam = GameObject.Find("Fish Camera").GetComponent<Camera>();
+        backgroundCam = GameObject.Find("Background Camera").GetComponent<Camera>();
         if (control.background == 0) {
-            background_cam.enabled = false;
+            backgroundCam.enabled = false;
         }
 
         videoFiles = System.IO.Directory.GetFiles(videoDir,"*.avi");
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
 
         bakedMesh = new Mesh();
-        screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
+        screenshotTex = new Texture2D(imgWidth, imgHeight, TextureFormat.RGB24, false);
 
         //Set the seed for random
         Random.InitState(7);
@@ -621,7 +636,8 @@ public class Spawner : MonoBehaviour
         randomizeBackgroundColor();
         if (control.fog == 1) randomizeFog();         
         if (control.distractors == 1) generateDistractors();
-        InstantiateFish();
+        //InstantiateFish();
+        InstantiateFlocks();
         addNewSequence();
     }
 
@@ -629,7 +645,7 @@ public class Spawner : MonoBehaviour
     void Update()
     {   
         //deltaTime = Time.deltaTime;
-        if (sequence_image == sequence_length)
+        if (sequenceImage == sequenceLength)
         {      
             CleanUp();
 
@@ -638,7 +654,8 @@ public class Spawner : MonoBehaviour
             randomizeBackgroundColor();
             if (control.fog == 1) randomizeFog();         
             if (control.distractors == 1) generateDistractors();
-            InstantiateFish();
+            InstantiateFlocks();
+            //InstantiateFish();
             addNewSequence();
         } 
 
@@ -646,8 +663,8 @@ public class Spawner : MonoBehaviour
         {
             timePassed += deltaTime;
 
-            sequence_image += 1;
-            foreach (DynamicGameObject dgo in dgo_list)
+            sequenceImage += 1;
+            foreach (DynamicGameObject dgo in flock_list)
             {
                 /*if (Time.frameCount%20 == 0)
                 {
@@ -664,7 +681,7 @@ public class Spawner : MonoBehaviour
                 if (timePassed > 1)
                 { 
                     if (dgo.activity == 1) updateActivity(dgo);
-                    if (dgo.activity == 0 && Random.value > 0.75f) updateActivity(dgo);
+                    if (dgo.activity == 0 && Random.value > 0.5f) updateActivity(dgo);
                 }
 
                 if (dgo.activity == 0){
@@ -683,7 +700,7 @@ public class Spawner : MonoBehaviour
     void LateUpdate()
     {
 
-        if (sequence_number == sequence_goal+1)
+        if (sequenceNumber == sequenceGoal+1)
         {  
             Debug.Log("All sequences were generated");
             UnityEditor.EditorApplication.isPlaying = false;
@@ -692,22 +709,22 @@ public class Spawner : MonoBehaviour
 
             if(vp.isPlaying || control.background == 0)
             {
-                foreach (DynamicGameObject dgo in dgo_list)
+                foreach (DynamicGameObject dgo in fish_list)
                 {
-                    Vector4 bounds = GetBoundingBoxInCamera(dgo.go, main_cam);
+                    Vector4 bounds = GetBoundingBoxInCamera(dgo.go, mainCam);
                     SaveAnnotation(bounds, dgo.id);
                     //Debug.Log("Bounds" + bounds);
                 }
 
                 if (control.background == 1){
-                    SaveImage();
+                    SaveGameView();
                 } else {
                     SaveCameraView();
                 }
 
-                Debug.Log("Sequence Number " + sequence_number.ToString() 
-                + " Sequence Image " + sequence_image.ToString() 
-                + "/" + sequence_length.ToString());
+                Debug.Log("Sequence Number " + sequenceNumber.ToString() 
+                + " Sequence Image " + sequenceImage.ToString() 
+                + "/" + sequenceLength.ToString());
             }
         }
 

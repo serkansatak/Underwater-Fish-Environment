@@ -12,6 +12,8 @@ public class mover : MonoBehaviour
     float action;
     //float deltaTime;
     float time_passed;
+    int FPS = 15;
+    float deltaTime;
 
     public class DynamicGameObject
     {
@@ -87,19 +89,28 @@ public class mover : MonoBehaviour
 
     void Turn(DynamicGameObject dgo)
     {
-        dgo.go.transform.Rotate(dgo.ang_speed * Time.deltaTime);
-        dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * Time.fixedDeltaTime;
+        //dgo.go.transform.Rotate(dgo.ang_speed * Time.deltaTime);
+        //dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * Time.fixedDeltaTime;
+        //dgo.go.transform.Rotate(dgo.ang_speed * deltaTime);
+        dgo.go.transform.Find("Armature").transform.Rotate(new Vector3(0, 0, 45) * deltaTime);
+        //dgo.go.transform.Find("Rig 1/head").transform.Rotate(dgo.ang_speed* deltaTime);
+        //dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * deltaTime;
+        dgo.go.transform.Find("Armature").transform.position += dgo.go.transform.rotation * dgo.lin_speed * deltaTime;
     }
 
     void goStraight(DynamicGameObject dgo)
     {
-        dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * Time.fixedDeltaTime;
+        //dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * Time.fixedDeltaTime;
+        //dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * deltaTime;
+        dgo.go.transform.Find("Armature").transform.position += dgo.go.transform.rotation * dgo.lin_speed * deltaTime;
     }
 
 
     // Start is called before the first frame update
     void Start()
     {
+        deltaTime = (float) 1/FPS;
+        Debug.Log("deltaTime " + deltaTime.ToString());
         Random.InitState(7);
         main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
         //speed = Random.Range(0.5f, 1.8f);
@@ -126,8 +137,9 @@ public class mover : MonoBehaviour
     // Update is called once per frame
     void Update()
     {   
-        time_passed += Time.deltaTime;
-        Debug.Log("Time pass" + time_passed.ToString());
+        //time_passed += Time.deltaTime;
+        time_passed += deltaTime;
+        Debug.Log("Time passed " + time_passed.ToString());
 
         //deltaTime = Time.fixedDeltaTime;
         //Debug.Log("Turning, Time Delta " + Time.deltaTime.ToString());
