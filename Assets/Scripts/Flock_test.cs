@@ -17,10 +17,10 @@ public class Flock_test : MonoBehaviour
     float deltaTime;
     float timePassed;
 
-    float maxLinSpeed = 5f;
+    float maxLinSpeed = 2f;
     float minLinSpeed = 1f;
-    float maxAngSpeed = 360f;
-    float minAngSpeed =  0f;
+    float maxAngSpeed = -180f;
+    float minAngSpeed =  180f;
     float animationSpeed = 1f;
 
     int numberOfFlocksMin = 1;
@@ -59,8 +59,17 @@ public class Flock_test : MonoBehaviour
     Vector3 GetRandomPositionInUnitSphere(Camera cam, Vector3 offset)
     {
         float radius = Random.Range(radiusMin, radiusMax);
+        Vector3 rnd_skew = new Vector3(
+            Random.Range(0.5f, radius),
+            Random.Range(0.5f, radius), 
+            Random.Range(0.5f, radius));
+
         Vector3 spherePos = Random.insideUnitSphere * radius + offset;
-        return spherePos;
+        Vector3 skewedSpherePos = new Vector3(
+            spherePos.x*rnd_skew.x,
+            spherePos.y*rnd_skew.y,
+            spherePos.z*rnd_skew.z);
+        return skewedSpherePos;
     }
 
 
@@ -115,7 +124,7 @@ public class Flock_test : MonoBehaviour
             //sphere.transform.position = verts[i];
             //sphere.transform.localScale = Vector3.one * 0.1f;
             //dgo.go.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
-            dgo.go.GetComponent<Renderer>().enabled = false;
+            dgo.go.GetComponent<Renderer>().enabled = true;
             dgo.go.transform.parent = transform;
             dgo.go.transform.position = GetRandomPositionInCamera(mainCam);
             //dgo.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-45f, 45f));
