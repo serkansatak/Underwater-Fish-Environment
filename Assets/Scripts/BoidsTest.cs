@@ -13,11 +13,12 @@ public class BoidsTest: MonoBehaviour
     float deltaTime;
     float timePassed;
 
-    int numberOfFishMin = 5;
-    int numberOfFishMax = 5;
+    int numberOfFishMin = 100;
+    int numberOfFishMax = 500;
     //int numberOfFishInTheFlock;
 
     float animationSpeed = 1f;
+    Vector3 leaderSpeed = new Vector3(1, 0, 0);
 
     public class Boid
     {
@@ -30,13 +31,20 @@ public class BoidsTest: MonoBehaviour
         //public Vector3 v = Vector3.zero; //combined steer
         public List<int> neighbours = new List<int>(); //list of list indexes of local neighbours based on the visibility range
         public Vector3 c; //centre of the local flock
+        public bool leader = false;
+        public Vector3 x; //eccentricity
+        public int framesAsLeader = 0;
     }
     List<Boid> boidsList = new List<Boid>();
 
-    float visibilityRange = 5f;
-    float S = 0; 
-    float K = .01f;
-    float M = 0f;
+    float visibilityRange = 2f;
+    float S = 1f;//separation weight
+    float K = 1f;//cohesion weight
+    float M = 1f;//allignment weight
+    float X = 1f;//eccentricity weight
+    float forceThreshold = 0.01f;
+
+    List<GameObject> flockCentres = new List<GameObject>();
 
     /*float maxLinSpeed = 2f;
     float minLinSpeed = 1f;
@@ -77,7 +85,11 @@ public class BoidsTest: MonoBehaviour
 
     Vector3 GetRandomPositionInCamera(Camera cam)
     {
-        Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(5f, 34f)));
+        //Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(5f, 34f)));
+        Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(
+            UnityEngine.Random.Range(0.1f, 0.4f), 
+            UnityEngine.Random.Range(0.1f, 0.9f), 
+            UnityEngine.Random.Range(5f, 34f)));
         return world_pos;
     }
 
@@ -216,45 +228,74 @@ public class BoidsTest: MonoBehaviour
         //Debug.Log("number of neighbours " + b.neighbours.Count().ToString());
         foreach (var idx in b.neighbours)
         {  
-            Vector3 temp = b.go.transform.position - boidsList[idx].go.transform.position;
-            separation += temp;
+            /*Vector3 temp = b.go.transform.position - boidsList[idx].go.transform.position;
+            separation += temp;*/
+            /*Vector3 temp = Vector3.zero;
+            temp.x += boidsList[idx].go.transform.position.x - b.go.transform.position.x;
+            temp.y += boidsList[idx].go.transform.position.y - b.go.transform.position.y;
+            temp.z += boidsList[idx].go.transform.position.z - b.go.transform.position.z;*/
+            separation.x += boidsList[idx].go.transform.position.x - b.go.transform.position.x;
+            separation.y += boidsList[idx].go.transform.position.y - b.go.transform.position.y;
+            separation.z += boidsList[idx].go.transform.position.z - b.go.transform.position.z;
         }
         //Debug.Log("b.s" + b.s.ToString());
-        b.s = separation;
+        b.s = -1.0f * separation;
+        Vector3.Normalize(b.s);
+        //if (b.s.magnitude < forceThreshold) b.s = Vector3.zero;
     }
 
     void calculateCohesion(Boid b)
     {
+        /*if (flockCentres.Count() != 0)
+        {
+            flockCentres.ForEach(go => Destroy(go));
+        }*/
+
         Vector3 cohesion = Vector3.zero;
         Vector3 centre = Vector3.zero;
         int numberOfNeighbours = b.neighbours.Count();
-        Debug.Log("calculateCohesion number of neighbours " + numberOfNeighbours.ToString());
+        //Debug.Log("calculateCohesion number of neighbours " + numberOfNeighbours.ToString());
 
         if (numberOfNeighbours != 0)
         {
             foreach (var idx in b.neighbours)
             {  
-                Vector3 temp = boidsList[idx].go.transform.position;
+                /*Vector3 temp = boidsList[idx].go.transform.position;
                 Debug.Log("temp " + temp.ToString());
                 temp = temp/numberOfNeighbours;
                 Debug.Log("temp " + temp.ToString());
                 centre += temp;
-                Debug.Log("centre " + centre.ToString());
+                Debug.Log("centre " + centre.ToString());*/
+                centre.x += boidsList[idx].go.transform.position.x;
+                centre.y += boidsList[idx].go.transform.position.y;
+                centre.z += boidsList[idx].go.transform.position.z;
             }
-            printDivider();
+            //printDivider();
+            centre.x /= numberOfNeighbours;
+            centre.y /= numberOfNeighbours;
+            centre.z /= numberOfNeighbours;
 
             b.c = centre;
             b.k = b.c - b.go.transform.position;
+            /*Vector3.Normalize(b.k);
+            if (b.k.magnitude < forceThreshold) {
+                Debug.Log("b.k " + b.k.magnitude.ToString());
+                b.k = Vector3.zero;
+                Debug.Log("b.k " + b.k.ToString());
+            }*/
+            //b.k = b.go.transform.position - b.c;
         } 
         else
         {
-            b.c = centre;
-            b.k = cohesion;
+            b.c = Vector3.zero;
+            b.k = Vector3.zero;
         }
 
-        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        /*GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        go.transform.parent = transform;
         go.transform.position = b.c;
         go.GetComponent<Renderer>().material.SetColor("_Color", Color.blue);
+        flockCentres.Add(go);*/
 
 
     }
@@ -268,20 +309,79 @@ public class BoidsTest: MonoBehaviour
         {
             foreach (var idx in b.neighbours)
             {  
-                allignment = allignment + boidsList[idx].v;
+                allignment.x += boidsList[idx].v.x;
+                allignment.y += boidsList[idx].v.y;
+                allignment.z += boidsList[idx].v.z;
+                //allignment = allignment + boidsList[idx].v;
             }
-            b.m = allignment/numberOfNeighbours;
+            allignment.x /= numberOfNeighbours;
+            allignment.y /= numberOfNeighbours;
+            allignment.z /= numberOfNeighbours;
+
+            b.m = allignment;
+            Vector3.Normalize(b.m);
         } 
         else
         {
-            b.m = allignment;
+            b.m = Vector3.zero;
+        }
+    }
+
+    void calculateLeader(Boid b)
+    {
+        Vector3 eccentricity = Vector3.zero;
+        if (!b.leader){
+            eccentricity.x = b.c.x/visibilityRange;
+            eccentricity.y = b.c.y/visibilityRange;
+            eccentricity.z = b.c.z/visibilityRange;
+            Vector3.Normalize(eccentricity);
+
+            if (eccentricity.magnitude > 0.5f && Random.value > 0.5f)
+            {
+                b.leader = true;
+                b.x = b.go.transform.rotation * leaderSpeed;
+                Vector3.Normalize(b.x);
+            } 
+            else
+            {
+                b.leader = false;
+                b.x = Vector3.zero;
+            }
+        } 
+        else 
+        {
+            b.x = b.go.transform.rotation * leaderSpeed;
+            Vector3.Normalize(b.x);
+
+            b.framesAsLeader++;
+            if (b.framesAsLeader>30)
+            {
+                b.leader = false;
+            }
         }
     }
 
     void calculateSteering(Boid b)
     {
-        b.v = b.v + S*b.s + K*b.k + M*b.m;
+        Vector3 steer = Vector3.zero;
+        b.s = S*b.s;
+        b.k = K*b.k;
+        b.m = M*b.m;
+        b.x = X*b.x;
+        /*if (b.k == Vector3.zero) 
+        {
+            b.v = Vector3.zero;
+        } 
+        else 
+        {
+            b.v = b.v + S*b.s + K*b.k + M*b.m;
+        }*/
+        steer = b.s + b.k + b.m + b.x;
+        b.v += steer;
+        Vector3.Normalize(b.v);
+        //b.v = b.v + S*b.s + K*b.k + M*b.m;
     }
+
 
 
     /*void calculateSeparationCohesionAllignmentVectors()
@@ -334,7 +434,8 @@ public class BoidsTest: MonoBehaviour
 
     void move(Boid b)
     {
-        b.go.transform.position += b.go.transform.rotation*b.v*Time.deltaTime;
+        Vector3 displacement = b.go.transform.rotation*b.v*Time.deltaTime;
+        b.go.transform.position += displacement;
     }
 
 
@@ -351,6 +452,7 @@ public class BoidsTest: MonoBehaviour
             calculateAllignment(boid);
             calculateCohesion(boid);
             calculateSeparation(boid);
+            calculateLeader(boid);
             calculateSteering(boid);
         }
         //calculateAllignment(boidsList[0]);
@@ -369,6 +471,10 @@ public class BoidsTest: MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        foreach (var boid in boidsList)
+        {
+            move(boid);
+        }
         /*getNeighbours();
         //getLocalFlockCenter();
         //calculateSeparationCohesionAllignmentVectors();
@@ -392,6 +498,23 @@ public class BoidsTest: MonoBehaviour
 
     void LateUpdate()
     {
+        boidsList.ForEach(boid => boid.neighbours.Clear());
+        getNeighbours();
+        foreach (var boid in boidsList)
+        {
+            if (boid.neighbours.Count() == 0)
+            {
+                Debug.Log("No more neightbours in sight");
+            }
+            calculateAllignment(boid);
+            calculateCohesion(boid);
+            calculateSeparation(boid);
+            calculateLeader(boid);
+            calculateSteering(boid);
+            //Debug.Log("Sterring vector " + boid.v.ToString());
+        }
+
+        printDivider();
         //getNeighbours();
         //getLocalFlockCenter();
         //calculateSeparationCohesionAllignmentVectors();
