@@ -1158,8 +1158,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1517805483}
-  - component: {fileID: 1517805482}
-  - component: {fileID: 1517805484}
   - component: {fileID: 1517805485}
   m_Layer: 0
   m_Name: boids
@@ -1168,19 +1166,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1517805482
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1517805481}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9ce346b78802ef18a9f1398081f3b876, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
 --- !u!4 &1517805483
 Transform:
   m_ObjectHideFlags: 0
@@ -1196,19 +1181,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 19
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1517805484
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1517805481}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 623ad5fad81c7e21dab357bdaf7a4010, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fishPrefab: {fileID: 0}
 --- !u!114 &1517805485
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1221,7 +1193,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6f1bd2e807e0411c805b548e4ae87d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fishPrefab: {fileID: 0}
+  fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
 --- !u!1 &1562544730
 GameObject:
   m_ObjectHideFlags: 0
