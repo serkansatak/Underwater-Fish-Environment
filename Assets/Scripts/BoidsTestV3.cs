@@ -1,4 +1,5 @@
 //https://www.dawn-studio.de/tutorials/boids/
+    //https://github.com/RealDawnStudio/unity-tutorial-boids
 
 using System.Collections;
 using System.Collections.Generic;
@@ -89,6 +90,7 @@ public class BoidsTestV3: MonoBehaviour
             Vector3 steering = Vector3.zero;
 
             boidController b_i = boids[i];
+
             Vector3 separationDirection = Vector3.zero;
             int separationCount = 0;
             Vector3 alignmentDirection = Vector3.zero;
@@ -104,15 +106,15 @@ public class BoidsTestV3: MonoBehaviour
 
             Vector3 randomDirection = Vector3.zero;
             float randomWeight = 0;
-            if (!b_i.randomBehaviour || Random.value > 0.25)
+            if (!b_i.randomBehaviour || Random.value > .5f)
             {
                 b_i.randomBehaviour = true;
                 b_i.elapsedFrames = 0;
                 b_i.goalFrames = (int) Random.Range(180f, 360f);
-                b_i.randomDirection = new Vector3(Random.Range(-1, 1), Random.Range(-1, 1), Random.Range(-1, 1));
+                b_i.randomDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
                 b_i.randomDirection = b_i.randomDirection.normalized;
-                b_i.randomWeight = Random.Range(0.5f, 10f);
-                //b_i.goalVector = new Vector3(Random.Range(1, 10f))
+                b_i.randomWeight = Random.Range(5f, 10f);
+                //b_i.goalVector = new Vector3(Random.Range(1, 10f));
             }
 
             if (b_i.randomBehaviour)
@@ -162,23 +164,24 @@ public class BoidsTestV3: MonoBehaviour
                         }
                     }
                 }
-            }
+            
 
-            if (separationCount > 0) separationDirection /= separationCount;
-            separationDirection = -separationDirection;
-            separationDirection = separationDirection.normalized;
+                if (separationCount > 0) separationDirection /= separationCount;
+                separationDirection = -separationDirection;
+                separationDirection = separationDirection.normalized;
 
-            if (alignmentCount > 0) alignmentDirection /= alignmentCount;
-            alignmentDirection = alignmentDirection.normalized;
+                if (alignmentCount > 0) alignmentDirection /= alignmentCount;
+                alignmentDirection = alignmentDirection.normalized;
 
-            if (cohesionCount > 0) cohesionDirection /= cohesionCount;
-            cohesionDirection -= b_i.go.transform.position;
-            cohesionDirection = cohesionDirection.normalized;
+                if (cohesionCount > 0) cohesionDirection /= cohesionCount;
+                cohesionDirection -= b_i.go.transform.position;
+                cohesionDirection = cohesionDirection.normalized;
 
-            if (leaderBoid != null) 
-            {
-                leaderDirection = leaderBoid.go.transform.position - b_i.go.transform.position;
-                leaderDirection = leaderDirection.normalized;
+                if (leaderBoid != null && !b_i.randomBehaviour) 
+                {
+                    leaderDirection = leaderBoid.go.transform.position - b_i.go.transform.position;
+                    leaderDirection = leaderDirection.normalized;
+                }
             }
 
             var distanceToCamera = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
@@ -194,17 +197,17 @@ public class BoidsTestV3: MonoBehaviour
 
             if (b_i.go.transform.position.z > 20f)
             {
-                /*backgroundDirection = background.transform.position - b_i.go.transform.position;
+                backgroundDirection = background.transform.position - b_i.go.transform.position;
                 backgroundDirection = -backgroundDirection;
-                backgroundDirection = backgroundDirection.normalized;*/
-                backgroundDirection = new Vector3(0, 0, -1f);
+                backgroundDirection = backgroundDirection.normalized;
+                //backgroundDirection = new Vector3(0, 0, -1f);
             }
 
-            if ( b_i.go.transform.position.z < -5f )
+            if ( b_i.go.transform.position.z < 0f )
             {
-                /*backgroundDirection = background.transform.position - b_i.go.transform.position;
-                backgroundDirection = backgroundDirection.normalized;*/
-                backgroundDirection = new Vector3(0, 0, 1f);
+                backgroundDirection = background.transform.position - b_i.go.transform.position;
+                backgroundDirection = backgroundDirection.normalized;
+                //backgroundDirection = new Vector3(0, 0, 1f);
             }
 
         
@@ -235,7 +238,7 @@ public class BoidsTestV3: MonoBehaviour
             }
             headTransform.position += headTransform.TransformDirection(new Vector3(0, 0, boidSpeed)) * time;*/
 
-            checkForBoundaries(b_i);  
+            //checkForBoundaries(b_i);  
 
             /*if (i == boidToTrack) 
             {
@@ -252,7 +255,22 @@ public class BoidsTestV3: MonoBehaviour
             }*/
             //Debug.Log("Boid " + i.ToString());
             //Debug.Log("distance_to_camera " + distanceToCamera.ToString());
-            //printDivider();
+            //printDivider();   
+
+            if (b_i.randomBehaviour)
+            {
+                Debug.Log("Boid " + i.ToString());
+                Debug.Log("separation direction " + separationDirection.ToString());
+                Debug.Log("alignemt direction " + alignmentDirection.ToString());
+                Debug.Log("cohesion direction " + cohesionDirection.ToString());
+                Debug.Log("leader direction " + leaderDirection.ToString());
+                Debug.Log("camera direction " + cameraDirection.ToString());
+                Debug.Log("background direction " + backgroundDirection.ToString());
+                Debug.Log("random direction " + randomDirection.ToString());
+                printDivider();
+                //Debug.Break();
+            }
+            
         }
     }
 
@@ -314,7 +332,7 @@ public class BoidsTestV3: MonoBehaviour
 
     Vector3 GetRandomPositionInUnitSphere(Vector3 offset)
     {
-        float radius = Random.Range(1, boidLocalArea);
+        float radius = Random.Range(1f, boidLocalArea);
         Vector3 rndPos = Random.insideUnitSphere * radius + offset;
         return rndPos;
     }
