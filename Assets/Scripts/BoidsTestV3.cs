@@ -15,23 +15,11 @@ public class BoidsTestV3: MonoBehaviour
     int fishId = 0;
     Color fogColor;
 
-    int numberOfSwarms = 3;
+    int numberOfSwarms = 2;
     int numberOfFish = 10;
     //int numberOfFishMin = 5;
     //int numberOfFishMax = 10;
     float animationSpeed = 1f;
-
-    /*public class Boid
-    {
-        public GameObject go;
-        public int id;
-        public Vector3 k; //cohesion vector
-        public Vector3 s; //separation vector
-        public Vector3 m; //allignment (velocity matching) vector
-        public Vector3 v = Vector3.zero; //combined steer
-        public List<int> neighbours = new List<int>(); //list of list indexes of local neighbours based on the visibility range
-        public Vector3 c; //centre of the local flock
-    }*/
 
     //Default boids values
     //public int spawnBoids = 100;
@@ -49,11 +37,13 @@ public class BoidsTestV3: MonoBehaviour
     public class boidController
     {
         public GameObject go;
+
         //identification data
         public int id;
         public int swarmIndex;
-        //randomization data
-        public bool randomBehaviour;
+
+        //random movement
+        public bool randomBehaviour = false;
         public int elapsedFrames;
         public int goalFrames;
         public Vector3 randomDirection;
@@ -98,15 +88,15 @@ public class BoidsTestV3: MonoBehaviour
             Vector3 cohesionDirection = Vector3.zero;
             int cohesionCount = 0;
             Vector3 leaderDirection = Vector3.zero;
-            var leaderBoid = boids[0];
-            var leaderAngle = 180f;
+            boidController leaderBoid = boids[0];
+            float leaderAngle = 180f;
 
             Vector3 cameraDirection = Vector3.zero;
             Vector3 backgroundDirection = Vector3.zero;
 
             Vector3 randomDirection = Vector3.zero;
             float randomWeight = 0;
-            if (!b_i.randomBehaviour || Random.value > .5f)
+            if (!b_i.randomBehaviour && Random.value > .9f)
             {
                 b_i.randomBehaviour = true;
                 b_i.elapsedFrames = 0;
@@ -139,7 +129,7 @@ public class BoidsTestV3: MonoBehaviour
 
                     if (b_i == b_j) continue;
 
-                    var distance = Vector3.Distance(b_j.go.transform.position, b_i.go.transform.position);
+                    float distance = Vector3.Distance(b_j.go.transform.position, b_i.go.transform.position);
 
                     if (distance < boidNoClumpingArea)
                     {
@@ -156,7 +146,7 @@ public class BoidsTestV3: MonoBehaviour
                         cohesionCount++;
 
                         //identify leader
-                        var angle = Vector3.Angle(b_j.go.transform.position - b_i.go.transform.position, b_i.go.transform.forward);
+                        float angle = Vector3.Angle(b_j.go.transform.position - b_i.go.transform.position, b_i.go.transform.forward);
                         if (angle < leaderAngle && angle < 90f)
                         {
                             leaderBoid = b_j;
@@ -177,15 +167,15 @@ public class BoidsTestV3: MonoBehaviour
                 cohesionDirection -= b_i.go.transform.position;
                 cohesionDirection = cohesionDirection.normalized;
 
-                if (leaderBoid != null && !b_i.randomBehaviour) 
+                if (leaderBoid != null) 
                 {
                     leaderDirection = leaderBoid.go.transform.position - b_i.go.transform.position;
                     leaderDirection = leaderDirection.normalized;
                 }
             }
 
-            var distanceToCamera = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
-            var myDistanceToCamera = getDistance(mainCam.transform.position, b_i.go.transform.position);
+            float distanceToCamera = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
+            float myDistanceToCamera = getDistance(mainCam.transform.position, b_i.go.transform.position);
             float D = 10f; //distance weight, applied to both distance to the camera and distance to the background
             if (distanceToCamera < 20 )
             {
@@ -238,7 +228,7 @@ public class BoidsTestV3: MonoBehaviour
             }
             headTransform.position += headTransform.TransformDirection(new Vector3(0, 0, boidSpeed)) * time;*/
 
-            //checkForBoundaries(b_i);  
+            checkForBoundariesV2(b_i);  
 
             /*if (i == boidToTrack) 
             {
@@ -257,7 +247,7 @@ public class BoidsTestV3: MonoBehaviour
             //Debug.Log("distance_to_camera " + distanceToCamera.ToString());
             //printDivider();   
 
-            if (b_i.randomBehaviour)
+            if (!b_i.randomBehaviour)
             {
                 Debug.Log("Boid " + i.ToString());
                 Debug.Log("separation direction " + separationDirection.ToString());
@@ -274,7 +264,7 @@ public class BoidsTestV3: MonoBehaviour
         }
     }
 
-    public void checkForBoundaries(boidController b)
+    void checkForBoundaries(boidController b)
     {
         Vector3 boidPos = b.go.transform.position;
         bool destroyGo = false;
@@ -324,6 +314,64 @@ public class BoidsTestV3: MonoBehaviour
         }
 
     }
+
+    void checkForBoundariesV2(boidController b)
+    {
+        Vector3 boidPos = b.go.transform.position;
+        bool destroyGo = false;
+
+        if (boidPos.x > boidSimulationArea)
+        {
+            boidPos.x -= boidSimulationArea * 2;
+            destroyGo = true;
+        }
+        
+        if (boidPos.x < -boidSimulationArea)
+        {
+            boidPos.x += boidSimulationArea * 2;
+            destroyGo = true;
+        }
+
+        if (boidPos.y > boidSimulationArea)
+        {
+            boidPos.y -= boidSimulationArea * 2;
+            destroyGo = true;
+
+        }  
+        
+        if (boidPos.y < -boidSimulationArea)
+        {
+            boidPos.y += boidSimulationArea * 2;
+            destroyGo = true;
+        }
+
+        if (boidPos.z > boidSimulationArea)
+        {
+            boidPos.z -= boidSimulationArea * 2;
+            destroyGo = true;
+        }
+        
+        if (boidPos.z < -boidSimulationArea)
+        {
+            boidPos.z += boidSimulationArea * 2;
+            destroyGo = true;
+        }
+           
+        if (destroyGo)
+        {
+            /*Destroy(b.go);
+            boidsList.Remove(b);*/
+            /*Vector3 scale = b.go.transform.localScale;
+            b.go.transform.localScale = Vector3.zero;
+            b.go.transform.position = boidPos;
+            b.go.transform.localScale = scale;*/
+            b.go.active = false;
+            b.go.transform.position = boidPos;
+            b.go.active = true;
+        }
+
+    }
+
    
     void printDivider()
     {
@@ -371,10 +419,10 @@ public class BoidsTestV3: MonoBehaviour
                 b.go = Instantiate(fishPrefab, rnd_pos, Quaternion.identity);
                 //b.go.transform.localScale = Vector3.one * Random.Range(0.1f, 0.3f);
                 //b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-22.5f, 22.5f));
-                b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
+                b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-45f, 45f));
                 b.go.GetComponent<Animator>().SetFloat("SpeedFish", animationSpeed);
-                b.go.name = "fish_" + i.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
-                b.go.GetComponentInChildren<fishName>().fishN = "fish_" + i.ToString();
+                b.go.name = "fish_" + fishId.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
+                b.go.GetComponentInChildren<fishName>().fishN = "fish_" + fishId.ToString();
 
                 //Visual randomisation
                 SkinnedMeshRenderer renderer = b.go.GetComponentInChildren<SkinnedMeshRenderer>();
@@ -457,7 +505,6 @@ public class BoidsTestV3: MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Time.frameCount%180 == 0) Debug.Log("Speed");
         simulateMovement(boidsList, Time.deltaTime);
     }
 
