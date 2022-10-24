@@ -18,8 +18,8 @@ public class BoidsTestV3: MonoBehaviour
     int fishId = 0;
     Color fogColor;
 
-    int numberOfSwarms = 3;
-    int numberOfFish = 50;
+    int numberOfSwarms = 1;
+    int numberOfFish = 1;
     float animationSpeed = 1f;
 
     //Default boids values
@@ -209,9 +209,10 @@ public class BoidsTestV3: MonoBehaviour
                         boidSteeringSpeed * time);
             }
             headTransform.position += headTransform.TransformDirection(new Vector3(0, 0, boidSpeed)) * time;*/
-
+            
             //checkForBoundaries(b_i);  
-            checkForBoundariesV2(b_i);  
+            checkForBoundariesV2(b_i); 
+            //checkForBoundariesV2(b_i);  
 
             /*if (i == boidToTrack) 
             {
@@ -247,13 +248,6 @@ public class BoidsTestV3: MonoBehaviour
         }
     }
 
-    void checkForBoundariesV2(boidController b)
-    {
-        if (b.go.OnBecameInvisible()){
-            Destroy(b.go);
-        }
-    }
-
     void checkForBoundaries(boidController b)
     {
         Vector3 boidPos = b.go.transform.position;
@@ -275,6 +269,26 @@ public class BoidsTestV3: MonoBehaviour
 
     }
 
+    //https://docs.unity3d.com/ScriptReference/Renderer-bounds.html
+    void checkForBoundariesV2(boidController b)
+    {
+        Vector3 boidPos = b.go.transform.position;
+        Bounds boidBounds = new Bounds();
+        boidBounds.center = Vector3.zero;
+        //Vertical bounds (Y)
+        float verticalFOV = mainCam.fieldOfView;
+        float verticalExt = b.go.transform.position.z * Mathf.Tan(verticalFOV/2f);
+        //Horizontal bounds (X)
+        float aspectRatio = 544f/960f;
+        float horizontalFOV =  Camera.VerticalToHorizontalFieldOfView(verticalFOV, aspectRatio);
+        float horizontalExt = b.go.transform.position.z * Mathf.Tan(horizontalFOV/2f);
+        float depthExt = b.go.transform.position.z/2f;
+        boidBounds.extents = new Vector3(horizontalExt, verticalExt, depthExt);
+        Debug.Log("boidBounds " + boidBounds.ToString());
+        Debug.Log("verticalFOV " + verticalFOV.ToString());
+        Debug.Log("horizontalFOV " + horizontalFOV.ToString());
+        Debug.Break();
+    }
    
     void printDivider()
     {
