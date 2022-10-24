@@ -12,22 +12,23 @@ public class BoidsTestV3: MonoBehaviour
     bool useFish = true;
     Camera mainCam;
     GameObject background;
+    Bounds simAreaBounds;
+    //Vector3 simulationArea = new Vector3(60, 60, 60);
+    Vector3 simAreaSize = new Vector3(120, 60, 60);
     int fishId = 0;
     Color fogColor;
 
-    int numberOfSwarms = 2;
-    int numberOfFish = 10;
-    //int numberOfFishMin = 5;
-    //int numberOfFishMax = 10;
+    int numberOfSwarms = 3;
+    int numberOfFish = 50;
     float animationSpeed = 1f;
 
     //Default boids values
-    //public int spawnBoids = 100;
     float boidSpeed = 10f;
     float boidSteeringSpeed = 100f;
     float boidNoClumpingArea = 20f;
-    float boidLocalArea = 20f;
+    float boidLocalArea = 10f;
     float boidSimulationArea = 30f;
+    
 
     float K = 1f;
     float S = 1f;
@@ -56,31 +57,13 @@ public class BoidsTestV3: MonoBehaviour
     }
     List<boidController> boidsList = new List<boidController>();
 
-    int boidToTrack = -1;
-
-    float getDistance(Vector3 v1, Vector3 v2)
-    {
-        Vector3 distance = Vector3.zero;
-        distance.x = v1.x-v2.x;
-        distance.y = v1.y-v2.y;
-        distance.z = v1.z-v2.z;
-
-        distance.x = distance.x * distance.x;
-        distance.y = distance.y * distance.y;
-        distance.z = distance.z * distance.z;
-
-        float distMag = Mathf.Sqrt(distance.x + distance.y + distance.z);
-        return distMag;
-    }
-
     void simulateMovement(List<boidController> boids, float time)
     {
         for (int i = 0; i < boids.Count(); i++)
         {
-            Vector3 steering = Vector3.zero;
-
             boidController b_i = boids[i];
 
+            Vector3 steering = Vector3.zero;
             Vector3 separationDirection = Vector3.zero;
             int separationCount = 0;
             Vector3 alignmentDirection = Vector3.zero;
@@ -96,7 +79,7 @@ public class BoidsTestV3: MonoBehaviour
 
             Vector3 randomDirection = Vector3.zero;
             float randomWeight = 0;
-            if (!b_i.randomBehaviour && Random.value > .9f)
+            if (!b_i.randomBehaviour && Random.value > 1.1f)
             {
                 b_i.randomBehaviour = true;
                 b_i.elapsedFrames = 0;
@@ -175,11 +158,10 @@ public class BoidsTestV3: MonoBehaviour
             }
 
             float distanceToCamera = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
-            float myDistanceToCamera = getDistance(mainCam.transform.position, b_i.go.transform.position);
             float D = 10f; //distance weight, applied to both distance to the camera and distance to the background
             if (distanceToCamera < 20 )
             {
-                if (boidToTrack == -1) boidToTrack = i;
+                //if (boidToTrack == -1) boidToTrack = i;
                 cameraDirection = mainCam.transform.position - b_i.go.transform.position;
                 cameraDirection = -cameraDirection;
                 cameraDirection = cameraDirection.normalized;
@@ -228,6 +210,7 @@ public class BoidsTestV3: MonoBehaviour
             }
             headTransform.position += headTransform.TransformDirection(new Vector3(0, 0, boidSpeed)) * time;*/
 
+            //checkForBoundaries(b_i);  
             checkForBoundariesV2(b_i);  
 
             /*if (i == boidToTrack) 
@@ -247,7 +230,7 @@ public class BoidsTestV3: MonoBehaviour
             //Debug.Log("distance_to_camera " + distanceToCamera.ToString());
             //printDivider();   
 
-            if (!b_i.randomBehaviour)
+            /*if (!b_i.randomBehaviour)
             {
                 Debug.Log("Boid " + i.ToString());
                 Debug.Log("separation direction " + separationDirection.ToString());
@@ -259,115 +242,35 @@ public class BoidsTestV3: MonoBehaviour
                 Debug.Log("random direction " + randomDirection.ToString());
                 printDivider();
                 //Debug.Break();
-            }
+            }*/
             
+        }
+    }
+
+    void checkForBoundariesV2(boidController b)
+    {
+        if (b.go.OnBecameInvisible()){
+            Destroy(b.go);
         }
     }
 
     void checkForBoundaries(boidController b)
     {
         Vector3 boidPos = b.go.transform.position;
-        bool destroyGo = false;
-
-        if (boidPos.x > boidSimulationArea)
-        {
-            boidPos.x -= boidSimulationArea * 2;
-            destroyGo = true;
-        }
-        else if (boidPos.x < -boidSimulationArea)
-        {
-            boidPos.x += boidSimulationArea * 2;
-            destroyGo = true;
-        }
-
-        if (boidPos.y > boidSimulationArea)
-        {
-            boidPos.y -= boidSimulationArea * 2;
-            destroyGo = true;
-
-        }  
-        else if (boidPos.y < -boidSimulationArea)
-        {
-            boidPos.y += boidSimulationArea * 2;
-            destroyGo = true;
-        }
-
-        if (boidPos.z > boidSimulationArea)
-        {
-            boidPos.z -= boidSimulationArea * 2;
-            destroyGo = true;
-        }
-        else if (boidPos.z < -boidSimulationArea)
-        {
-            boidPos.z += boidSimulationArea * 2;
-            destroyGo = true;
-        }
-           
-        if (destroyGo)
-        {
-            /*Destroy(b.go);
-            boidsList.Remove(b);*/
-            Vector3 scale = b.go.transform.localScale;
-            b.go.transform.localScale = Vector3.zero;
-            b.go.transform.position = boidPos;
-            b.go.transform.localScale = scale;
-        }
-
-    }
-
-    void checkForBoundariesV2(boidController b)
-    {
-        Vector3 boidPos = b.go.transform.position;
-        bool destroyGo = false;
-
-        if (boidPos.x > boidSimulationArea)
-        {
-            boidPos.x -= boidSimulationArea * 2;
-            destroyGo = true;
-        }
+        bool inBounds = simAreaBounds.Contains(boidPos);
         
-        if (boidPos.x < -boidSimulationArea)
+        if (!inBounds)
         {
-            boidPos.x += boidSimulationArea * 2;
-            destroyGo = true;
-        }
+            if (boidPos.x > simAreaBounds.max.x) boidPos.x -= simAreaBounds.extents.x* 2f;
+            if (boidPos.x < simAreaBounds.min.x) boidPos.x += simAreaBounds.extents.x * 2f;
 
-        if (boidPos.y > boidSimulationArea)
-        {
-            boidPos.y -= boidSimulationArea * 2;
-            destroyGo = true;
+            if (boidPos.y > simAreaBounds.max.y) boidPos.y -= simAreaBounds.extents.y * 2f;
+            if (boidPos.y < simAreaBounds.min.y) boidPos.y += simAreaBounds.extents.y * 2f;
 
-        }  
-        
-        if (boidPos.y < -boidSimulationArea)
-        {
-            boidPos.y += boidSimulationArea * 2;
-            destroyGo = true;
-        }
+            //if (boidPos.z > simAreaBounds.max.z) boidPos.z -= simAreaBounds.extents.z * 2f;
+            //if (boidPos.z < simAreaBounds.min.z) boidPos.z += simAreaBounds.extents.z * 2f;
 
-        if (boidPos.z > boidSimulationArea)
-        {
-            boidPos.z -= boidSimulationArea * 2;
-            destroyGo = true;
-        }
-        
-        if (boidPos.z < -boidSimulationArea)
-        {
-            boidPos.z += boidSimulationArea * 2;
-            destroyGo = true;
-        }
-           
-        if (destroyGo)
-        {
-            /*Destroy(b.go);
-            boidsList.Remove(b);*/
-            /*Vector3 scale = b.go.transform.localScale;
-            b.go.transform.localScale = Vector3.zero;
             b.go.transform.position = boidPos;
-            b.go.transform.localScale = scale;*/
-            b.go.active = false;
-            b.go.transform.position = boidPos;
-            b.go.active = true;
         }
 
     }
@@ -382,14 +285,19 @@ public class BoidsTestV3: MonoBehaviour
     {
         float radius = Random.Range(1f, boidLocalArea);
         Vector3 rndPos = Random.insideUnitSphere * radius + offset;
+        if (rndPos.z < 0f) rndPos.z = -rndPos.z;
         return rndPos;
     }
 
 
     Vector3 GetRandomPositionInCamera(Camera cam)
     {
-        Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(10f, 34f)));
-        return world_pos;
+        //Vector3 world_pos = cam.ViewportToWorldPoint(new Vector3(UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(0.1f, 0.9f), UnityEngine.Random.Range(10f, 34f)));
+        Vector3 worldPos = cam.ViewportToWorldPoint(new Vector3(
+            UnityEngine.Random.Range(0.1f, 0.9f), 
+            UnityEngine.Random.Range(0.1f, 0.9f), 
+            simAreaSize.z/2f + 10f));
+        return worldPos;
     }
 
     void instantiateFish(int swarmIdx)
@@ -418,8 +326,7 @@ public class BoidsTestV3: MonoBehaviour
             {
                 b.go = Instantiate(fishPrefab, rnd_pos, Quaternion.identity);
                 //b.go.transform.localScale = Vector3.one * Random.Range(0.1f, 0.3f);
-                //b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-22.5f, 22.5f));
-                b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-45f, 45f));
+                b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-22.5f, 22.5f));
                 b.go.GetComponent<Animator>().SetFloat("SpeedFish", animationSpeed);
                 b.go.name = "fish_" + fishId.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
                 b.go.GetComponentInChildren<fishName>().fishN = "fish_" + fishId.ToString();
@@ -439,15 +346,13 @@ public class BoidsTestV3: MonoBehaviour
             else
             {
                 b.go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                b.go.transform.position = rnd_pos;
-                b.go.transform.rotation = Random.rotation;
-                b.go.transform.localScale = Vector3.one * 0.5f;
-                b.go.transform.parent = transform;
+                b.go.name = "fish_" + fishId.ToString();
+                b.go.transform.localPosition = rnd_pos;
+                //b.go.transform.rotation = Random.rotation;
+                //b.go.transform.localScale = Vector3.one * 0.5f;
                 b.go.GetComponent<Renderer>().material.color = swarm_color;
-                //if (swarmIdx == 0) b.go.GetComponent<Renderer>().material.SetColor("_Color", Color.green);
-                //if (swarmIdx == 1) b.go.GetComponent<Renderer>().material.SetColor("_Color", Color.blue);
-                //if (swarmIdx == 2) b.go.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
             }
+
             b.id = fishId;
             fishId++;
             b.swarmIndex = swarmIdx;
@@ -477,29 +382,25 @@ public class BoidsTestV3: MonoBehaviour
         mainCam.backgroundColor = fogColor;
         background = GameObject.Find("backgroundTransparent");
         background.SetActive(false);
-        //background.GetComponent<Renderer>().active = false;
-        /*GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.transform.position = new Vector3(0, 0, 50);
-        go.transform.localScale = new Vector3(180, 80, 80);*/
-        /*go.transform.localScale.x = 90f;
-        go.transform.localScale.y = 40f;
-        go.transform.localScale.z = 24f;*/
-        /*GameObject background_plane = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        background_plane.transform.localScale = new Vector3(1000, 1000, 1);
-        background_plane.transform.position = new Vector3(0, 0, 100);*/
+     
+        GameObject simArea = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        simArea.transform.position = new Vector3(0, 0, simAreaSize.z/2f);
+        simArea.transform.localScale = simAreaSize;
+        UnityEngine.Physics.SyncTransforms();
+        simAreaBounds = simArea.GetComponent<Collider>().bounds;
+        simArea.SetActive(false);
+        //float distanceToSimArea = Vector3.Distance(go.transform.position, mainCam.transform.position);
     }
 
     // Start is called before the first frame update
     void Start()
-    {
+    {   Debug.Log("Bounds " + simAreaBounds.ToString());
+        Debug.Log("BoundsMax " + simAreaBounds.max.ToString());
+        Debug.Log("BoundsMin " + simAreaBounds.min.ToString());
         for (int i = 0; i < numberOfSwarms; i++)
         {
             instantiateFish(i);
         }
-
-        /*GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        go.transform.position = mainCam.transform.position;
-        go.transform.localScale = Vector3.one * 15f;*/
     }
 
     // Update is called once per frame
