@@ -9,7 +9,7 @@ using UnityEngine;
 public class BoidsTestV3: MonoBehaviour
 {
     [SerializeField] GameObject fishPrefab;
-    bool useFish = true;
+    bool useFish = false;
     Camera mainCam;
     GameObject background;
     Bounds simAreaBounds;
@@ -47,9 +47,15 @@ public class BoidsTestV3: MonoBehaviour
 
         //random movement
         public bool randomBehaviour = false;
+        
         public int elapsedFrames;
         public int goalFrames;
         public int framesToMaxSpeed;
+
+        public float elapsedTime;
+        public float goalTime;
+        public float timeToMaxSpeed;
+
         public Vector3 randomDirection;
         public float randomWeight;
         public float randomSpeed;
@@ -100,6 +106,39 @@ public class BoidsTestV3: MonoBehaviour
         return newSpeed;
     }
 
+    float updateSpeedTime(boidController b, float rndSpeed, float initSpeed)
+    {
+        float deltaSpeed = rndSpeed - initSpeed;
+        float speedIncrement;
+        float newSpeed;
+    
+        if (b.elapsedTime < b.timeToMaxSpeed)
+        {
+            speedIncrement = b.elapsedTime/b.timeToMaxSpeed*deltaSpeed;
+        } 
+        else if (b.elapsedTime == b.timeToMaxSpeed) 
+        {
+            speedIncrement = deltaSpeed;
+        }   
+        else 
+        {
+            //Debug.Break();
+            speedIncrement = b.elapsedTime/b.goalTime*deltaSpeed*-1f;
+        }
+
+        Debug.Log("rndSpeed " + rndSpeed.ToString());
+        Debug.Log("initSpeed " + initSpeed.ToString());
+        Debug.Log("deltaSpeed " + deltaSpeed.ToString());
+        Debug.Log("elapsedTime " + b.elapsedTime.ToString());
+        Debug.Log("timeToMaxSpeed " + b.timeToMaxSpeed.ToString());
+        Debug.Log("goalTime " + b.goalTime.ToString());
+        Debug.Log("speedIncrement " + speedIncrement.ToString());
+        printDivider();
+        newSpeed = initSpeed + speedIncrement;
+        
+        return newSpeed;
+    }
+
 
     void simulateMovement(List<boidController> boids, float time)
     {
@@ -119,44 +158,53 @@ public class BoidsTestV3: MonoBehaviour
             float leaderAngle = 180f;
 
             Vector3 cameraDirection = Vector3.zero;
-            Vector3 backgroundDirection = Vector3.zero;
-            Vector3 originDirection = Vector3.zero;
+            Vector3 towardsOriginDirection = Vector3.zero;
+            Vector3 fromOriginDirection = Vector3.zero;
 
             Vector3 randomDirection = Vector3.zero;
             float randomWeight = 0;
 
-            if (!b_i.randomBehaviour && Random.value > 0.75f)
+            if (!b_i.randomBehaviour && Random.value > 0.99f)
             {
                 numberOfRandomFish += 1;
                 b_i.randomBehaviour = true;
+
                 b_i.elapsedFrames = 0;
                 b_i.goalFrames = (int) Random.Range(180f, 360f);
                 b_i.framesToMaxSpeed = Mathf.RoundToInt(Random.Range(0.1f, 0.5f) * b_i.goalFrames);
+
+                b_i.elapsedTime = 0f;
+                b_i.goalTime = 1f;
+                b_i.timeToMaxSpeed = Random.Range(0.1f, 0.5f);
+                
                 b_i.randomDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
                 b_i.randomDirection = b_i.randomDirection.normalized;
                 b_i.randomWeight = Random.Range(5f, 10f);
-                //b_i.randomSpeed = Random.Range(1.5f, 2f)*b_i.speed;
-                b_i.randomSpeed = Random.Range(1.1f, 1.5f)*b_i.speed;
-                b_i.randomSteeringSpeed = Random.Range(1.5f, 2f)*b_i.steeringSpeed;
+                b_i.randomSpeed = Random.Range(3f, 5f)*b_i.speed;
+                b_i.randomSteeringSpeed = Random.Range(3f, 5f)*b_i.steeringSpeed;
                 b_i.originalSpeed = b_i.speed;
                 b_i.originalSteeringSpeed = b_i.steeringSpeed;
             }
 
             if (b_i.randomBehaviour)
             {
-                if (b_i.elapsedFrames == b_i.goalFrames)
+                //if (b_i.elapsedFrames == b_i.goalFrames)
+                if (b_i.elapsedTime > b_i.goalTime)
                 {
                     numberOfRandomFish -= 1;
                     b_i.randomBehaviour = false;
                     b_i.speed = b_i.originalSpeed;
                     b_i.steeringSpeed = b_i.originalSteeringSpeed;
+                    //Debug.Break();
                 }
                 else
                 {
                     randomDirection = b_i.randomDirection;
                     randomWeight = b_i.randomWeight;
-                    b_i.speed = updateSpeed(b_i, b_i.randomSpeed, b_i.originalSpeed);
-                    b_i.steeringSpeed = updateSpeed(b_i, b_i.randomSteeringSpeed, b_i.originalSteeringSpeed);
+                    b_i.speed = updateSpeedTime(b_i, b_i.randomSpeed, b_i.originalSpeed);
+                    //b_i.steeringSpeed = updateSpeedTime(b_i, b_i.randomSteeringSpeed, b_i.originalSteeringSpeed);
+
+                    b_i.elapsedTime += time;
                     b_i.elapsedFrames += 1;
                 }
             } 
@@ -214,7 +262,7 @@ public class BoidsTestV3: MonoBehaviour
                 }
             }
 
-            float distanceToCamera = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
+            /*float distanceToCamera = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
             float D = 10f; //distance weight, applied to both distance to the camera and distance to the background
             
             if (distanceToCamera < 20 )
@@ -238,7 +286,23 @@ public class BoidsTestV3: MonoBehaviour
                 backgroundDirection = background.transform.position - b_i.go.transform.position;
                 backgroundDirection = backgroundDirection.normalized;
                 //backgroundDirection = new Vector3(0, 0, 1f);
-            }
+            }*/
+
+            float distanceToCamera = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
+            float cameraDirWeight = 10/distanceToCamera;
+            cameraDirection = mainCam.transform.position - b_i.go.transform.position;
+            cameraDirection = -cameraDirection;
+            cameraDirection = cameraDirection.normalized;
+
+            //backgroundDirection = background.transform.position - b_i.go.transform.position;
+            //backgroundDirection = -backgroundDirection;
+            //backgroundDirection = backgroundDirection.normalized;
+            
+            /*float maxDistance = 1000f;
+            float towardsOriginWeight = b_i.go.transform.position.z/maxDistance;
+            float fromOriginWeight = 1f - b_i.go.transform.position.z/maxDistance;
+            towardsOriginDirection = -b_i.go.transform.position;
+            fromOriginDirection = b_i.go.transform.position;*/
 
         
             steering += separationDirection*S;
@@ -246,9 +310,11 @@ public class BoidsTestV3: MonoBehaviour
             steering += cohesionDirection*K;
             steering += leaderDirection*X;
 
-            steering += cameraDirection*D;
-            steering += backgroundDirection*D;
-            steering += originDirection*D;
+            steering += cameraDirection*cameraDirWeight;
+            //steering += towardsOriginDirection*towardsOriginWeight;
+            //steering += fromOriginDirection*fromOriginWeight;
+            //steering += backgroundDirection*D;
+            //steering += originDirection*D;
 
             steering += randomDirection*randomWeight;
 
@@ -272,7 +338,7 @@ public class BoidsTestV3: MonoBehaviour
             headTransform.position += headTransform.TransformDirection(new Vector3(0, 0, boidSpeed)) * time;*/
             
             //checkForBoundaries(b_i);  
-            checkForBoundaries(b_i); 
+            checkForBoundariesV2(b_i); 
             //checkForBoundariesV2(b_i);  
 
             /*if (i == boidToTrack) 
@@ -292,18 +358,18 @@ public class BoidsTestV3: MonoBehaviour
             //Debug.Log("distance_to_camera " + distanceToCamera.ToString());
             //printDivider();   
 
-            if (b_i.randomBehaviour)
+            if (!b_i.randomBehaviour)
             {
                 Debug.Log("Boid " + i.ToString());
 
-                /*Debug.Log("separation direction " + separationDirection.ToString());
+                Debug.Log("separation direction " + separationDirection.ToString());
                 Debug.Log("alignemt direction " + alignmentDirection.ToString());
                 Debug.Log("cohesion direction " + cohesionDirection.ToString());
                 Debug.Log("leader direction " + leaderDirection.ToString());
                 Debug.Log("camera direction " + cameraDirection.ToString());
-                Debug.Log("background direction " + backgroundDirection.ToString());
+                //Debug.Log("background direction " + backgroundDirection.ToString());
                 Debug.Log("random direction " + randomDirection.ToString());
-                Debug.Log("steering " + steering.ToString());*/
+                Debug.Log("steering " + steering.ToString());
                 printDivider();
                 //Debug.Break();
             }
@@ -318,7 +384,7 @@ public class BoidsTestV3: MonoBehaviour
         
         if (!inBounds)
         {
-            if (boidPos.x > simAreaBounds.max.x) boidPos.x -= simAreaBounds.extents.x* 2f;
+            if (boidPos.x > simAreaBounds.max.x) boidPos.x -= simAreaBounds.extents.x * 2f;
             if (boidPos.x < simAreaBounds.min.x) boidPos.x += simAreaBounds.extents.x * 2f;
 
             if (boidPos.y > simAreaBounds.max.y) boidPos.y -= simAreaBounds.extents.y * 2f;
@@ -367,8 +433,8 @@ public class BoidsTestV3: MonoBehaviour
             if (boidPos.y > boidBounds.max.y) boidPos.y -= boidBounds.extents.y * 2f;
             if (boidPos.y < boidBounds.min.y) boidPos.y += boidBounds.extents.y * 2f;
 
-            if (boidPos.z > 40f) boidPos.z = -10f;
-            if (boidPos.z < -15f) boidPos.z = -10f;
+            //if (boidPos.z > 40f) boidPos.z = -10f;
+            //if (boidPos.z < -15f) boidPos.z = -10f;
             //b.go.SetActive(false);
             b.go.transform.position = boidPos;
             //b.go.SetActive(true);
