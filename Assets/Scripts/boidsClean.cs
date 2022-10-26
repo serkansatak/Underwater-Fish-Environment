@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class BoidsTestV3: MonoBehaviour
+public class boidsClean: MonoBehaviour
 {
     [SerializeField] GameObject fishPrefab;
     bool useFish = true;
@@ -14,18 +14,18 @@ public class BoidsTestV3: MonoBehaviour
     GameObject background;
     Bounds simAreaBounds;
     //Vector3 simulationArea = new Vector3(60, 60, 60);
-    Vector3 simAreaSize = new Vector3(60, 60, 30);
+    Vector3 simAreaSize = new Vector3(90, 60, 60);
     int fishId = 0;
     Color fogColor;
 
     int numberOfSwarms = 1;
-    int numberOfFish = 2;
+    int numberOfFish = 10;
     float animationSpeed = 1f;
     int numberOfRandomFish = 0;
 
     //default boids values
     float boidSpeed = 10f; //10f
-    float boidSteeringSpeed = 100f; //100
+    float boidSteeringSpeed = 1000f; //100
     float boidNoClumpingArea = 20f;
     float boidLocalArea = 10f;
     float boidSimulationArea = 30f;
@@ -35,6 +35,8 @@ public class BoidsTestV3: MonoBehaviour
     float S = 1f;
     float M = 1f;
     float X = 1f;
+
+    float minDistToCamera = 20f;
 
     public class boidController
     {
@@ -72,8 +74,6 @@ public class BoidsTestV3: MonoBehaviour
         public float steeringSpeed;
     }
     List<boidController> boidsList = new List<boidController>();
-
-    float minDistToCamera = 10f;
 
     float updateSpeed(boidController b, float rndSpeed, float initSpeed)
     {
@@ -159,11 +159,6 @@ public class BoidsTestV3: MonoBehaviour
             boidController leaderBoid = boids[0];
             float leaderAngle = 180f;
 
-            Vector3 cameraDirection = Vector3.zero;
-            Vector3 boundsDirection = Vector3.zero;
-            //Vector3 towardsOriginDirection = Vector3.zero;
-            //Vector3 fromOriginDirection = Vector3.zero;
-
             Vector3 randomDirection = Vector3.zero;
             float randomWeight = 0;
 
@@ -201,14 +196,13 @@ public class BoidsTestV3: MonoBehaviour
                     b_i.randomBehaviour = false;
                     b_i.speed = b_i.originalSpeed;
                     b_i.steeringSpeed = b_i.originalSteeringSpeed;
-                    //Debug.Break();
                 }
                 else
                 {
                     randomDirection = b_i.randomDirection;
                     randomWeight = b_i.randomWeight;
                     b_i.speed = updateSpeedTime(b_i, b_i.randomSpeed, b_i.originalSpeed);
-                    //b_i.steeringSpeed = updateSpeedTime(b_i, b_i.randomSteeringSpeed, b_i.originalSteeringSpeed);
+                    b_i.steeringSpeed = updateSpeedTime(b_i, b_i.randomSteeringSpeed, b_i.originalSteeringSpeed);
 
                     b_i.elapsedTime += time;
                     b_i.elapsedFrames += 1;
@@ -247,8 +241,6 @@ public class BoidsTestV3: MonoBehaviour
                             leaderAngle = angle;
                         }
                     }
-                
-                
                 }
             
                 if (separationCount > 0) separationDirection /= separationCount;
@@ -269,42 +261,27 @@ public class BoidsTestV3: MonoBehaviour
                 }
             }
 
-            /*float distanceToCamera = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
-            float D = 10f; //distance weight, applied to both distance to the camera and distance to the background
-            
-            if (distanceToCamera < 20 )
-            {
-                //if (boidToTrack == -1) boidToTrack = i;
-                cameraDirection = mainCam.transform.position - b_i.go.transform.position;
-                cameraDirection = -cameraDirection;
-                cameraDirection = cameraDirection.normalized;
-            }
-
-            if (b_i.go.transform.position.z > 20f)
-            {
-                backgroundDirection = background.transform.position - b_i.go.transform.position;
-                backgroundDirection = -backgroundDirection;
-                backgroundDirection = backgroundDirection.normalized;
-                //backgroundDirection = new Vector3(0, 0, -1f);
-            }
-
-            if ( b_i.go.transform.position.z < 0f )
-            {
-                backgroundDirection = background.transform.position - b_i.go.transform.position;
-                backgroundDirection = backgroundDirection.normalized;
-                //backgroundDirection = new Vector3(0, 0, 1f);
-            }*/
-
+            Vector3 cameraDirection = Vector3.zero;
             float distanceToCamera = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
             float cameraDirWeight = minDistToCamera/distanceToCamera;
+            /*if (cameraDirWeight > 1f) 
+            {
+                cameraDirection = mainCam.transform.position - b_i.go.transform.position;
+                cameraDirection = cameraDirection;
+                cameraDirection = -cameraDirection;
+                cameraDirection = cameraDirection.normalized*cameraDirWeight;
+                print("cameraDirection " + cameraDirection.ToString());
+            }*/
             cameraDirection = mainCam.transform.position - b_i.go.transform.position;
-            cameraDirection = cameraDirection*cameraDirWeight;
+            cameraDirection = cameraDirection;
             cameraDirection = -cameraDirection;
-            cameraDirection = cameraDirection.normalized;
+            cameraDirection = cameraDirection.normalized*cameraDirWeight;
+            print("cameraDirection " + cameraDirection.ToString());
+            steering += cameraDirection;
         
+            Vector3 boundsDirection = Vector3.zero;
             if (!simAreaBounds.Contains(b_i.go.transform.position))
             {
-                float weightXDir, weightYDir, weightZDir;
                 if (b_i.go.transform.position.x > simAreaBounds.max.x) boundsDirection.x = -simAreaBounds.extents.x * 2f;
                 if (b_i.go.transform.position.x < simAreaBounds.min.x) boundsDirection.x = simAreaBounds.extents.x * 2f;
 
@@ -314,38 +291,26 @@ public class BoidsTestV3: MonoBehaviour
                 if (b_i.go.transform.position.z > simAreaBounds.max.z) boundsDirection.z = -simAreaBounds.extents.z * 2f;
                 if (b_i.go.transform.position.z < simAreaBounds.min.z) boundsDirection.z = simAreaBounds.extents.z * 2f;
                 
-                weightXDir = Mathf.Abs((b_i.go.transform.position.x - simAreaBounds.center.x)/simAreaBounds.extents.x);
-                weightYDir = Mathf.Abs((b_i.go.transform.position.y - simAreaBounds.center.y)/simAreaBounds.extents.y);
-                weightZDir = Mathf.Abs((b_i.go.transform.position.z - simAreaBounds.center.z)/simAreaBounds.extents.z);
+                boundsDirection = boundsDirection.normalized;
+
+                float weightXDir = Mathf.Abs((b_i.go.transform.position.x - simAreaBounds.center.x)/simAreaBounds.extents.x);
+                float weightYDir = Mathf.Abs((b_i.go.transform.position.y - simAreaBounds.center.y)/simAreaBounds.extents.y);
+                float weightZDir = Mathf.Abs((b_i.go.transform.position.z - simAreaBounds.center.z)/simAreaBounds.extents.z);
                 boundsDirection.x = boundsDirection.x*weightXDir;
                 boundsDirection.y = boundsDirection.y*weightYDir;
                 boundsDirection.z = boundsDirection.z*weightZDir;
-                Debug.Log("weightXDir " + weightXDir.ToString());
-                Debug.Log("weightYDir " + weightYDir.ToString());
-                Debug.Log("weightZDir " + weightZDir.ToString());
-                //Debug.Break();
-
-                Debug.Log("bounds direction " + boundsDirection.ToString());
-                boundsDirection = boundsDirection.normalized;
-                Debug.Log("bounds direction " + boundsDirection.ToString());
-                //Debug.Break();
+               
+                b_i.steeringSpeed = 10000f;
+                print("boundsDirection " + boundsDirection.ToString());
             }
-
-
-            //backgroundDirection = background.transform.position - b_i.go.transform.position;
-            //backgroundDirection = -backgroundDirection;
-            //backgroundDirection = backgroundDirection.normalized;
-            /*float maxDistance = 1000f;
-            float towardsOriginWeight = b_i.go.transform.position.z/maxDistance;
-            float fromOriginWeight = 1f - b_i.go.transform.position.z/maxDistance;
-            towardsOriginDirection = -b_i.go.transform.position;
-            fromOriginDirection = b_i.go.transform.position;*/
-
-
-            steering += cameraDirection;
+            else
+            {
+                b_i.steeringSpeed = boidSteeringSpeed;
+            }
             steering += boundsDirection;
-            //Boid behaviour steering 
-            if (cameraDirection == Vector3.zero && boundsDirection == Vector3.zero)
+
+            //Apply boid behaviour if the fish is within the simulation area bounds and far enough from the camera
+            if (boundsDirection == Vector3.zero)
             {
                 steering += separationDirection*S;
                 steering += alignmentDirection*M;
@@ -353,17 +318,8 @@ public class BoidsTestV3: MonoBehaviour
                 steering += leaderDirection*X;
             }
 
-            //Meta steering, no weights as these are already accounted for
-        
-
-            //steering += towardsOriginDirection*towardsOriginWeight;
-            //steering += fromOriginDirection*fromOriginWeight;
-            //steering += backgroundDirection*D;
-            //steering += originDirection*D;
-
             if (randomDirection != Vector3.zero) steering += randomDirection*randomWeight;
 
-            
             if (steering != Vector3.zero)
             {
                     b_i.go.transform.rotation = Quaternion.RotateTowards(
@@ -371,131 +327,18 @@ public class BoidsTestV3: MonoBehaviour
                         Quaternion.LookRotation(steering), 
                         b_i.steeringSpeed * time);
             }
-            //b_i.go.transform.position += b_i.go.transform.TransformDirection(new Vector3(0, 0, boidSpeed)) * time;
+           
             b_i.go.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;
-
-            /*Transform headTransform = b_i.go.transform.Find("Armature/Bone").transform;
-            if (steering != Vector3.zero){
-                    headTransform.rotation = Quaternion.RotateTowards(
-                        headTransform.rotation, 
-                        Quaternion.LookRotation(steering), 
-                        boidSteeringSpeed * time);
-            }
-            headTransform.position += headTransform.TransformDirection(new Vector3(0, 0, boidSpeed)) * time;*/
             
-            //checkForBoundaries(b_i);  
-            //checkForBoundaries(b_i); 
-            //checkForBoundariesV2(b_i);  
-
-            /*if (i == boidToTrack) 
-            {
-
-                Debug.Log("Boid " + i.ToString() + " distanceToCamera " + distanceToCamera.ToString());
-                Debug.Log("Boid " + i.ToString() + " myDistanceToCamera " + myDistanceToCamera.ToString());
-                Debug.Log("Boid local position " + b_i.go.transform.localPosition);
-                Debug.Log("Boid position " + b_i.go.transform.position);
-                Debug.Log("mainCam position " + mainCam.transform.position);
-                
-                //Debug.Log("cameraDirection " + cameraDirection.ToString());
-                b_i.go.name = "THIS ONE";
-                Debug.Break();
-            }*/
-            //Debug.Log("Boid " + i.ToString());
-            //Debug.Log("distance_to_camera " + distanceToCamera.ToString());
-            //printDivider();   
-
-            Debug.Log("Boid " + i.ToString());
-            //Debug.Log("separation direction " + separationDirection.ToString());
-            //Debug.Log("alignemt direction " + alignmentDirection.ToString());
-            //Debug.Log("cohesion direction " + cohesionDirection.ToString());
-            //Debug.Log("leader direction " + leaderDirection.ToString());
-            //Debug.Log("camera direction " + cameraDirection.ToString());
-            Debug.Log("bounds direcetion " + boundsDirection.ToString());
-            //Debug.Log("random direction " + randomDirection.ToString());
-            //Debug.Log("steering " + steering.ToString());
+            print("steering " + steering.ToString());
             //printDivider();
-            //Debug.Break();
-            
-        }
-    }
-
-    void checkForBoundaries(boidController b)
-    {
-        Vector3 boidPos = b.go.transform.position;
-        bool inBounds = simAreaBounds.Contains(boidPos);
-        
-        if (!inBounds)
-        {
-            if (boidPos.x > simAreaBounds.max.x) boidPos.x -= simAreaBounds.extents.x * 2f;
-            if (boidPos.x < simAreaBounds.min.x) boidPos.x += simAreaBounds.extents.x * 2f;
-
-            if (boidPos.y > simAreaBounds.max.y) boidPos.y -= simAreaBounds.extents.y * 2f;
-            if (boidPos.y < simAreaBounds.min.y) boidPos.y += simAreaBounds.extents.y * 2f;
-
-            if (boidPos.z > simAreaBounds.max.z) boidPos.z -= simAreaBounds.extents.z * 2f;
-            if (boidPos.z < simAreaBounds.min.z) boidPos.z += simAreaBounds.extents.z * 2f;
-            
-            b.go.SetActive(false);
-            b.go.transform.position = boidPos;
-            b.go.SetActive(true);
-        }
-
-    }
-
-    //https://docs.unity3d.com/ScriptReference/Renderer-bounds.html
-    //DEBUG
-    void checkForBoundariesV2(boidController b)
-    {
-        Vector3 boidPos = b.go.transform.position;
-        Bounds boidBounds = new Bounds();
-        //float boundsOffset = 10f + boidPos.z; //to accumulate for difference between the centre and the head/tail of the fish
-        float boundsOffset = 10f;
-        boidBounds.center = new Vector3(0, 0, boidPos.z);
-        //Vertical bounds (Y)
-        float verticalFOV = mainCam.fieldOfView;
-        float verticalExt = b.go.transform.position.z * Mathf.Tan(verticalFOV/2f*Mathf.Deg2Rad) + boundsOffset;
-        //Horizontal bounds (X)
-        float aspectRatio = 960f/544f;
-        float horizontalFOV =  Camera.VerticalToHorizontalFieldOfView(verticalFOV, aspectRatio);
-        float horizontalExt = b.go.transform.position.z * Mathf.Tan(horizontalFOV/2f*Mathf.Deg2Rad) + boundsOffset;
-        float depthExt = b.go.transform.position.z/2f + boundsOffset ;
-        boidBounds.extents = new Vector3(horizontalExt, verticalExt, depthExt);
-        /*Debug.Log("boidBounds " + boidBounds.ToString());
-        Debug.Log("verticalFOV " + verticalFOV.ToString());
-        Debug.Log("horizontalFOV " + horizontalFOV.ToString());
-        Debug.Break();*/
-
-        bool inBounds = boidBounds.Contains(boidPos);
-        
-        if (!inBounds)
-        {
-            if (boidPos.x > boidBounds.max.x) boidPos.x -= boidBounds.extents.x* 2f;
-            if (boidPos.x < boidBounds.min.x) boidPos.x += boidBounds.extents.x * 2f;
-
-            if (boidPos.y > boidBounds.max.y) boidPos.y -= boidBounds.extents.y * 2f;
-            if (boidPos.y < boidBounds.min.y) boidPos.y += boidBounds.extents.y * 2f;
-
-            //if (boidPos.z > 40f) boidPos.z = -10f;
-            //if (boidPos.z < -15f) boidPos.z = -10f;
-            //b.go.SetActive(false);
-            b.go.transform.position = boidPos;
-            //b.go.SetActive(true);
         }
     }
    
     void printDivider()
     {
-        Debug.Log("===============================\n===============================" + Random.value.ToString());
+        print("===============================\n===============================" + Random.value.ToString());
     }
-
-    Vector3 GetRandomPositionInUnitSphere(Vector3 offset)
-    {
-        float radius = Random.Range(1f, boidLocalArea);
-        Vector3 rndPos = Random.insideUnitSphere * radius + offset;
-        if (rndPos.z < 0f) rndPos.z = -rndPos.z;
-        return rndPos;
-    }
-
 
     Vector3 GetRandomPositionInCamera(Camera cam)
     {
@@ -518,27 +361,13 @@ public class BoidsTestV3: MonoBehaviour
         for (int i = 0; i < numberOfFish; i++)
         {
             boidController b = new boidController();
-            Vector3 rnd_pos;
-
-            if (i==0)
-            {
-                rnd_pos = GetRandomPositionInCamera(mainCam);
-            }
-            else
-            {
-                rnd_pos = GetRandomPositionInUnitSphere(boidsList.Last().go.transform.position);
-            }
-           
-            rnd_pos = GetRandomPositionInCamera(mainCam);
-
             if(useFish) 
             {
-                //b.go = Instantiate(fishPrefab, rnd_pos, Quaternion.identity);
-                //b.go.transform.localScale = Vector3.one * Random.Range(0.1f, 0.3f);
-                //b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-22.5f, 22.5f));
                 b.go = Instantiate(fishPrefab);
-                b.go.transform.position = rnd_pos;
-                b.go.transform.localScale = Vector3.one * Random.Range(40f, 60f);
+                b.go.transform.position = GetRandomPositionInCamera(mainCam);
+                //b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-22.5f, 22.5f));
+                b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
+                //b.go.transform.localScale = Vector3.one * Random.Range(40f, 60f);
                 b.go.GetComponent<Animator>().SetFloat("SpeedFish", animationSpeed);
                 b.go.name = "fish_" + fishId.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
                 b.go.GetComponentInChildren<fishName>().fishN = "fish_" + fishId.ToString();
@@ -560,7 +389,7 @@ public class BoidsTestV3: MonoBehaviour
             {
                 b.go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 b.go.name = "fish_" + fishId.ToString();
-                b.go.transform.localPosition = rnd_pos;
+                b.go.transform.localPosition = GetRandomPositionInCamera(mainCam);
                 //b.go.transform.rotation = Random.rotation;
                 //b.go.transform.localScale = Vector3.one * 0.5f;
                 b.go.GetComponent<Renderer>().material.color = swarm_color;
@@ -593,6 +422,7 @@ public class BoidsTestV3: MonoBehaviour
         mainCam = GameObject.Find("Fish Camera").GetComponent<Camera>();
         generateFogColor();
         mainCam.backgroundColor = fogColor;
+
         background = GameObject.Find("backgroundTransparent");
         background.SetActive(false);
      
