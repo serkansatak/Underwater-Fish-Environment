@@ -28,7 +28,7 @@ public class BoidsTestV3: MonoBehaviour
     float boidSteeringSpeed = 100f; //100
     float boidNoClumpingArea = 20f;
     float boidLocalArea = 10f;
-    float boidSimulationArea = 30f;
+    //float boidSimulationArea = 30f;
     
     //default weights
     float K = 1f;

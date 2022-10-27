@@ -42,7 +42,7 @@ public class BoidsTest: MonoBehaviour
     float K = 1f;//cohesion weight
     float M = 1f;//allignment weight
     float X = 1f;//eccentricity weight
-    float forceThreshold = 0.01f;
+    //float forceThreshold = 0.01f;
 
     List<GameObject> flockCentres = new List<GameObject>();
 

@@ -10,12 +10,12 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Video;
 
-public class SpawnerBoids: MonoBehaviour
+public class SpawnerBoids : MonoBehaviour
 {
-    [SerializeField] Vector2 numFishMinMax;
+    //[SerializeField] Vector2 numFishMinMax;
     [SerializeField] GameObject fishPrefab;
     //[SerializeField] Vector2 radiusMinMax;
-    [SerializeField] Vector2 swimAnimationMinMax;
+    //[SerializeField] Vector2 swimAnimationMinMax;
 
     //int[] control_vector = new int[]{0, 1, 1};
     struct conditionsControl{
@@ -29,21 +29,78 @@ public class SpawnerBoids: MonoBehaviour
             this.distractors = c3;
         }
     }
-    conditionsControl control = new conditionsControl(0, 0, 0);
+    conditionsControl control = new conditionsControl(0, 0, 1);
 
-    Camera main_cam;
-    Camera background_cam;
+    Vector2 numFishMinMax = new Vector2(4, 50);
+    int numberOfSwarms = 1;
+    //Vector2 numSwarmsMinMax = new Vector2(2, 10);
+    Camera mainCam;
+    Camera backgroundCam;
     Color fogColor;
     VideoPlayer vp;
     int FPS = 15;
     float deltaTime;
-    float timePassed;
+    int fishId;
+    //float timePassed;
 
-    float max_lin_speed = 5f;
-    float min_lin_speed = 1f;
-    float max_ang_speed = 180f;
-    float min_ang_speed = -180f;
-    float animation_speed = 0.75f;
+    Bounds simAreaBounds;
+    Vector3 simAreaSize = new Vector3(150, 60, 180);
+
+    float animationSpeed = 1f;
+    
+    int numberOfRandomFish = 0;
+    Vector2 numOfRandomFishMinMax;
+    int maxNumOfRandomFish;
+
+    //default boids values
+    float boidSpeed = 10f; //10f
+    float boidSteeringSpeed = 100f; //100
+    float boidNoClumpingArea = 20f;
+    float boidLocalArea = 10f;
+    //float boidSimulationArea = 30f;
+    
+    //default weights
+    float K = 1f;
+    float S = 1f;
+    float M = 1f;
+    float X = 1f;
+
+    public class boidController
+    {
+        public GameObject go;
+        public SkinnedMeshRenderer renderer;
+
+        //identification data
+        public int id;
+        public int swarmIndex;
+
+        //random movement
+        public bool randomBehaviour = false;
+        
+        //public int elapsedFrames;
+        //public int goalFrames;
+        //public int framesToMaxSpeed;
+
+        public float elapsedTime;
+        public float goalTime;
+        public float timeToMaxSpeed;
+
+        public Vector3 randomDirection;
+        public float randomWeight;
+        public float randomSpeed;
+        public float randomSteeringSpeed;
+
+        //original values are used to revert back into non-random behaviour
+        public float originalSpeed;
+        public float originalSteeringSpeed;
+
+        //default behaviour values
+        public float noClumpingArea;
+        public float localArea;
+        public float speed;
+        public float steeringSpeed;
+    }
+    List<boidController> boidsList = new List<boidController>();
 
     string videoDir = "Assets/videos";
     string[] videoFiles;
@@ -54,9 +111,9 @@ public class SpawnerBoids: MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
-    int sequence_goal = 2;
+    int sequence_goal = 50;
     //int sequence_length = 100;
-    int sequence_length = 50;
+    int sequence_length = 150;
 
     int img_height = 544;
     int img_width = 960;
@@ -68,46 +125,13 @@ public class SpawnerBoids: MonoBehaviour
     public class DynamicGameObject
     {
         public GameObject go;
-        public int id; //used for fish only
-        public int previous_activity; //fish, used to prevent fish from turning twice in a row 
-        public int activity; //fish, 0 for going straight, 1 for turning
-        public Vector3 lin_speed; //used for fish
-        public Vector3 ang_speed; //used for fish
         public float speed; //used for distractors
-        //public bool distractor;
     }
-    List<DynamicGameObject> dgo_list = new List<DynamicGameObject>();
 
     int number_of_distractors;
     List<DynamicGameObject> distractors_list = new List<DynamicGameObject>(); 
     Vector3 current_direction;
     [SerializeField] Material mat;
-
-    public class Boid
-    {
-        public GameObject go;
-        public int id;
-        public Vector3 k; //cohesion vector
-        public Vector3 s; //separation vector
-        public Vector3 m; //allignment (velocity matching) vector
-        public Vector3 v = Vector3.zero; //combined steer
-        public List<int> neighbours; //local neighbours based on the visibility range
-        public Vector3 c; //centre of the local flock
-    }
-
-    float visibilityRange = 3f;
-    float S = 0.5f; 
-    float K = 0.5f;
-    float M = 0.5f;
-
-
-    Vector3 GetRandomPosition()
-    {
-        float x = Random.Range(-49, 43);
-        float y = Random.Range (-20, 22);
-        float z = Random. Range (0, 24);
-        return new Vector3(x, y, z);
-    }
 
     void getNewCurrentDirection()
     {
@@ -119,14 +143,14 @@ public class SpawnerBoids: MonoBehaviour
     {
         getNewCurrentDirection();
         number_of_distractors = (int) Random.Range(500, 1000);
-        //distractors_list = new List<DynamicGameObject>(); 
 
         for (int i = 0; i < number_of_distractors; i++)
         {
             DynamicGameObject dgo = new DynamicGameObject();
             dgo.speed = Random.Range(1, 10);
             GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            sphere.transform.position = GetRandomPosition();
+            sphere.transform.position = GetRandomPositionInCamera(mainCam);
+            sphere.name = "distractor_" + i.ToString();
 
             sphere.transform.parent = transform;
             sphere.transform.localScale = Vector3.one * Random.Range(0.01f, 1f);
@@ -145,24 +169,29 @@ public class SpawnerBoids: MonoBehaviour
         }
     }
 
-    void updateDistractors()
+    void updateDistractors(float time)
     {
-        //int distractors_to_create = 0;
-
+        print("updateDistractors");
         for (int i = distractors_list.Count - 1; i >= 0; i--)
         {
             DynamicGameObject distractor = distractors_list[i];
-            distractor.go.transform.position += current_direction*deltaTime*distractor.speed;
-            if (distractor.go.transform.position.x > 45f || distractor.go.transform.position.x < -55f || 
-                distractor.go.transform.position.y > 25f || distractor.go.transform.position.y < -25f ||
-                distractor.go.transform.position.z > 25f || distractor.go.transform.position.z < -10f )
+            Vector3 distPos = distractor.go.transform.position;
+            distPos += current_direction*time*distractor.speed;
+            /*bool inBounds = simAreaBounds.Contains(distPos);
+        
+            if (!inBounds)
             {
-                /*distractors_list.RemoveAt(i);
-                Destroy(distractor.go);
-                distractors_to_create += 1;*/
-                distractor.go.transform.position = GetRandomPosition();
+                if (distPos.x > simAreaBounds.max.x) distPos.x -= simAreaBounds.extents.x * 2f;
+                if (distPos.x < simAreaBounds.min.x) distPos.x += simAreaBounds.extents.x * 2f;
 
-            }
+                if (distPos.y > simAreaBounds.max.y) distPos.y -= simAreaBounds.extents.y * 2f;
+                if (distPos.y < simAreaBounds.min.y) distPos.y += simAreaBounds.extents.y * 2f;
+
+                if (distPos.z > simAreaBounds.max.z) distPos.z -= simAreaBounds.extents.z * 2f;
+                if (distPos.z < simAreaBounds.min.z) distPos.z += simAreaBounds.extents.z * 2f;
+
+                distractor.go.transform.position = distPos;
+            }*/
         }
     }
 
@@ -181,7 +210,7 @@ public class SpawnerBoids: MonoBehaviour
         Vector3 world_pos = cam.ViewportToWorldPoint( new Vector3(
             UnityEngine.Random.Range(0.1f, 0.8f), 
             UnityEngine.Random.Range(0.1f, 0.8f), 
-            UnityEngine.Random.Range(20f, 30f)));
+            UnityEngine.Random.Range(20f, 40f)));
         return world_pos;
     }
 
@@ -206,8 +235,8 @@ public class SpawnerBoids: MonoBehaviour
 
     void SaveCameraView()
     {
-        //Camera cam1 = background_cam;
-        //Camera cam2 = main_cam;
+        //Camera cam1 = backgroundCam;
+        //Camera cam2 = mainCam;
         string filename;
         if (sequence_image > 99999){
             filename = imageFolder + "/" + sequence_image.ToString() + ".png";
@@ -225,8 +254,8 @@ public class SpawnerBoids: MonoBehaviour
         //string filename = dataDir + "/" + Time.frameCount.ToString() + ".png";
         
         screenRenderTexture = RenderTexture.GetTemporary(img_width, img_height, 24);
-        main_cam.targetTexture = screenRenderTexture;
-        main_cam.Render();
+        mainCam.targetTexture = screenRenderTexture;
+        mainCam.Render();
         RenderTexture.active = screenRenderTexture;
 
         //Texture2D screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
@@ -252,41 +281,25 @@ public class SpawnerBoids: MonoBehaviour
         RenderSettings.fog = true;
     }
 
-    void randomizeBackgroundColor(){
-        GameObject bg = GameObject.Find("backgroundTransparent");
-        MeshRenderer bg_renderer = bg.GetComponent<MeshRenderer>();
-        bg_renderer.material.color = fogColor;
-    }
+    void instantiateFish(int swarmIdx)
+    { 
+        fishId = 0;
+        int numberOfFish = (int) Random.Range(numFishMinMax.x, numFishMinMax.y);
 
-    //TODO - Add pose within Unity Sphere for some images in order to simulate flocks
-    void InstantiateFish()
-    {
-        //dgo_list = new List<DynamicGameObject>();
-        int numberOfFish = (int)Random.Range(numFishMinMax.x, numFishMinMax.y);
         for (int i = 0; i < numberOfFish; i++)
-        {   
-            //float radius = Random.Range(radiusMinMax.x, radiusMinMax.y);
-            DynamicGameObject dgo = new DynamicGameObject();
-            Vector3 rnd_pos = GetRandomPositionInCamera(main_cam);
-            dgo.go = Instantiate(fishPrefab, rnd_pos, Quaternion.identity);
-            dgo.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), Random.Range(-45f, 45f));
-            dgo.go.transform.parent = transform; // Parent the fish to the moverObj
-            dgo.go.transform.localScale = Vector3.one * Random.Range(0.4f, 0.8f);
-            
-            /*float speed = Random.Range(swimAnimationMinMax.x, swimAnimationMinMax.y);
-            currFish.GetComponent<Animator>().SetFloat("SpeedFish", speed);*/
-            float lin_speed = Random.Range(min_lin_speed, max_lin_speed);
-            //dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", );
-            dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", animation_speed);
-            dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
-
-            dgo.go.name = "fish_" + i.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
-            dgo.go.GetComponentInChildren<fishName>().fishN = "fish_" + i.ToString();
-
-            
+        {
+            boidController b = new boidController();
+            b.go = Instantiate(fishPrefab);
+            b.go.transform.position = GetRandomPositionInCamera(mainCam);
+            b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
+            b.go.transform.localScale = Vector3.one * Random.Range(0.5f, 1f);
+            b.go.GetComponent<Animator>().SetFloat("SpeedFish", animationSpeed);
+            b.go.name = "fish_" + fishId.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
+            b.go.GetComponentInChildren<fishName>().fishN = "fish_" + fishId.ToString();
 
             //Visual randomisation
-            SkinnedMeshRenderer renderer = dgo.go.GetComponentInChildren<SkinnedMeshRenderer>();
+            SkinnedMeshRenderer renderer = b.go.GetComponentInChildren<SkinnedMeshRenderer>();
+            b.renderer = renderer;
             float rnd_color_seed = Random.Range(75.0f, 225.0f);
             Color rnd_albedo = new Color(
                 rnd_color_seed/255, 
@@ -296,20 +309,24 @@ public class SpawnerBoids: MonoBehaviour
             renderer.material.color = rnd_albedo;
             renderer.material.SetFloat("_Metalic", Random.Range(0.1f, 0.5f));
             renderer.material.SetFloat("_Metalic/_Glossiness", Random.Range(0.1f, 0.5f));
+   
+            b.id = fishId;
+            fishId++;
+            b.swarmIndex = swarmIdx;
+            b.speed = boidSpeed;
+            b.steeringSpeed = boidSteeringSpeed;
+            b.localArea = boidLocalArea;
+            b.noClumpingArea = boidNoClumpingArea;
             
-            //dgo.go = currFish;
-            dgo.id = i;
-            dgo.activity = 0;
-            //dgo.speed = speed;
-            dgo_list.Add(dgo);
+            boidsList.Add(b);
         }
     }
 
     void CleanUp()
     {
-        foreach (DynamicGameObject dgo in dgo_list)
+        foreach (boidController b in boidsList)
         {
-            Destroy(dgo.go);
+            Destroy(b.go);
         }
 
         foreach (DynamicGameObject dgo in distractors_list)
@@ -317,29 +334,18 @@ public class SpawnerBoids: MonoBehaviour
             Destroy(dgo.go);
         }
 
-        dgo_list.Clear();
+        boidsList.Clear();
         distractors_list.Clear();
     }
 
     bool isWithinTheView(GameObject go)
     {
-        //Animator ani = go.GetComponent<Animator>();
+        
         Vector3 headPosition = go.transform.Find("Armature/Bone").transform.position;
         Vector3 tailPosition = go.transform.Find("Armature/Bone/Bone.001/Bone.002/Bone.003/Bone.004").transform.position;
-        Vector3 viewPosHead = main_cam.WorldToViewportPoint(headPosition);
-        Vector3 viewPosTail = main_cam.WorldToViewportPoint(tailPosition);
-        /*
-        GameObject sphere;
-        sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        sphere.transform.position = head_position;
-        sphere.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
-        sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        sphere.transform.position = tail_position;
-        sphere.GetComponent<Renderer>().material.SetColor("_Color", Color.red);
-        */
-
-        /*if (viewPosHead.x <= 0 ||  viewPosHead.x >= 1 ||  
-            viewPosTail.x <= 0 ||  viewPosTail.x >= 1 ){*/
+        Vector3 viewPosHead = mainCam.WorldToViewportPoint(headPosition);
+        Vector3 viewPosTail = mainCam.WorldToViewportPoint(tailPosition);
+       
         if (viewPosHead.x <= 0 && viewPosTail.x <= 0 ||  
             viewPosHead.x >= 1 && viewPosTail.x >= 1 ){
             return false;
@@ -350,7 +356,7 @@ public class SpawnerBoids: MonoBehaviour
             return false;
         }
 
-        if (go.transform.position.z > 34f || go.transform.position.z < -10f){
+        if (go.transform.position.z > 50f || go.transform.position.z < -10f){
             return false;
         }
         
@@ -467,65 +473,6 @@ public class SpawnerBoids: MonoBehaviour
         //Debug.Log(annotation);
     }
 
-    /*void updateActivity(DynamicGameObject dgo)
-    {
-        dgo.previous_activity = dgo.activity;
-        if(Random.value > 0.5 && dgo.previous_activity != 1)
-        {
-            dgo.activity = 1;
-            dgo.speed = Random.Range(10f, 100f);
-        } else {
-            dgo.activity = 0;
-            dgo.speed = Random.Range(1f, 2f);
-        }
-    }
-
-    void Turn(DynamicGameObject dgo)
-    {
-        //Debug.Log("Turning, Time Delta " + Time.deltaTime.ToString());
-        dgo.go.transform.Rotate(0, Time.deltaTime*dgo.speed, 0 );
-    }
-
-    void goStraight(DynamicGameObject dgo)
-    {
-        dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", dgo.speed);
-        Quaternion rot = dgo.go.transform.rotation;
-        Vector3 temp = new Vector3(1f, 0f, 0f);
-        dgo.go.transform.position += rot*temp*Time.deltaTime*dgo.speed;
-    }*/
-
-    void updateActivity(DynamicGameObject dgo)
-    {
-        if(dgo.previous_activity == 0)
-        {
-            dgo.activity = 1;
-            float ang_speed = Random.Range(min_ang_speed, max_ang_speed);
-            //float lin_speed = Mathf.Abs(ang_speed/10f);
-            float lin_speed = Random.Range(min_lin_speed, max_lin_speed);
-            //dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", lin_speed);
-            dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
-            dgo.ang_speed = new Vector3(0, ang_speed, 0);
-        }
-
-        if(dgo.previous_activity == 1)
-        {
-            dgo.activity = 0;
-            float lin_speed = Random.Range(min_lin_speed, max_lin_speed);
-            //dgo.go.GetComponent<Animator>().SetFloat("SpeedFish", lin_speed);
-            dgo.lin_speed = new Vector3(lin_speed, 0f, 0f);
-        }
-    }
-
-    void Turn(DynamicGameObject dgo)
-    {
-        dgo.go.transform.Rotate(dgo.ang_speed * deltaTime);
-        dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * deltaTime;
-    }
-
-    void goStraight(DynamicGameObject dgo)
-    {
-        dgo.go.transform.position += dgo.go.transform.rotation * dgo.lin_speed * deltaTime;
-    }
 
     void addNewSequence()
     {   
@@ -575,6 +522,200 @@ public class SpawnerBoids: MonoBehaviour
         vp.Prepare();
     }
 
+    float updateSpeed(boidController b, float rndSpeed, float initSpeed)
+    {
+        float deltaSpeed = rndSpeed - initSpeed;
+        float speedIncrement;
+        float newSpeed;
+    
+        if (b.elapsedTime < b.timeToMaxSpeed)
+        {
+            speedIncrement = b.elapsedTime/b.timeToMaxSpeed*deltaSpeed;
+        } 
+        else if (b.elapsedTime == b.timeToMaxSpeed) 
+        {
+            speedIncrement = deltaSpeed;
+        }   
+        else 
+        {
+            speedIncrement = b.elapsedTime/b.goalTime*deltaSpeed*-1f;
+        }
+
+        newSpeed = initSpeed + speedIncrement;
+        
+        return newSpeed;
+    }
+
+    void simulateMovement(List<boidController> boids, float time)
+    {
+        //maxNumOfRandomFish = (int) Random.Range(1f, numOfFish/2f);
+        maxNumOfRandomFish = 2;
+
+        for (int i = 0; i < boids.Count; i++)
+        {
+            boidController b_i = boids[i];
+
+            Vector3 steering = Vector3.zero;
+            Vector3 separationDirection = Vector3.zero;
+            int separationCount = 0;
+            Vector3 alignmentDirection = Vector3.zero;
+            int alignmentCount = 0;
+            Vector3 cohesionDirection = Vector3.zero;
+            int cohesionCount = 0;
+            Vector3 leaderDirection = Vector3.zero;
+            boidController leaderBoid = boids[0];
+            float leaderAngle = 180f;
+
+            Vector3 randomDirection = Vector3.zero;
+            float randomWeight = 0;
+
+            if (!b_i.randomBehaviour && Random.value > .9f && numberOfRandomFish != maxNumOfRandomFish)
+            {
+                numberOfRandomFish += 1;
+                b_i.randomBehaviour = true;
+
+                //b_i.elapsedFrames = 0;
+                //b_i.goalFrames = (int) Random.Range(180f, 360f);
+                //b_i.framesToMaxSpeed = Mathf.RoundToInt(Random.Range(0.1f, 0.5f) * b_i.goalFrames);
+
+                b_i.elapsedTime = 0f;
+                b_i.goalTime = 1f;
+                b_i.timeToMaxSpeed = Random.Range(0.1f, 0.5f);
+                
+                /*float rndValue = Random.Range(-1f, 1f);
+                float cond = Random.value;
+                if (cond < 0.33f)
+                {
+                    b_i.randomDirection = new Vector3(rndValue, 0, 0);
+                } 
+                else if (cond < 0.66f)
+                {
+                    b_i.randomDirection = new Vector3(0, rndValue, 0);
+                }
+                else 
+                {
+                    b_i.randomDirection = new Vector3(0, 0, rndValue);
+                } */
+                b_i.randomDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
+                b_i.randomDirection = b_i.randomDirection.normalized;
+
+                b_i.randomWeight = Random.Range(1f, 10f);
+                b_i.randomSteeringSpeed = Random.Range(2f, 10f)*b_i.steeringSpeed;
+                //b_i.randomSpeed = b_i.randomSteeringSpeed/10f;
+                b_i.originalSpeed = b_i.speed;
+                b_i.originalSteeringSpeed = b_i.steeringSpeed;
+            }
+
+            if (b_i.randomBehaviour)
+            {
+                //if (b_i.elapsedFrames == b_i.goalFrames)
+                if (b_i.elapsedTime > b_i.goalTime)
+                {
+                    numberOfRandomFish -= 1;
+                    b_i.randomBehaviour = false;
+                    b_i.speed = b_i.originalSpeed;
+                    b_i.steeringSpeed = b_i.originalSteeringSpeed;
+                }
+                else
+                {
+                    randomDirection = b_i.randomDirection;
+                    randomWeight = b_i.randomWeight;
+                    //b_i.speed = updateSpeedTime(b_i, b_i.randomSpeed, b_i.originalSpeed);
+                    b_i.steeringSpeed = updateSpeed(b_i, b_i.randomSteeringSpeed, b_i.originalSteeringSpeed);
+
+                    b_i.elapsedTime += time;
+                    //b_i.elapsedFrames += 1;
+                }
+            } 
+
+            if (!b_i.randomBehaviour)
+            {
+                for (int j = 0; j < boids.Count; j++)
+                {
+                    boidController b_j = boids[j];
+                    if (b_i == b_j) continue;
+
+                    float distance = Vector3.Distance(b_j.go.transform.position, b_i.go.transform.position);
+                    if (distance < boidNoClumpingArea)
+                    {
+                        separationDirection += b_j.go.transform.position - b_i.go.transform.position;
+                        separationCount++;
+                    }
+
+                    if (distance < boidLocalArea && b_j.swarmIndex == b_i.swarmIndex)
+                    {
+                        alignmentDirection += b_j.go.transform.forward;
+                        alignmentCount++;
+
+                        cohesionDirection += b_j.go.transform.position - b_i.go.transform.position;
+                        cohesionCount++;
+
+                        //identify leader
+                        float angle = Vector3.Angle(b_j.go.transform.position - b_i.go.transform.position, b_i.go.transform.forward);
+                        if (angle < leaderAngle && angle < 90f)
+                        {
+                            leaderBoid = b_j;
+                            leaderAngle = angle;
+                        }
+                    }
+                }
+            
+                if (separationCount > 0) separationDirection /= separationCount;
+                separationDirection = -separationDirection;
+                separationDirection = separationDirection.normalized;
+
+                if (alignmentCount > 0) alignmentDirection /= alignmentCount;
+                alignmentDirection = alignmentDirection.normalized;
+
+                if (cohesionCount > 0) cohesionDirection /= cohesionCount;
+                cohesionDirection -= b_i.go.transform.position;
+                cohesionDirection = cohesionDirection.normalized;
+
+                if (leaderBoid != null) 
+                {
+                    leaderDirection = leaderBoid.go.transform.position - b_i.go.transform.position;
+                    leaderDirection = leaderDirection.normalized;
+                }
+            }
+
+        
+            Vector3 boundsDirection = Vector3.zero;
+            float distanceToSimArea = Vector3.Distance(simAreaBounds.center, b_i.go.transform.position);
+            boundsDirection = simAreaBounds.center - b_i.go.transform.position;
+            boundsDirection = boundsDirection.normalized;
+
+            steering += boundsDirection;
+            steering += separationDirection*S;
+            steering += alignmentDirection*M;
+            steering += cohesionDirection*K;
+            steering += leaderDirection*X;
+            steering += randomDirection*randomWeight;
+
+            if (randomDirection != Vector3.zero)
+            {
+                steering = randomDirection*randomWeight;
+                //print("randomDirection " + randomDirection.ToString());
+                //print("randomWeight " + randomWeight.ToString());
+                //print("steering " + steering.ToString());
+            }
+
+            if (!simAreaBounds.Contains(b_i.go.transform.position))
+            {
+                steering = boundsDirection*distanceToSimArea;
+            }
+
+            if (steering != Vector3.zero)
+            {
+                    b_i.go.transform.rotation = Quaternion.RotateTowards(
+                        b_i.go.transform.rotation, 
+                        Quaternion.LookRotation(steering), 
+                        b_i.steeringSpeed * time);
+            }
+           
+            b_i.go.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;
+        }
+    }
+
     void Awake()
     {
         //Setup folder structure
@@ -611,11 +752,22 @@ public class SpawnerBoids: MonoBehaviour
         }
 
         //Set up constant variables
-        main_cam = GameObject.Find("Fish Camera").GetComponent<Camera>();
-        background_cam = GameObject.Find("Background Camera").GetComponent<Camera>();
+        mainCam = GameObject.Find("Fish Camera").GetComponent<Camera>();
+        
+        backgroundCam = GameObject.Find("Background Camera").GetComponent<Camera>();
         if (control.background == 0) {
-            background_cam.enabled = false;
+            backgroundCam.enabled = false;
         }
+
+        GameObject background = GameObject.Find("backgroundTransparent");
+        background.SetActive(false);
+
+        GameObject simArea = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        simArea.transform.position = new Vector3(0, 0, simAreaSize.z/2f);
+        simArea.transform.localScale = simAreaSize;
+        UnityEngine.Physics.SyncTransforms();
+        simAreaBounds = simArea.GetComponent<Collider>().bounds;
+        simArea.SetActive(false);
 
         videoFiles = System.IO.Directory.GetFiles(videoDir,"*.avi");
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
@@ -633,13 +785,18 @@ public class SpawnerBoids: MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+
         //Set up a first scene
         if (control.background == 1) randomizeVideo();
         generateFogColor();
-        randomizeBackgroundColor();
+        //randomizeBackgroundColor();
+        mainCam.backgroundColor = fogColor;
         if (control.fog == 1) randomizeFog();         
         if (control.distractors == 1) generateDistractors();
-        InstantiateFish();
+        for (int i = 0; i < numberOfSwarms; i++)
+        {
+            instantiateFish(i);
+        }
         addNewSequence();
     }
 
@@ -653,47 +810,24 @@ public class SpawnerBoids: MonoBehaviour
 
             if (control.background == 1) randomizeVideo();
             generateFogColor();
-            randomizeBackgroundColor();
+            //randomizeBackgroundColor();
+            mainCam.backgroundColor = fogColor;
             if (control.fog == 1) randomizeFog();         
             if (control.distractors == 1) generateDistractors();
-            InstantiateFish();
+            for (int i = 0; i < numberOfSwarms; i++)
+            {
+                instantiateFish(i);
+            }
             addNewSequence();
         } 
 
         if(vp.isPlaying || control.background == 0)
         {
-            timePassed += deltaTime;
-
             sequence_image += 1;
-            foreach (DynamicGameObject dgo in dgo_list)
-            {
-                /*if (Time.frameCount%20 == 0)
-                {
-                    updateActivity(dgo);
-                }
-                
-                //updateActivity(dgo);
-                if (dgo.activity == 0){
-                    goStraight(dgo);
-                } else {
-                    Turn(dgo);
-                }*/
 
-                if (timePassed > 1)
-                { 
-                    if (dgo.activity == 1) updateActivity(dgo);
-                    if (dgo.activity == 0 && Random.value > 0.75f) updateActivity(dgo);
-                }
+            simulateMovement(boidsList, deltaTime);
 
-                if (dgo.activity == 0){
-                    goStraight(dgo);
-                } else {
-                    Turn(dgo);
-                }
-            }
-
-            if (control.distractors == 1) updateDistractors();
-            if (timePassed > 1) timePassed = 0;
+            if (control.distractors == 1) updateDistractors(deltaTime);
         }
     }
 
@@ -710,11 +844,10 @@ public class SpawnerBoids: MonoBehaviour
 
             if(vp.isPlaying || control.background == 0)
             {
-                foreach (DynamicGameObject dgo in dgo_list)
+                foreach (boidController b in boidsList)
                 {
-                    Vector4 bounds = GetBoundingBoxInCamera(dgo.go, main_cam);
-                    SaveAnnotation(bounds, dgo.id);
-                    //Debug.Log("Bounds" + bounds);
+                    Vector4 bounds = GetBoundingBoxInCamera(b.go, mainCam);
+                    SaveAnnotation(bounds, b.id);
                 }
 
                 if (control.background == 1){

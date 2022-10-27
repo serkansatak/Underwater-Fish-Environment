@@ -123,6 +123,52 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &25331120
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 25331122}
+  - component: {fileID: 25331121}
+  m_Layer: 0
+  m_Name: finalSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &25331121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 25331120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51e1a7bf067a4c5859ed32fe0d98ff88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
+  mat: {fileID: 2100000, guid: 57cb8209be86bd249aab3f39532926c5, type: 2}
+--- !u!4 &25331122
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 25331120}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -56.359135, y: 57.104866, z: 87.1321}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 20
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &104356237
 GameObject:
   m_ObjectHideFlags: 0
@@ -595,6 +641,49 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
+  mainCam: {fileID: 0}
+  backgroundCam: {fileID: 0}
+  fogColor:
+    r: 0
+    g: 0
+    b: 0
+    a: 0
+  vp: {fileID: 0}
+  videoDir: Assets/videos
+  videoFiles: []
+  FPS: 15
+  deltaTime: 0
+  timePassed: 0
+  numberOfFlocksMin: 1
+  numberOfFlocksMax: 10
+  numberOfFlocks: 0
+  numberOfFishInTheFlockMin: 5
+  numberOfFishInTheFlockMax: 10
+  numberOfFishInTheFlock: 0
+  radiusMin: 3
+  radiusMax: 9
+  fishID: 0
+  maxLinSpeed: 5
+  minLinSpeed: 1
+  maxAngSpeed: 180
+  minAngSpeed: -180
+  animationSpeed: 1
+  rootDir: 
+  datasetDir: BrackishMOT_Synth
+  imageFolder: 
+  gtFolder: 
+  gtFile: 
+  sequenceNumber: 0
+  sequenceImage: 0
+  sequenceGoal: 2
+  sequenceLength: 50
+  imgHeight: 544
+  imgWidth: 960
+  screenRenderTexture: {fileID: 0}
+  screenshotTex: {fileID: 0}
+  bakedMesh: {fileID: 0}
+  numberOfDistractors: 0
+  currentDirection: {x: 0, y: 0, z: 0}
   mat: {fileID: 2100000, guid: 57cb8209be86bd249aab3f39532926c5, type: 2}
 --- !u!4 &774413013
 Transform:
@@ -1165,7 +1254,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1517805483
 Transform:
   m_ObjectHideFlags: 0
