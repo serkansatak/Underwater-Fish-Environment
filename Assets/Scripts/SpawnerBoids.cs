@@ -29,7 +29,10 @@ public class SpawnerBoids : MonoBehaviour
             this.distractors = c3;
         }
     }
-    conditionsControl control = new conditionsControl(0, 0, 1);
+    conditionsControl control;
+    int controlIdx = 0;
+    List<conditionsControl> controlList = new List<conditionsControl>();
+    // 000, 001, 010, 100, 101, 110, 011, 111
 
     Vector2 numFishMinMax = new Vector2(4, 50);
     int numberOfSwarms = 1;
@@ -49,8 +52,8 @@ public class SpawnerBoids : MonoBehaviour
     float animationSpeed = 1f;
     
     int numberOfRandomFish = 0;
-    Vector2 numOfRandomFishMinMax;
-    int maxNumOfRandomFish;
+    //Vector2 numOfRandomFishMinMax;
+    //int maxNumOfRandomFish;
 
     //default boids values
     float boidSpeed = 10f; //10f
@@ -94,7 +97,7 @@ public class SpawnerBoids : MonoBehaviour
         public float originalSpeed;
         public float originalSteeringSpeed;
 
-        //default behaviour values
+        //default behaviour values, not used for anything yet
         public float noClumpingArea;
         public float localArea;
         public float speed;
@@ -122,39 +125,39 @@ public class SpawnerBoids : MonoBehaviour
 
     Mesh bakedMesh;
 
-    public class DynamicGameObject
+    /*public class DynamicGameObject
     {
         public GameObject go;
         public float speed; //used for distractors
-    }
+    }*/
 
     int number_of_distractors;
-    List<DynamicGameObject> distractors_list = new List<DynamicGameObject>(); 
-    Vector3 current_direction;
+    List<GameObject> distractors_list = new List<GameObject>(); 
+    //Vector3 current_direction;
     [SerializeField] Material mat;
 
-    void getNewCurrentDirection()
+    /*void getNewCurrentDirection()
     {
         current_direction = new Vector3 (Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
         current_direction.Normalize();
-    }
+    }*/
 
     public void generateDistractors()
     {
-        getNewCurrentDirection();
+        //getNewCurrentDirection();
         number_of_distractors = (int) Random.Range(500, 1000);
 
         for (int i = 0; i < number_of_distractors; i++)
         {
-            DynamicGameObject dgo = new DynamicGameObject();
-            dgo.speed = Random.Range(1, 10);
+            //DynamicGameObject dgo = new DynamicGameObject();
+            //dgo.speed = Random.Range(1, 10);
             GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphere.transform.position = GetRandomPositionInCamera(mainCam);
             sphere.name = "distractor_" + i.ToString();
 
             sphere.transform.parent = transform;
             sphere.transform.localScale = Vector3.one * Random.Range(0.01f, 1f);
-            dgo.go = sphere;
+            //dgo.go = sphere;
             Renderer rend = sphere.GetComponent<Renderer>();
             rend.material = mat;
             //float rnd_color_seed = Random.Range(75.0f, 225.0f);
@@ -165,33 +168,18 @@ public class SpawnerBoids : MonoBehaviour
                 Random.Range(151f, 171f)/255);  
             rend.material.color = rnd_albedo;
             rend.material.SetFloat("_TranspModify", Random.Range(0.25f, 0.5f));
-            distractors_list.Add(dgo);
+            distractors_list.Add(sphere);
         }
     }
 
-    void updateDistractors(float time)
+    void updateDistractors()
     {
-        print("updateDistractors");
-        for (int i = distractors_list.Count - 1; i >= 0; i--)
+        foreach (GameObject go in distractors_list)
         {
-            DynamicGameObject distractor = distractors_list[i];
-            Vector3 distPos = distractor.go.transform.position;
-            distPos += current_direction*time*distractor.speed;
-            /*bool inBounds = simAreaBounds.Contains(distPos);
-        
-            if (!inBounds)
-            {
-                if (distPos.x > simAreaBounds.max.x) distPos.x -= simAreaBounds.extents.x * 2f;
-                if (distPos.x < simAreaBounds.min.x) distPos.x += simAreaBounds.extents.x * 2f;
-
-                if (distPos.y > simAreaBounds.max.y) distPos.y -= simAreaBounds.extents.y * 2f;
-                if (distPos.y < simAreaBounds.min.y) distPos.y += simAreaBounds.extents.y * 2f;
-
-                if (distPos.z > simAreaBounds.max.z) distPos.z -= simAreaBounds.extents.z * 2f;
-                if (distPos.z < simAreaBounds.min.z) distPos.z += simAreaBounds.extents.z * 2f;
-
-                distractor.go.transform.position = distPos;
-            }*/
+            go.transform.position = mainCam.ViewportToWorldPoint( new Vector3(
+            UnityEngine.Random.Range(0.0f, 1f), 
+            UnityEngine.Random.Range(0.0f, 1f),
+            UnityEngine.Random.Range(10f, 50f)));
         }
     }
 
@@ -277,7 +265,7 @@ public class SpawnerBoids : MonoBehaviour
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         //Color rnd_col = new Color(Random.value, Random.value, Random.value, Random.value);
         RenderSettings.fogColor = fogColor;
-        RenderSettings.fogDensity = Random.Range(0.005f, 0.02f);
+        RenderSettings.fogDensity = Random.Range(0.01f, 0.05f);
         RenderSettings.fog = true;
     }
 
@@ -329,13 +317,15 @@ public class SpawnerBoids : MonoBehaviour
             Destroy(b.go);
         }
 
-        foreach (DynamicGameObject dgo in distractors_list)
+        foreach (GameObject go in distractors_list)
         {
-            Destroy(dgo.go);
+            Destroy(go);
         }
 
         boidsList.Clear();
         distractors_list.Clear();
+        numberOfRandomFish = 0;
+        RenderSettings.fog = false;
     }
 
     bool isWithinTheView(GameObject go)
@@ -548,8 +538,7 @@ public class SpawnerBoids : MonoBehaviour
 
     void simulateMovement(List<boidController> boids, float time)
     {
-        //maxNumOfRandomFish = (int) Random.Range(1f, numOfFish/2f);
-        maxNumOfRandomFish = 2;
+        int maxNumOfRandomFish = (int) Random.Range(1f, 10);
 
         for (int i = 0; i < boids.Count; i++)
         {
@@ -579,7 +568,7 @@ public class SpawnerBoids : MonoBehaviour
                 //b_i.framesToMaxSpeed = Mathf.RoundToInt(Random.Range(0.1f, 0.5f) * b_i.goalFrames);
 
                 b_i.elapsedTime = 0f;
-                b_i.goalTime = 1f;
+                b_i.goalTime = Random.Range(1f, 2f);
                 b_i.timeToMaxSpeed = Random.Range(0.1f, 0.5f);
                 
                 /*float rndValue = Random.Range(-1f, 1f);
@@ -716,12 +705,60 @@ public class SpawnerBoids : MonoBehaviour
         }
     }
 
-    void Awake()
+    void generateControlList()
     {
-        //Setup folder structure
-        //Create string describing generation conditions and append it to the base daatset folder name        
+        conditionsControl controlVariant;
+
+        //000
+        controlVariant.background = 0; 
+        controlVariant.fog = 0;
+        controlVariant.distractors = 0;
+        controlList.Add(controlVariant);
+        //001
+        controlVariant.background = 0; 
+        controlVariant.fog = 0;
+        controlVariant.distractors = 1;
+        controlList.Add(controlVariant);
+        //010
+        controlVariant.background = 0; 
+        controlVariant.fog = 1;
+        controlVariant.distractors = 0;
+        controlList.Add(controlVariant);
+         //011
+        controlVariant.background = 0; 
+        controlVariant.fog = 1;
+        controlVariant.distractors = 1;
+        controlList.Add(controlVariant);
+
+        /*//100
+        controlVariant.background = 1; 
+        controlVariant.fog = 0;
+        controlVariant.distractors = 0;
+        controlList.Add(controlVariant);
+        //101
+        controlVariant.background = 1; 
+        controlVariant.fog = 0;
+        controlVariant.distractors = 1;
+        controlList.Add(controlVariant);
+        //110
+        controlVariant.background = 1; 
+        controlVariant.fog = 1;
+        controlVariant.distractors = 0;
+        controlList.Add(controlVariant);
+        //111
+        controlVariant.background = 1; 
+        controlVariant.fog = 1;
+        controlVariant.distractors = 1;*/
+
+
+        controlList.Add(controlVariant);
+
+    }
+
+    void setupFolderStructure()
+    {
         string controlString = "";
-        rootDir = datasetDir;
+        rootDir = "/home/vap/synthData/" + datasetDir;
         if (control.background == 1){
             controlString += "_Background";
         } else {
@@ -751,13 +788,23 @@ public class SpawnerBoids : MonoBehaviour
              System.IO.Directory.CreateDirectory(rootDir);
         }
 
+    }
+
+    void Awake()
+    {
+
+        generateControlList();
+        control = controlList[controlIdx];
+        //Setup folder structure
+        //Create string describing generation conditions and append it to the base daatset folder name        
+        setupFolderStructure();
+
         //Set up constant variables
         mainCam = GameObject.Find("Fish Camera").GetComponent<Camera>();
         
         backgroundCam = GameObject.Find("Background Camera").GetComponent<Camera>();
-        if (control.background == 0) {
-            backgroundCam.enabled = false;
-        }
+        if (control.background == 0) backgroundCam.enabled = false;
+        if (control.background == 1) backgroundCam.enabled = true;
 
         GameObject background = GameObject.Find("backgroundTransparent");
         background.SetActive(false);
@@ -803,6 +850,9 @@ public class SpawnerBoids : MonoBehaviour
 
     void Update()
     {   
+        print("control background " + control.background.ToString());
+        print("control fog " + control.fog.ToString());
+        print("control distractors " + control.distractors.ToString());
         //deltaTime = Time.deltaTime;
         if (sequence_image == sequence_length)
         {      
@@ -827,18 +877,46 @@ public class SpawnerBoids : MonoBehaviour
 
             simulateMovement(boidsList, deltaTime);
 
-            if (control.distractors == 1) updateDistractors(deltaTime);
+            if (control.distractors == 1) updateDistractors();
         }
     }
 
 
     void LateUpdate()
     {
+        print("lateUpdate");
 
         if (sequence_number == sequence_goal+1)
         {  
-            Debug.Log("All sequences were generated");
-            UnityEditor.EditorApplication.isPlaying = false;
+            controlIdx++;
+            if (controlIdx == controlList.Count)
+            {
+                Debug.Log("All sequences were generated");
+                UnityEditor.EditorApplication.isPlaying = false;
+            }
+            else
+            {
+                Debug.Log("New simulation conditions");
+                control = controlList[controlIdx];
+                sequence_number = 0;
+                setupFolderStructure();
+                if (control.background == 0) backgroundCam.enabled = false;
+                if (control.background == 1) backgroundCam.enabled = true;
+                
+                //Set up a new scene with new control conditions
+                CleanUp();
+                if (control.background == 1) randomizeVideo();
+                generateFogColor();
+                //randomizeBackgroundColor();
+                mainCam.backgroundColor = fogColor;
+                if (control.fog == 1) randomizeFog();         
+                if (control.distractors == 1) generateDistractors();
+                for (int i = 0; i < numberOfSwarms; i++)
+                {
+                    instantiateFish(i);
+                }
+                addNewSequence();
+            }
 
         } else {
 
@@ -851,8 +929,10 @@ public class SpawnerBoids : MonoBehaviour
                 }
 
                 if (control.background == 1){
+                    print("saveImage");
                     SaveImage();
                 } else {
+                    print("saveCameraView");
                     SaveCameraView();
                 }
 
