@@ -108,7 +108,7 @@ public class SpawnerBoids : MonoBehaviour
     string videoDir = "Assets/videos";
     string[] videoFiles;
     string rootDir;
-    string datasetDir = "BrackishMOT_Synth";
+    string datasetDir = "brackishMOT_Synth";
     string imageFolder;
     string gtFolder;
     string gtFile;
@@ -471,6 +471,17 @@ public class SpawnerBoids : MonoBehaviour
             sequence_image = 0;
             string new_sequence = rootDir + "/" + datasetDir + "-" + sequence_number.ToString();
 
+            string seq_name;
+            if (sequence_number < 10)
+            {
+                seq_name = datasetDir + "-0" + sequence_number.ToString();
+            }
+            else
+            {
+                seq_name = datasetDir + "-" + sequence_number.ToString();
+            }
+            
+
             if (System.IO.Directory.Exists(new_sequence))
             {
                 System.IO.Directory.Delete(new_sequence, true);
@@ -487,13 +498,13 @@ public class SpawnerBoids : MonoBehaviour
             string iniFile = new_sequence + "/seqinfo.ini";
 
             string seqInfo = "[Sequence]\n" + 
-                "name = " + new_sequence.ToString() + "\n" +
-                "imdir = img1\n" +
-                "framerate = " + FPS.ToString() + "\n" +
-                "seqlength = " + sequence_length.ToString() + "\n" +
-                "imwidth = " + img_width.ToString() + "\n" +
-                "imheight = " + img_height.ToString() + "\n" +
-                "imext = .png";
+                "name=" + seq_name.ToString() +"\n" +
+                "imDir=img1\n" +
+                "frameRate=" + FPS.ToString() + "\n" +
+                "seqLength=" + sequence_length.ToString() + "\n" +
+                "imWidth=" + img_width.ToString() + "\n" +
+                "imHeight=" + img_height.ToString() + "\n" +
+                "imExt=.png";
             
             using (StreamWriter writer = new StreamWriter(iniFile, true))
             {
@@ -709,7 +720,7 @@ public class SpawnerBoids : MonoBehaviour
     {
         conditionsControl controlVariant;
 
-        //000
+        /*//000
         controlVariant.background = 0; 
         controlVariant.fog = 0;
         controlVariant.distractors = 0;
@@ -728,9 +739,9 @@ public class SpawnerBoids : MonoBehaviour
         controlVariant.background = 0; 
         controlVariant.fog = 1;
         controlVariant.distractors = 1;
-        controlList.Add(controlVariant);
+        controlList.Add(controlVariant);*/
 
-        /*//100
+        //100
         controlVariant.background = 1; 
         controlVariant.fog = 0;
         controlVariant.distractors = 0;
@@ -748,7 +759,7 @@ public class SpawnerBoids : MonoBehaviour
         //111
         controlVariant.background = 1; 
         controlVariant.fog = 1;
-        controlVariant.distractors = 1;*/
+        controlVariant.distractors = 1;
 
 
         controlList.Add(controlVariant);
