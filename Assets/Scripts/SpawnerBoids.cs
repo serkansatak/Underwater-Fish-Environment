@@ -114,9 +114,9 @@ public class SpawnerBoids : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
-    int sequence_goal = 5;
+    int sequence_goal = 1;
     //int sequence_length = 100;
-    int sequence_length = 10;
+    int sequence_length = 25;
 
     int img_height = 544;
     int img_width = 960;

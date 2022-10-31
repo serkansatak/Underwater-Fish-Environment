@@ -32,32 +32,36 @@ def draw_rectangles(img, annotations):
     return img
 
 if __name__=="__main__":
-    idx = sys.argv[1]
-    rootDir = "BrackishMOT_Synth_NoBackground_NoFog_NoDistractors/BrackishMOT_Synth"
-    imgFolder = rootDir + "/BrackishMOT_Synth-" + str(idx) + "/img1"
-    gtFile = rootDir + "/BrackishMOT_Synth-" + str(idx) + "/gt/gt.txt"
+    idx = int(sys.argv[1])
+    if (idx < 10):
+        idx = "0" + str(idx)
+
+    rootDir = "/home/vap/synthData/brackishMOTSynth/train"
+    imgFolder = rootDir + "/brackishMOTSynth-" + str(idx) + "/img1"
+    gtFile = rootDir + "/brackishMOTSynth-" + str(idx) + "/gt/gt.txt"
     #outputFile = "annotatedVideos/video-" + str(idx) + ".avi"
 
     images = os.listdir(imgFolder)
     images_ordered = []
     img_array = []
     size = None
-    
+
     for image in images:
-        images_ordered.append( int(image.replace(".png", "")) )
+        images_ordered.append( int(image.replace(".jpg", "")) )
     images_ordered.sort()
     print("Number of images in the sequence ", len(images_ordered))
 
     for img_no in images_ordered:
         img_name = str(img_no)
-        img_name = img_name.zfill(6) + ".png"
+        img_name = img_name.zfill(6) + ".jpg"
         img = cv.imread(imgFolder+"/"+img_name)
         height, width, layers = img.shape
         size = (width,height)
         print(size)
         annotations = read_annotations(img_no)
         img = draw_rectangles(img, annotations)
-        cv.imshow("temp", img)
+        cv.imshow(img_name, img)
         cv.waitKey(0)
+        cv.destroyAllWindows()
         #filename = "annotatedVideos/" + img_name
         #cv.imwrite(filename, img)
