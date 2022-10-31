@@ -105,6 +105,7 @@ public class SpawnerBoids : MonoBehaviour
     }
     List<boidController> boidsList = new List<boidController>();
 
+    
     string videoDir = "Assets/videos";
     string[] videoFiles;
     string rootDir;
@@ -114,9 +115,9 @@ public class SpawnerBoids : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
-    int sequence_goal = 2;
+    int sequence_goal = 50;
     //int sequence_length = 100;
-    int sequence_length = 5;
+    int sequence_length = 150;
 
     int img_height = 544;
     int img_width = 960;
@@ -137,7 +138,6 @@ public class SpawnerBoids : MonoBehaviour
     [SerializeField] Material mat;
 
     GameObject simArea;
-    Renderer simAreaRenderer;
 
     string normalizedFogIntensity;
     string numberOfDistractors;
@@ -289,7 +289,7 @@ public class SpawnerBoids : MonoBehaviour
         RenderSettings.fog = true;*/
 
         simArea.SetActive(true);
-        //Renderer rend = simArea.GetComponent<Renderer>();
+        Renderer simAreaRenderer = simArea.GetComponent<Renderer>();
         simAreaRenderer.material = mat;
         simAreaRenderer.material.color = fogColor;
         float fogIntensityMax = 0.1f;
@@ -469,8 +469,19 @@ public class SpawnerBoids : MonoBehaviour
             string left = bbox.x.ToString();
             string top = bbox.y.ToString();
 
-            int width = (int)Mathf.Round(bbox.z-bbox.x);
+            int width = (int) Mathf.Round(bbox.z-bbox.x);
+            int bbWidth = (int) Mathf.Round(bbox.x + width);
+            if (bbWidth > img_width)
+            {
+                width = (int) Mathf.Round(img_width - bbox.x);
+            }
+
             int height = (int)Mathf.Round(bbox.w-bbox.y);
+            int bbHeight = (int) Mathf.Round(bbox.y + height);
+            if (bbHeight > img_height)
+            {
+                height = (int) Mathf.Round(img_height - bbox.y);
+            }
 
             string confidence = "1";
             string class_id = "1";
@@ -563,7 +574,9 @@ public class SpawnerBoids : MonoBehaviour
         //Debug.Log(files[Random.Range(0,files.Length)]);
         vp.url = random_file;
         string backgroundSequenceFull = random_file;
-        backgroundSequence = backgroundSequenceFull.Replace("Assets/videos/", "");
+        backgroundSequence = backgroundSequenceFull.Replace("Assets/videos\\", "");
+        backgroundSequence = backgroundSequence.Replace(".mp4", "");
+        
         //vp.url = "Assets/videos/converted/video_1_conv.ogv";
         vp.Prepare();
     }
@@ -765,7 +778,7 @@ public class SpawnerBoids : MonoBehaviour
     {
         conditionsControl controlVariant;
 
-        //000
+        /*//000
         controlVariant.background = 0; 
         controlVariant.fog = 0;
         controlVariant.distractors = 0;
@@ -780,11 +793,11 @@ public class SpawnerBoids : MonoBehaviour
         controlVariant.fog = 1;
         controlVariant.distractors = 0;
         controlList.Add(controlVariant);
-         //011
+        //011
         controlVariant.background = 0; 
         controlVariant.fog = 1;
         controlVariant.distractors = 1;
-        controlList.Add(controlVariant);
+        controlList.Add(controlVariant);*/
 
         //100
         controlVariant.background = 1; 
@@ -806,9 +819,7 @@ public class SpawnerBoids : MonoBehaviour
         controlVariant.fog = 1;
         controlVariant.distractors = 1;
 
-
         controlList.Add(controlVariant);
-
     }
 
     void setupFolderStructure()
@@ -868,11 +879,11 @@ public class SpawnerBoids : MonoBehaviour
         simArea.transform.position = new Vector3(0, 0, simAreaSize.z/2f);
         simArea.transform.localScale = simAreaSize;
         UnityEngine.Physics.SyncTransforms();
-        simAreaRenderer = simArea.GetComponent<Renderer>();
+        //simAreaRenderer = simArea.GetComponent<Renderer>();
         simAreaBounds = simArea.GetComponent<Collider>().bounds;
         simArea.SetActive(false);
 
-        videoFiles = System.IO.Directory.GetFiles(videoDir,"*.avi");
+        videoFiles = System.IO.Directory.GetFiles(videoDir,"*.mp4");
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
 
         bakedMesh = new Mesh();
@@ -940,7 +951,7 @@ public class SpawnerBoids : MonoBehaviour
 
     void LateUpdate()
     {
-        print("lateUpdate");
+        //print("lateUpdate");
 
         if (sequence_number == sequence_goal+1)
         {  
