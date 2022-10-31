@@ -108,7 +108,7 @@ public class SpawnerBoids : MonoBehaviour
     string videoDir = "Assets/videos";
     string[] videoFiles;
     string rootDir;
-    string datasetDir = "brackishMOT_Synth";
+    string datasetDir = "brackishMOTSynth";
     string imageFolder;
     string gtFolder;
     string gtFile;
@@ -116,7 +116,7 @@ public class SpawnerBoids : MonoBehaviour
     int sequence_image;
     int sequence_goal = 5;
     //int sequence_length = 100;
-    int sequence_length = 50;
+    int sequence_length = 10;
 
     int img_height = 544;
     int img_width = 960;
@@ -137,6 +137,11 @@ public class SpawnerBoids : MonoBehaviour
     [SerializeField] Material mat;
 
     GameObject simArea;
+
+    string normalizedFogIntensity;
+    string numberOfDistractors;
+    string spawnedFish;
+    string backgroundSequence;
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -151,6 +156,7 @@ public class SpawnerBoids : MonoBehaviour
     {
         //getNewCurrentDirection();
         number_of_distractors = (int) Random.Range(50, 500);
+        numberOfDistractors = number_of_distractors.ToString();
 
         for (int i = 0; i < number_of_distractors; i++)
         {
@@ -285,13 +291,19 @@ public class SpawnerBoids : MonoBehaviour
         Renderer rend = simArea.GetComponent<Renderer>();
         rend.material = mat;
         rend.material.color = fogColor;
-        rend.material.SetFloat("_TranspModify", Random.Range(0.1f, 0.8f));
+        float fogIntensityMax = 0.1f;
+        float fogIntensityMin = 0.8f;
+        float fogIntensity = Random.Range(fogIntensityMin, fogIntensityMax);
+        rend.material.SetFloat("_TranspModify", fogIntensity);
+        float normalizedIntensity = (fogIntensity - fogIntensityMin)/(fogIntensityMax-fogIntensityMin);
+        normalizedFogIntensity = normalizedIntensity.ToString();
     }
 
     void instantiateFish(int swarmIdx)
     { 
         fishId = 1;
         int numberOfFish = (int) Random.Range(numFishMinMax.x, numFishMinMax.y);
+        spawnedFish = numberOfFish.ToString();
 
         for (int i = 0; i < numberOfFish; i++)
         {
@@ -518,6 +530,10 @@ public class SpawnerBoids : MonoBehaviour
             System.IO.Directory.CreateDirectory(gtFolder);
             gtFile = gtFolder + "/gt.txt";
             string iniFile = new_sequence + "/seqinfo.ini";
+            
+            if (control.background == 0) backgroundSequence = "plain";
+            if (control.distractors == 0) numberOfDistractors = "0";
+            if (control.fog == 0) normalizedFogIntensity = "0";
 
             string seqInfo = "[Sequence]\n" + 
                 "name=" + seq_name.ToString() +"\n" +
@@ -526,7 +542,11 @@ public class SpawnerBoids : MonoBehaviour
                 "seqLength=" + sequence_length.ToString() + "\n" +
                 "imWidth=" + img_width.ToString() + "\n" +
                 "imHeight=" + img_height.ToString() + "\n" +
-                "imExt=.jpg";
+                "imExt=.jpg\n" +
+                "fogIntensity=" + normalizedFogIntensity + "\n" +
+                "numberOfDistractors=" + numberOfDistractors + "\n" +
+                "spawnedFish=" + spawnedFish + "\n" +
+                "backgroundSequence=" + backgroundSequence + "\n";
             
             using (StreamWriter writer = new StreamWriter(iniFile, true))
             {
@@ -541,6 +561,8 @@ public class SpawnerBoids : MonoBehaviour
         string random_file = videoFiles[Random.Range(0, videoFiles.Length)];
         //Debug.Log(files[Random.Range(0,files.Length)]);
         //vp.url = random_file;
+        string backgroundSequenceFull = random_file;
+        backgroundSequence = backgroundSequenceFull.Replace("Assets/videos/", "");
         vp.url = "Assets/videos/converted/video_1_conv.ogv";
         vp.Prepare();
     }
@@ -793,7 +815,7 @@ public class SpawnerBoids : MonoBehaviour
         string controlString = "";
         rootDir = "/home/vap/synthData/" + datasetDir;
 
-        if (control.background != 0 && control.fog != 0 && control.distractors != 0) controlString += "_";
+        if (control.background != 0 || control.fog != 0 || control.distractors != 0) controlString += "_";
 
         if (control.background == 1){
             controlString += "B";
