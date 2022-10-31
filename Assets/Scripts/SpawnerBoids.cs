@@ -38,7 +38,7 @@ public class SpawnerBoids : MonoBehaviour
     int numberOfSwarms = 1;
     //Vector2 numSwarmsMinMax = new Vector2(2, 10);
     Camera mainCam;
-    Camera backgroundCam;
+    //Camera backgroundCam;
     Color fogColor;
     VideoPlayer vp;
     int FPS = 15;
@@ -114,9 +114,9 @@ public class SpawnerBoids : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
-    int sequence_goal = 50;
+    int sequence_goal = 5;
     //int sequence_length = 100;
-    int sequence_length = 150;
+    int sequence_length = 50;
 
     int img_height = 544;
     int img_width = 960;
@@ -136,6 +136,11 @@ public class SpawnerBoids : MonoBehaviour
     //Vector3 current_direction;
     [SerializeField] Material mat;
 
+    GameObject simArea;
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     /*void getNewCurrentDirection()
     {
         current_direction = new Vector3 (Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
@@ -145,14 +150,18 @@ public class SpawnerBoids : MonoBehaviour
     public void generateDistractors()
     {
         //getNewCurrentDirection();
-        number_of_distractors = (int) Random.Range(500, 1000);
+        number_of_distractors = (int) Random.Range(50, 500);
 
         for (int i = 0; i < number_of_distractors; i++)
         {
             //DynamicGameObject dgo = new DynamicGameObject();
             //dgo.speed = Random.Range(1, 10);
             GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            sphere.transform.position = GetRandomPositionInCamera(mainCam);
+            sphere.transform.position = mainCam.ViewportToWorldPoint( new Vector3(
+            UnityEngine.Random.Range(0.0f, 1f), 
+            UnityEngine.Random.Range(0.0f, 1f),
+            UnityEngine.Random.Range(10f, 50f)));
+
             sphere.name = "distractor_" + i.ToString();
 
             sphere.transform.parent = transform;
@@ -167,7 +176,7 @@ public class SpawnerBoids : MonoBehaviour
                 Random.Range(137f, 157f)/255,
                 Random.Range(151f, 171f)/255);  
             rend.material.color = rnd_albedo;
-            rend.material.SetFloat("_TranspModify", Random.Range(0.25f, 0.5f));
+            rend.material.SetFloat("_TranspModify", Random.Range(0f, 1f));
             distractors_list.Add(sphere);
         }
     }
@@ -176,6 +185,7 @@ public class SpawnerBoids : MonoBehaviour
     {
         foreach (GameObject go in distractors_list)
         {
+            //go.transform.position += current_direction*deltaTime;
             go.transform.position = mainCam.ViewportToWorldPoint( new Vector3(
             UnityEngine.Random.Range(0.0f, 1f), 
             UnityEngine.Random.Range(0.0f, 1f),
@@ -202,7 +212,7 @@ public class SpawnerBoids : MonoBehaviour
         return world_pos;
     }
 
-    void SaveImage()
+    /*void SaveImage()
     {   
         string filename;
         if (sequence_image > 99999){
@@ -219,7 +229,7 @@ public class SpawnerBoids : MonoBehaviour
             filename = imageFolder + "/00000" + sequence_image.ToString() + ".png";
         }
         ScreenCapture.CaptureScreenshot(filename);
-    }
+    }*/
 
     void SaveCameraView()
     {
@@ -227,17 +237,17 @@ public class SpawnerBoids : MonoBehaviour
         //Camera cam2 = mainCam;
         string filename;
         if (sequence_image > 99999){
-            filename = imageFolder + "/" + sequence_image.ToString() + ".png";
+            filename = imageFolder + "/" + sequence_image.ToString() + ".jpg";
         } else if (sequence_image > 9999) {
-            filename = imageFolder + "/0" + sequence_image.ToString() + ".png";
+            filename = imageFolder + "/0" + sequence_image.ToString() + ".jpg";
         } else if (sequence_image > 999) {
-            filename = imageFolder + "/00" + sequence_image.ToString() + ".png";
+            filename = imageFolder + "/00" + sequence_image.ToString() + ".jpg";
         } else if (sequence_image > 99) {
-            filename = imageFolder + "/000" + sequence_image.ToString() + ".png";
+            filename = imageFolder + "/000" + sequence_image.ToString() + ".jpg";
         } else if (sequence_image > 9) {
-            filename = imageFolder + "/0000" + sequence_image.ToString() + ".png";
+            filename = imageFolder + "/0000" + sequence_image.ToString() + ".jpg";
         } else {
-            filename = imageFolder + "/00000" + sequence_image.ToString() + ".png";
+            filename = imageFolder + "/00000" + sequence_image.ToString() + ".jpg";
         }
         //string filename = dataDir + "/" + Time.frameCount.ToString() + ".png";
         
@@ -254,24 +264,33 @@ public class SpawnerBoids : MonoBehaviour
         screenRenderTexture = null;
         Destroy(screenRenderTexture);
 
-        byte[] byteArray = screenshotTex.EncodeToPNG();
+        //byte[] byteArray = screenshotTex.EncodeToPNG();
+        byte[] byteArray = screenshotTex.EncodeToJPG();
         System.IO.File.WriteAllBytes(filename, byteArray);
         //Destroy(screenshotTex);
     }
 
     void randomizeFog()
     {
-        RenderSettings.fog = false;
+        /*RenderSettings.fog = false;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
+        //RenderSettings.fogMode = FogMode.Exponential;
+        //RenderSettings.fogMode = FogMode.Linear;
         //Color rnd_col = new Color(Random.value, Random.value, Random.value, Random.value);
         RenderSettings.fogColor = fogColor;
-        RenderSettings.fogDensity = Random.Range(0.01f, 0.05f);
-        RenderSettings.fog = true;
+        RenderSettings.fogDensity = Random.Range(0.01f, 0.025f);
+        RenderSettings.fog = true;*/
+
+        simArea.SetActive(true);
+        Renderer rend = simArea.GetComponent<Renderer>();
+        rend.material = mat;
+        rend.material.color = fogColor;
+        rend.material.SetFloat("_TranspModify", Random.Range(0.1f, 0.8f));
     }
 
     void instantiateFish(int swarmIdx)
     { 
-        fishId = 0;
+        fishId = 1;
         int numberOfFish = (int) Random.Range(numFishMinMax.x, numFishMinMax.y);
 
         for (int i = 0; i < numberOfFish; i++)
@@ -325,7 +344,8 @@ public class SpawnerBoids : MonoBehaviour
         boidsList.Clear();
         distractors_list.Clear();
         numberOfRandomFish = 0;
-        RenderSettings.fog = false;
+        //RenderSettings.fog = false;
+        simArea.SetActive(false);
     }
 
     bool isWithinTheView(GameObject go)
@@ -463,13 +483,11 @@ public class SpawnerBoids : MonoBehaviour
         //Debug.Log(annotation);
     }
 
-
     void addNewSequence()
     {   
         sequence_number += 1;
         if (sequence_number != sequence_goal + 1){
             sequence_image = 0;
-            string new_sequence = rootDir + "/" + datasetDir + "-" + sequence_number.ToString();
 
             string seq_name;
             if (sequence_number < 10)
@@ -480,6 +498,10 @@ public class SpawnerBoids : MonoBehaviour
             {
                 seq_name = datasetDir + "-" + sequence_number.ToString();
             }
+
+            string new_sequence = rootDir + "/" + seq_name;
+
+
             
 
             if (System.IO.Directory.Exists(new_sequence))
@@ -504,7 +526,7 @@ public class SpawnerBoids : MonoBehaviour
                 "seqLength=" + sequence_length.ToString() + "\n" +
                 "imWidth=" + img_width.ToString() + "\n" +
                 "imHeight=" + img_height.ToString() + "\n" +
-                "imExt=.png";
+                "imExt=.jpg";
             
             using (StreamWriter writer = new StreamWriter(iniFile, true))
             {
@@ -569,7 +591,7 @@ public class SpawnerBoids : MonoBehaviour
             Vector3 randomDirection = Vector3.zero;
             float randomWeight = 0;
 
-            if (!b_i.randomBehaviour && Random.value > .9f && numberOfRandomFish != maxNumOfRandomFish)
+            if (!b_i.randomBehaviour && Random.value > .9f && numberOfRandomFish < maxNumOfRandomFish)
             {
                 numberOfRandomFish += 1;
                 b_i.randomBehaviour = true;
@@ -720,7 +742,7 @@ public class SpawnerBoids : MonoBehaviour
     {
         conditionsControl controlVariant;
 
-        /*//000
+        //000
         controlVariant.background = 0; 
         controlVariant.fog = 0;
         controlVariant.distractors = 0;
@@ -739,7 +761,7 @@ public class SpawnerBoids : MonoBehaviour
         controlVariant.background = 0; 
         controlVariant.fog = 1;
         controlVariant.distractors = 1;
-        controlList.Add(controlVariant);*/
+        controlList.Add(controlVariant);
 
         //100
         controlVariant.background = 1; 
@@ -770,24 +792,21 @@ public class SpawnerBoids : MonoBehaviour
     {
         string controlString = "";
         rootDir = "/home/vap/synthData/" + datasetDir;
+
+        if (control.background != 0 && control.fog != 0 && control.distractors != 0) controlString += "_";
+
         if (control.background == 1){
-            controlString += "_Background";
-        } else {
-            controlString += "_NoBackground";
-        }
+            controlString += "B";
+        } 
 
         if (control.fog == 1){
-            controlString += "_Fog";
-        } else {
-            controlString += "_NoFog";
+            controlString += "F";
         }
 
         if (control.distractors == 1){
-            controlString += "_Distractors";
-        } else {
-            controlString += "_NoDistractors";
+            controlString += "D";
         }
-        rootDir = rootDir + controlString + "/" + datasetDir;
+        rootDir = rootDir + controlString + "/train/";
 
 
         //Create a parent folder, remove the old one if it exists
@@ -813,14 +832,15 @@ public class SpawnerBoids : MonoBehaviour
         //Set up constant variables
         mainCam = GameObject.Find("Fish Camera").GetComponent<Camera>();
         
-        backgroundCam = GameObject.Find("Background Camera").GetComponent<Camera>();
-        if (control.background == 0) backgroundCam.enabled = false;
-        if (control.background == 1) backgroundCam.enabled = true;
+        //backgroundCam = GameObject.Find("Background Camera").GetComponent<Camera>();
+        //if (control.background == 0) backgroundCam.enabled = false;
+        //if (control.background == 1) backgroundCam.enabled = true;
 
         GameObject background = GameObject.Find("backgroundTransparent");
         background.SetActive(false);
 
-        GameObject simArea = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        //GameObject simArea = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        simArea = GameObject.Find("simArea");
         simArea.transform.position = new Vector3(0, 0, simAreaSize.z/2f);
         simArea.transform.localScale = simAreaSize;
         UnityEngine.Physics.SyncTransforms();
@@ -911,8 +931,8 @@ public class SpawnerBoids : MonoBehaviour
                 control = controlList[controlIdx];
                 sequence_number = 0;
                 setupFolderStructure();
-                if (control.background == 0) backgroundCam.enabled = false;
-                if (control.background == 1) backgroundCam.enabled = true;
+                //if (control.background == 0) backgroundCam.enabled = false;
+                //if (control.background == 1) backgroundCam.enabled = true;
                 
                 //Set up a new scene with new control conditions
                 CleanUp();
@@ -939,13 +959,14 @@ public class SpawnerBoids : MonoBehaviour
                     SaveAnnotation(bounds, b.id);
                 }
 
-                if (control.background == 1){
+                SaveCameraView();
+                /*if (control.background == 1){
                     print("saveImage");
                     SaveImage();
                 } else {
                     print("saveCameraView");
                     SaveCameraView();
-                }
+                }*/
 
                 Debug.Log("Sequence Number " + sequence_number.ToString() 
                 + " Sequence Image " + sequence_image.ToString() 
