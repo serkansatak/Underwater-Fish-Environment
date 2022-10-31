@@ -1,2 +1,0 @@
-ffmpeg -i input_video output.format
-eg ffmpeg -i video_1.avi video_1_conv.ogv

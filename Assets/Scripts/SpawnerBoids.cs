@@ -114,9 +114,9 @@ public class SpawnerBoids : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
-    int sequence_goal = 1;
+    int sequence_goal = 2;
     //int sequence_length = 100;
-    int sequence_length = 25;
+    int sequence_length = 5;
 
     int img_height = 544;
     int img_width = 960;
@@ -137,6 +137,7 @@ public class SpawnerBoids : MonoBehaviour
     [SerializeField] Material mat;
 
     GameObject simArea;
+    Renderer simAreaRenderer;
 
     string normalizedFogIntensity;
     string numberOfDistractors;
@@ -288,13 +289,13 @@ public class SpawnerBoids : MonoBehaviour
         RenderSettings.fog = true;*/
 
         simArea.SetActive(true);
-        Renderer rend = simArea.GetComponent<Renderer>();
-        rend.material = mat;
-        rend.material.color = fogColor;
+        //Renderer rend = simArea.GetComponent<Renderer>();
+        simAreaRenderer.material = mat;
+        simAreaRenderer.material.color = fogColor;
         float fogIntensityMax = 0.1f;
         float fogIntensityMin = 0.8f;
         float fogIntensity = Random.Range(fogIntensityMin, fogIntensityMax);
-        rend.material.SetFloat("_TranspModify", fogIntensity);
+        simAreaRenderer.material.SetFloat("_TranspModify", fogIntensity);
         float normalizedIntensity = (fogIntensity - fogIntensityMin)/(fogIntensityMax-fogIntensityMin);
         normalizedFogIntensity = normalizedIntensity.ToString();
     }
@@ -560,10 +561,10 @@ public class SpawnerBoids : MonoBehaviour
         //vp.Stop();
         string random_file = videoFiles[Random.Range(0, videoFiles.Length)];
         //Debug.Log(files[Random.Range(0,files.Length)]);
-        //vp.url = random_file;
+        vp.url = random_file;
         string backgroundSequenceFull = random_file;
         backgroundSequence = backgroundSequenceFull.Replace("Assets/videos/", "");
-        vp.url = "Assets/videos/converted/video_1_conv.ogv";
+        //vp.url = "Assets/videos/converted/video_1_conv.ogv";
         vp.Prepare();
     }
 
@@ -813,7 +814,8 @@ public class SpawnerBoids : MonoBehaviour
     void setupFolderStructure()
     {
         string controlString = "";
-        rootDir = "/home/vap/synthData/" + datasetDir;
+        //rootDir = "/home/vap/synthData/" + datasetDir;
+        rootDir = "synthData/" + datasetDir;
 
         if (control.background != 0 || control.fog != 0 || control.distractors != 0) controlString += "_";
 
@@ -866,6 +868,7 @@ public class SpawnerBoids : MonoBehaviour
         simArea.transform.position = new Vector3(0, 0, simAreaSize.z/2f);
         simArea.transform.localScale = simAreaSize;
         UnityEngine.Physics.SyncTransforms();
+        simAreaRenderer = simArea.GetComponent<Renderer>();
         simAreaBounds = simArea.GetComponent<Collider>().bounds;
         simArea.SetActive(false);
 
