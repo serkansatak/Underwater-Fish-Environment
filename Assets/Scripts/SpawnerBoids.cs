@@ -115,9 +115,9 @@ public class SpawnerBoids : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
-    int sequence_goal = 50;
+    int sequence_goal = 1;
     //int sequence_length = 100;
-    int sequence_length = 150;
+    int sequence_length = 100;
 
     int img_height = 544;
     int img_width = 960;
@@ -219,29 +219,8 @@ public class SpawnerBoids : MonoBehaviour
         return world_pos;
     }
 
-    /*void SaveImage()
-    {   
-        string filename;
-        if (sequence_image > 99999){
-            filename = imageFolder + "/" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 9999) {
-            filename = imageFolder + "/0" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 999) {
-            filename = imageFolder + "/00" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 99) {
-            filename = imageFolder + "/000" + sequence_image.ToString() + ".png";
-        } else if (sequence_image > 9) {
-            filename = imageFolder + "/0000" + sequence_image.ToString() + ".png";
-        } else {
-            filename = imageFolder + "/00000" + sequence_image.ToString() + ".png";
-        }
-        ScreenCapture.CaptureScreenshot(filename);
-    }*/
-
     void SaveCameraView()
     {
-        //Camera cam1 = backgroundCam;
-        //Camera cam2 = mainCam;
         string filename;
         if (sequence_image > 99999){
             filename = imageFolder + "/" + sequence_image.ToString() + ".jpg";
@@ -379,7 +358,7 @@ public class SpawnerBoids : MonoBehaviour
             return false;
         }
 
-        if (go.transform.position.z > 50f || go.transform.position.z < -10f){
+        if (go.transform.position.z > 75f || go.transform.position.z < -10f){
             return false;
         }
         
@@ -470,21 +449,21 @@ public class SpawnerBoids : MonoBehaviour
             string top = bbox.y.ToString();
 
             int width = (int) Mathf.Round(bbox.z-bbox.x);
-            int bbWidth = (int) Mathf.Round(bbox.x + width);
+            /*int bbWidth = (int) Mathf.Round(bbox.x + width);
             if (bbWidth > img_width)
             {
                 width = (int) Mathf.Round(img_width - bbox.x);
-            }
+            }*/
 
             int height = (int)Mathf.Round(bbox.w-bbox.y);
-            int bbHeight = (int) Mathf.Round(bbox.y + height);
+            /*int bbHeight = (int) Mathf.Round(bbox.y + height);
             if (bbHeight > img_height)
             {
                 height = (int) Mathf.Round(img_height - bbox.y);
-            }
+            }*/
 
             string confidence = "1";
-            string class_id = "1";
+            string class_id = "5";
             string visibility = "1";
 
             string annotation = frame + ","
@@ -778,12 +757,12 @@ public class SpawnerBoids : MonoBehaviour
     {
         conditionsControl controlVariant;
 
-        /*//000
+        //000
         controlVariant.background = 0; 
         controlVariant.fog = 0;
         controlVariant.distractors = 0;
         controlList.Add(controlVariant);
-        //001
+        /*//001
         controlVariant.background = 0; 
         controlVariant.fog = 0;
         controlVariant.distractors = 1;
@@ -797,7 +776,7 @@ public class SpawnerBoids : MonoBehaviour
         controlVariant.background = 0; 
         controlVariant.fog = 1;
         controlVariant.distractors = 1;
-        controlList.Add(controlVariant);*/
+        controlList.Add(controlVariant);
 
         //100
         controlVariant.background = 1; 
@@ -817,7 +796,7 @@ public class SpawnerBoids : MonoBehaviour
         //111
         controlVariant.background = 1; 
         controlVariant.fog = 1;
-        controlVariant.distractors = 1;
+        controlVariant.distractors = 1;*/
 
         controlList.Add(controlVariant);
     }
@@ -871,8 +850,8 @@ public class SpawnerBoids : MonoBehaviour
         //if (control.background == 0) backgroundCam.enabled = false;
         //if (control.background == 1) backgroundCam.enabled = true;
 
-        GameObject background = GameObject.Find("backgroundTransparent");
-        background.SetActive(false);
+        //GameObject background = GameObject.Find("backgroundTransparent");
+        //background.SetActive(false);
 
         //GameObject simArea = GameObject.CreatePrimitive(PrimitiveType.Cube);
         simArea = GameObject.Find("simArea");
@@ -951,8 +930,6 @@ public class SpawnerBoids : MonoBehaviour
 
     void LateUpdate()
     {
-        //print("lateUpdate");
-
         if (sequence_number == sequence_goal+1)
         {  
             controlIdx++;

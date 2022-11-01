@@ -81,6 +81,6 @@ ProjectSettings
 UnityPlayer.so
 fish_synth_BurstDebugInformation_DoNotShip
 fish_synth.x86_64
-synthData
+synthData*
 Assets/videos*
 Assets/videos
