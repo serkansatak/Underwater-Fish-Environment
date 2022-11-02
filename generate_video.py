@@ -19,8 +19,6 @@ def draw_rectangles(img, annotations):
         min_y = int(annotations[i, 3])
         max_x = int(annotations[i, 2] + annotations[i, 4])
         max_y = int(annotations[i, 3] + annotations[i, 5])
-        print("max_x: ", max_x)
-        print("max_y: ", max_y)
         center_x = int((min_x + max_x)/2)
         center_y = int((min_y + max_y)/2)
         color = (rnd.randint(0,255), rnd.randint(0,255), rnd.randint(0,255))
