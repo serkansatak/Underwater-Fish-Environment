@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Video;
@@ -34,7 +35,8 @@ public class fixingBoundingBoxes : MonoBehaviour
         public bool save;
     }
 
-    Vector2 numFishMinMax = new Vector2(1,20);
+    Vector2 numFishMinMax = new Vector2(5, 10);
+    int numberOfFish;
     int numberOfSwarms = 1;
     Camera mainCam;
 
@@ -46,6 +48,7 @@ public class fixingBoundingBoxes : MonoBehaviour
     Renderer simAreaRenderer;
     Bounds simAreaBounds;
     Vector3 simAreaSize = new Vector3(150, 60, 180);
+    //Vector3 simAreaSize = Vector3.one*75;
 
     float animationSpeed = 1f;
     
@@ -55,7 +58,7 @@ public class fixingBoundingBoxes : MonoBehaviour
     float boidSpeed = 10f; //10f
     float boidSteeringSpeed = 100f; //100
     float boidNoClumpingArea = 10f;
-    float boidLocalArea = 10f;
+    float boidLocalArea = 20f;
     //default behaviour weights
     float K = 1f;
     float S = 1f;
@@ -108,8 +111,8 @@ public class fixingBoundingBoxes : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
-    int sequence_goal = 2;
-    int sequence_length = 25;
+    int sequence_goal =5;
+    int sequence_length = 50;
 
     string normalizedFogIntensity;
     string numberOfDistractors;
@@ -127,9 +130,9 @@ public class fixingBoundingBoxes : MonoBehaviour
     public Vector3 GetRandomPositionInCamera(Camera cam)
     {
         Vector3 world_pos = cam.ViewportToWorldPoint( new Vector3(
-            UnityEngine.Random.Range(0.1f, 0.8f), 
-            UnityEngine.Random.Range(0.1f, 0.8f), 
-            UnityEngine.Random.Range(20f, 40f)));
+            UnityEngine.Random.Range(0, 1.0f), 
+            UnityEngine.Random.Range(0, 1.0f), 
+            UnityEngine.Random.Range(20f, 60f)));
         return world_pos;
     }
 
@@ -155,7 +158,7 @@ public class fixingBoundingBoxes : MonoBehaviour
 
     void simulateMovement(List<boidController> boids, float time)
     {
-        int maxNumOfRandomFish = (int) Random.Range(1f, 10);
+        int maxNumOfRandomFish = (int) Random.Range(1f, numberOfFish/2f);
 
         for (int i = 0; i < boids.Count; i++)
         {
@@ -174,7 +177,7 @@ public class fixingBoundingBoxes : MonoBehaviour
             Vector3 randomDirection = Vector3.zero;
             float randomWeight = 0;
 
-            if (!b_i.randomBehaviour && Random.value > .9f && numberOfRandomFish < maxNumOfRandomFish)
+            if (!b_i.randomBehaviour && Random.value > .99f && numberOfRandomFish < maxNumOfRandomFish)
             {
                 numberOfRandomFish += 1;
                 b_i.randomBehaviour = true;
@@ -209,7 +212,6 @@ public class fixingBoundingBoxes : MonoBehaviour
                     randomWeight = b_i.randomWeight;
                     //b_i.speed = updateSpeedTime(b_i, b_i.randomSpeed, b_i.originalSpeed);
                     b_i.steeringSpeed = updateSpeed(b_i, b_i.randomSteeringSpeed, b_i.originalSteeringSpeed);
-
                     b_i.elapsedTime += time;
                 }
             } 
@@ -264,30 +266,29 @@ public class fixingBoundingBoxes : MonoBehaviour
                 }
             }
 
-        
-            Vector3 boundsDirection = Vector3.zero;
-            float distanceToSimArea = Vector3.Distance(simAreaBounds.center, b_i.go.transform.position);
-            boundsDirection = simAreaBounds.center - b_i.go.transform.position;
-            boundsDirection = boundsDirection.normalized;
+            Vector3 cameraDirection = mainCam.transform.position - b_i.go.transform.position;
+            cameraDirection = -cameraDirection.normalized;
 
-            steering += boundsDirection;
-            steering += separationDirection*S;
-            steering += alignmentDirection*M;
-            steering += cohesionDirection*K;
-            steering += leaderDirection*X;
-            steering += randomDirection*randomWeight;
-
-            if (randomDirection != Vector3.zero)
+            if (randomDirection != Vector3.zero && simAreaBounds.Contains(b_i.go.transform.position))
             {
-                steering = randomDirection*randomWeight;
-                //print("randomDirection " + randomDirection.ToString());
-                //print("randomWeight " + randomWeight.ToString());
-                //print("steering " + steering.ToString());
-            }
-
-            if (!simAreaBounds.Contains(b_i.go.transform.position))
+                float cameraDistance = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
+                steering += cameraDirection*cameraDistance;
+                steering += randomDirection*randomWeight;
+                
+                Debug.DrawRay(b_i.go.transform.position, steering, Color.red);
+            } 
+            else
             {
-                steering = boundsDirection*distanceToSimArea;
+                Vector3 boundsDirection = Vector3.zero;
+                boundsDirection = simAreaBounds.center - b_i.go.transform.position;
+                boundsDirection = boundsDirection.normalized;
+                steering += boundsDirection;
+                steering += cameraDirection;
+                steering += separationDirection*S;
+                steering += alignmentDirection*M;
+                steering += cohesionDirection*K;
+                steering += leaderDirection*X;
+                Debug.DrawRay(b_i.go.transform.position, steering, Color.green);
             }
 
             b_i.go.transform.rotation = Quaternion.RotateTowards(
@@ -302,7 +303,8 @@ public class fixingBoundingBoxes : MonoBehaviour
     void instantiateFish(int swarmIdx)
     { 
         fishId = 1;
-        int numberOfFish = (int) Random.Range(numFishMinMax.x, numFishMinMax.y);
+
+        numberOfFish = (int) Random.Range(numFishMinMax.x, numFishMinMax.y);
         spawnedFish = numberOfFish.ToString();
 
         for (int i = 0; i < numberOfFish; i++)
@@ -318,6 +320,7 @@ public class fixingBoundingBoxes : MonoBehaviour
 
             //Visual randomisation
             SkinnedMeshRenderer renderer = b.go.GetComponentInChildren<SkinnedMeshRenderer>();
+            renderer.forceMatrixRecalculationPerRender = true;
             b.renderer = renderer;
             float rnd_color_seed = Random.Range(75.0f, 225.0f);
             Color rnd_albedo = new Color(
@@ -345,7 +348,8 @@ public class fixingBoundingBoxes : MonoBehaviour
     {   
         sequence_number += 1;
         if (sequence_number != sequence_goal + 1){
-            sequence_image = 0;
+            //sequence_image = 0;
+            sequence_image = 1;
 
             string seq_name;
             if (sequence_number < 10)
@@ -443,16 +447,19 @@ public class fixingBoundingBoxes : MonoBehaviour
         controlVariant.fog = 0;
         controlVariant.distractors = 0;
         controlList.Add(controlVariant);
+        
         /*//001
         controlVariant.background = 0; 
         controlVariant.fog = 0;
         controlVariant.distractors = 1;
         controlList.Add(controlVariant);
+        
         //010
         controlVariant.background = 0; 
         controlVariant.fog = 1;
         controlVariant.distractors = 0;
         controlList.Add(controlVariant);
+        
         //011
         controlVariant.background = 0; 
         controlVariant.fog = 1;
@@ -464,22 +471,24 @@ public class fixingBoundingBoxes : MonoBehaviour
         controlVariant.fog = 0;
         controlVariant.distractors = 0;
         controlList.Add(controlVariant);
+        
         //101
         controlVariant.background = 1; 
         controlVariant.fog = 0;
         controlVariant.distractors = 1;
         controlList.Add(controlVariant);
+        
         //110
         controlVariant.background = 1; 
         controlVariant.fog = 1;
         controlVariant.distractors = 0;
         controlList.Add(controlVariant);
+
         //111
         controlVariant.background = 1; 
         controlVariant.fog = 1;
-        controlVariant.distractors = 1;*/
-
-        controlList.Add(controlVariant);
+        controlVariant.distractors = 1;
+        controlList.Add(controlVariant);*/
     }
 
     void CleanUp()
@@ -491,6 +500,19 @@ public class fixingBoundingBoxes : MonoBehaviour
 
         boidsList.Clear();
         numberOfRandomFish = 0;
+    }
+
+    void getNewBoidParameters()
+    {
+        K = Random.Range(0.75f, 1.25f);
+        S = Random.Range(0.75f, 1.25f);
+        M = Random.Range(0.75f, 1.25f);
+        X = Random.Range(0.75f, 1.25f);
+        
+        //boidSpeed = 10f; //10f
+        //boidSteeringSpeed = 100f; //100
+        boidNoClumpingArea = Random.Range(7.5f, 12.5f);
+        boidLocalArea = Random.Range(15f, 25f);
     }
     
 
@@ -523,11 +545,16 @@ public class fixingBoundingBoxes : MonoBehaviour
 
         //Set delta time used for animating
         deltaTime = (float) 1/FPS;
+
+        getNewBoidParameters();
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        //numberOfSwarms = (int) Random.Range(1, 5);
+        numberOfSwarms = 1;
+
         for (int i = 0; i < numberOfSwarms; i++)
         {
             instantiateFish(i);
@@ -540,9 +567,9 @@ public class fixingBoundingBoxes : MonoBehaviour
     void Update()
     {
         deltaTime = Time.deltaTime;
-        print("control background " + control.background.ToString());
-        print("control fog " + control.fog.ToString());
-        print("control distractors " + control.distractors.ToString());
+        //print("control background " + control.background.ToString());
+        //print("control fog " + control.fog.ToString());
+        //print("control distractors " + control.distractors.ToString());
 
         if (sequence_image == sequence_length)
         {      
@@ -552,6 +579,8 @@ public class fixingBoundingBoxes : MonoBehaviour
                 instantiateFish(i);
             }
             addNewSequence();
+
+            //sequence_image += 1;
         } 
         else if(vp.isPlaying || control.background == 0)
         {
@@ -565,10 +594,15 @@ public class fixingBoundingBoxes : MonoBehaviour
 
     void LateUpdate()
     {
+        //print("controlIdx " + controlIdx.ToString());
+        //print("controlList.Count " + controlList.Count.ToString());
+            
         if (sequence_number == sequence_goal+1)
         {  
+           
             controlIdx++;
             if (controlIdx == controlList.Count)
+            //if (controlList[controlIdx] == controlList.Last())
             {
                 Debug.Log("All sequences were generated");
                 UnityEditor.EditorApplication.isPlaying = false;
@@ -582,36 +616,36 @@ public class fixingBoundingBoxes : MonoBehaviour
                 SaveAnnotation(bb, b.id);
             }
             SaveCameraView();
+
+            Debug.Log("Sequence Number " + sequence_number.ToString() 
+            + " Sequence Image " + sequence_image.ToString() 
+            + "/" + sequence_length.ToString());
         }
-
-        Debug.Log("Sequence Number " + sequence_number.ToString() 
-                + " Sequence Image " + sequence_image.ToString() 
-                + "/" + sequence_length.ToString());
-
     }
 
     bool isWithinTheView(GameObject go)
     {
-        
+        if (go.transform.position.z < -10f){
+            return false;
+        }
+
         Vector3 headPosition = go.transform.Find("Armature/Bone").transform.position;
         Vector3 tailPosition = go.transform.Find("Armature/Bone/Bone.001/Bone.002/Bone.003/Bone.004").transform.position;
         Vector3 viewPosHead = mainCam.WorldToViewportPoint(headPosition);
         Vector3 viewPosTail = mainCam.WorldToViewportPoint(tailPosition);
-       
-        if (viewPosHead.x <= 0 && viewPosTail.x <= 0 ||  
-            viewPosHead.x >= 1 && viewPosTail.x >= 1 ){
+        float minViewPos = 0.0f;
+        float maxViewPos = 1.0f;
+
+        if (viewPosHead.x <= minViewPos && viewPosTail.x <= minViewPos ||  
+            viewPosHead.x >= maxViewPos && viewPosTail.x >= maxViewPos ){
             return false;
         }
         
-        if (viewPosHead.y <= 0 && viewPosTail.y <= 0 ||  
-            viewPosHead.y >= 1 && viewPosTail.y >= 1 ){
+        if (viewPosHead.y <= minViewPos && viewPosTail.y <= minViewPos ||  
+            viewPosHead.y >= maxViewPos && viewPosTail.y >= maxViewPos ){
             return false;
         }
 
-        if (go.transform.position.z > 75f || go.transform.position.z < -10f){
-            return false;
-        }
-        
         return true;
     }
 
@@ -633,7 +667,7 @@ public class fixingBoundingBoxes : MonoBehaviour
 
     boundingBox GetBoundingBoxInCamera(GameObject go, Camera cam)
     {
-        Physics.SyncTransforms();
+        //Physics.SyncTransforms();
         bool withinTheView = isWithinTheView(go);
         //bool withinTheView = true;
         //Debug.Log("Within the view " + withinTheView.ToString());
@@ -666,9 +700,12 @@ public class fixingBoundingBoxes : MonoBehaviour
             Vector2 min = pixelCoordinates[0];
             Vector2 max = pixelCoordinates[0];
             foreach (Vector2 pixel in pixelCoordinates)
-            {
-                min = Vector2.Min(min, pixel);
-                max = Vector2.Max(max, pixel);
+            {   
+                if (pixel.x >= 0 && pixel.x <= img_width && pixel.y >= 0 && pixel.y <= img_height)
+                {
+                    min = Vector2.Min(min, pixel);
+                    max = Vector2.Max(max, pixel);
+                }
             }
             
             float minHeight = min.y;
@@ -677,18 +714,16 @@ public class fixingBoundingBoxes : MonoBehaviour
             max.y = img_height - minHeight;
 
             bb.left = (int) min.x;
-            if (bb.left < 0) bb.left = 0;
+            //if (bb.left < 0) bb.left = 0;
             
             bb.right = (int) max.x;
-            if (bb.right > img_width) bb.right = img_width;
+            //if (bb.right > img_width) bb.right = img_width;
 
             bb.top = (int) min.y;
-            if (bb.top < 0) bb.top = 0;
+            //if (bb.top < 0) bb.top = 0;
             
             bb.bottom = (int) max.y;
-            if (bb.bottom  > img_height) bb.bottom = img_height;
-            
-           
+            //if (bb.bottom  > img_height) bb.bottom = img_height;
             
             bb.height = (int) bb.bottom - bb.top;
             bb.width = (int) bb.right - bb.left;

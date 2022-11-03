@@ -22,7 +22,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _TranspModify: 0.86
+    - _TranspModify: 0.601
     m_Colors:
     - _Color: {r: 0.7293766, g: 1, b: 0.02352941, a: 1}
   m_BuildTextureStacks: []

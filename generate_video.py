@@ -32,36 +32,49 @@ def draw_rectangles(img, annotations):
     return img
 
 if __name__=="__main__":
-    idx = int(sys.argv[1])
-    if (idx < 10):
-        idx = "0" + str(idx)
 
-    rootDir = "synthData/brackishMOTSynth/train"
-    imgFolder = rootDir + "/brackishMOTSynth-" + str(idx) + "/img1"
-    gtFile = rootDir + "/brackishMOTSynth-" + str(idx) + "/gt/gt.txt"
-    #outputFile = "annotatedVideos/video-" + str(idx) + ".avi"
+    rootDirs = [
+        "synthData/brackishMOTSynth/train",
+        "synthData/brackishMOTSynth_B/train",
+        "synthData/brackishMOTSynth_BD/train",
+        "synthData/brackishMOTSynth_BF/train",
+        "synthData/brackishMOTSynth_BFD/train",
+        "synthData/brackishMOTSynth_D/train",
+        "synthData/brackishMOTSynth_F/train",
+        "synthData/brackishMOTSynth_FD/train",
+    ]
 
-    images = os.listdir(imgFolder)
-    images_ordered = []
-    img_array = []
-    size = None
+    for rootDir in rootDirs:
+        for idx in range(1,11):
+            if (idx < 10):
+                idx = "0" + str(idx)
 
-    for image in images:
-        images_ordered.append( int(image.replace(".jpg", "")) )
-    images_ordered.sort()
-    print("Number of images in the sequence ", len(images_ordered))
+            imgFolder = rootDir + "/brackishMOTSynth-" + str(idx) + "/img1"
+            gtFile = rootDir + "/brackishMOTSynth-" + str(idx) + "/gt/gt.txt"
+            #outputFile = "annotatedVideos/video-" + str(idx) + ".avi"
 
-    for img_no in images_ordered:
-        img_name = str(img_no)
-        img_name = img_name.zfill(6) + ".jpg"
-        img = cv.imread(imgFolder+"/"+img_name)
-        height, width, layers = img.shape
-        size = (width,height)
-        print(size)
-        annotations = read_annotations(img_no)
-        img = draw_rectangles(img, annotations)
-        cv.imshow(img_name, img)
-        cv.waitKey(0)
-        cv.destroyAllWindows()
-        #filename = "annotatedVideos/" + img_name
-        #cv.imwrite(filename, img)
+            images = os.listdir(imgFolder)
+            images_ordered = []
+            img_array = []
+            size = None
+
+            for image in images:
+                images_ordered.append( int(image.replace(".jpg", "")) )
+            images_ordered.sort()
+            print("Number of images in the sequence ", len(images_ordered))
+
+            for img_no in images_ordered:
+                img_name = str(img_no)
+                img_name = img_name.zfill(6) + ".jpg"
+                img = cv.imread(imgFolder+"/"+img_name)
+                height, width, layers = img.shape
+                size = (width,height)
+                print(size)
+                annotations = read_annotations(img_no)
+                img = draw_rectangles(img, annotations)
+                window_name = rootDir + img_name
+                cv.imshow(window_name, img)
+                cv.waitKey(0)
+                cv.destroyAllWindows()
+                #filename = "annotatedVideos/" + img_name
+                #cv.imwrite(filename, img)
