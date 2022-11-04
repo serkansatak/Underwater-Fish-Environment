@@ -35,9 +35,9 @@ public class fixingBoundingBoxes : MonoBehaviour
         public bool save;
     }
 
-    Vector2 numFishMinMax = new Vector2(5, 10);
+    Vector2 numFishMinMax = new Vector2(1, 5);
     int numberOfFish;
-    int numberOfSwarms = 1;
+    int numberOfSwarms = 3;
     Camera mainCam;
 
     int FPS = 15;
@@ -127,6 +127,9 @@ public class fixingBoundingBoxes : MonoBehaviour
     Mesh bakedMesh;
     VideoPlayer vp;
 
+    //bool moveOtherWay;
+    Vector3 fishCenter;
+
     public Vector3 GetRandomPositionInCamera(Camera cam)
     {
         Vector3 world_pos = cam.ViewportToWorldPoint( new Vector3(
@@ -156,13 +159,16 @@ public class fixingBoundingBoxes : MonoBehaviour
         return newSpeed;
     }
 
+
     void simulateMovement(List<boidController> boids, float time)
     {
+        fishCenter = Vector3.zero;
         int maxNumOfRandomFish = (int) Random.Range(1f, numberOfFish/2f);
 
         for (int i = 0; i < boids.Count; i++)
         {
             boidController b_i = boids[i];
+            //print("isVisible " + b_i.renderer.isVisible);
             Vector3 steering = Vector3.zero;
 
             Vector3 separationDirection = Vector3.zero;
@@ -279,10 +285,10 @@ public class fixingBoundingBoxes : MonoBehaviour
             } 
             else
             {
-                Vector3 boundsDirection = Vector3.zero;
-                boundsDirection = simAreaBounds.center - b_i.go.transform.position;
-                boundsDirection = boundsDirection.normalized;
-                steering += boundsDirection;
+                //Vector3 boundsDirection = Vector3.zero;
+                //boundsDirection = simAreaBounds.center - b_i.go.transform.position;
+                //boundsDirection = boundsDirection.normalized;
+                //steering += boundsDirection;
                 steering += cameraDirection;
                 steering += separationDirection*S;
                 steering += alignmentDirection*M;
@@ -291,12 +297,24 @@ public class fixingBoundingBoxes : MonoBehaviour
                 Debug.DrawRay(b_i.go.transform.position, steering, Color.green);
             }
 
-            b_i.go.transform.rotation = Quaternion.RotateTowards(
-                b_i.go.transform.rotation, 
-                Quaternion.LookRotation(steering), 
-                b_i.steeringSpeed * time);
-           
-            b_i.go.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;
+            if (!b_i.renderer.isVisible)
+            {
+                b_i.go.transform.rotation = Quaternion.RotateTowards(
+                    b_i.go.transform.rotation, 
+                    Quaternion.LookRotation(simAreaBounds.center), 
+                    b_i.steeringSpeed * time);
+                b_i.go.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;
+
+            }
+            else 
+            {
+                b_i.go.transform.rotation = Quaternion.RotateTowards(
+                    b_i.go.transform.rotation, 
+                    Quaternion.LookRotation(steering), 
+                    b_i.steeringSpeed * time);
+            
+                b_i.go.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;
+            }
         }
     }
 
@@ -509,12 +527,16 @@ public class fixingBoundingBoxes : MonoBehaviour
         M = Random.Range(0.75f, 1.25f);
         X = Random.Range(0.75f, 1.25f);
         
-        //boidSpeed = 10f; //10f
-        //boidSteeringSpeed = 100f; //100
+        boidSpeed = 10f*Random.Range(0.5f, 1.5f); //10f
+        boidSteeringSpeed = 100f*Random.Range(0.5f, 1.5f); //100
         boidNoClumpingArea = Random.Range(7.5f, 12.5f);
         boidLocalArea = Random.Range(15f, 25f);
     }
     
+    void followFlock()
+    {
+        mainCam.transform.position = fishCenter + new Vector3(0, 0, -40);
+    }
 
     void Awake()
     {
@@ -553,7 +575,7 @@ public class fixingBoundingBoxes : MonoBehaviour
     void Start()
     {
         //numberOfSwarms = (int) Random.Range(1, 5);
-        numberOfSwarms = 1;
+        //numberOfSwarms = 5;
 
         for (int i = 0; i < numberOfSwarms; i++)
         {
@@ -567,7 +589,7 @@ public class fixingBoundingBoxes : MonoBehaviour
     void Update()
     {
         deltaTime = Time.deltaTime;
-        //print("control background " + control.background.ToString());
+        /*//print("control background " + control.background.ToString());
         //print("control fog " + control.fog.ToString());
         //print("control distractors " + control.distractors.ToString());
 
@@ -587,12 +609,14 @@ public class fixingBoundingBoxes : MonoBehaviour
             sequence_image += 1;
 
             simulateMovement(boidsList, deltaTime);
-        }
-        //simulateMovement(boidsList, deltaTime);
+        }*/
+        
+        simulateMovement(boidsList, deltaTime);
+        //followFlock();
         
     }
 
-    void LateUpdate()
+    /*void LateUpdate()
     {
         //print("controlIdx " + controlIdx.ToString());
         //print("controlList.Count " + controlList.Count.ToString());
@@ -621,7 +645,7 @@ public class fixingBoundingBoxes : MonoBehaviour
             + " Sequence Image " + sequence_image.ToString() 
             + "/" + sequence_length.ToString());
         }
-    }
+    }*/
 
     bool isWithinTheView(GameObject go)
     {
