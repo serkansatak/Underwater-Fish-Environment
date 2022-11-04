@@ -123,15 +123,14 @@ public class SpawnerBoids : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
-    int sequence_goal = 1;
+    int sequence_goal = 50;
     //int sequence_length = 100;
-    int sequence_length = 50;
+    int sequence_length = 150;
 
     int img_height = 544;
     int img_width = 960;
     RenderTexture screenRenderTexture;
-    //RenderTexture tempRenderTexture;
-    //Texture2D screenshotTex;
+    Texture2D screenshotTex;
 
     Mesh bakedMesh;
 
@@ -246,7 +245,7 @@ public class SpawnerBoids : MonoBehaviour
         mainCam.Render();
         RenderTexture.active = screenRenderTexture;
         
-        Texture2D screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
+        //screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
         screenshotTex.ReadPixels(new Rect(0, 0, img_width, img_height), 0, 0);
 
         //mainCam.targetTexture = tempRenderTexture;
@@ -351,7 +350,7 @@ public class SpawnerBoids : MonoBehaviour
 
     bool isWithinTheView(GameObject go)
     {
-        if (go.transform.position.z < -10f){
+        if (go.transform.position.z < -10f || go.transform.position.z > 75f){
             return false;
         }
 
@@ -436,8 +435,15 @@ public class SpawnerBoids : MonoBehaviour
             bb.bottom = (int) max.y;
             //if (bb.bottom  > img_height) bb.bottom = img_height;
             
+            float temp;
             bb.height = (int) bb.bottom - bb.top;
+            temp = bb.top + bb.height;
+            if (temp > img_height) bb.height = img_height - bb.top;
+
             bb.width = (int) bb.right - bb.left;
+            temp = bb.left + bb.width;
+            if (temp > img_width) bb.width = img_width - bb.left;
+
         }
         return bb;
     }
@@ -1031,6 +1037,8 @@ public class SpawnerBoids : MonoBehaviour
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
 
         bakedMesh = new Mesh();
+
+        screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
 
         //Set the seed for random
         //Random.InitState(7);

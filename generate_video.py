@@ -18,7 +18,11 @@ def draw_rectangles(img, annotations):
         min_x = int(annotations[i, 2])
         min_y = int(annotations[i, 3])
         max_x = int(annotations[i, 2] + annotations[i, 4])
+        if (max_x > 960):
+            print("Width overflow")
         max_y = int(annotations[i, 3] + annotations[i, 5])
+        if (max_y > 544):
+            print("Height overflow")
         center_x = int((min_x + max_x)/2)
         center_y = int((min_y + max_y)/2)
         color = (rnd.randint(0,255), rnd.randint(0,255), rnd.randint(0,255))
@@ -45,7 +49,8 @@ if __name__=="__main__":
     ]
 
     for rootDir in rootDirs:
-        for idx in range(1,11):
+        for idx in range(1):
+            idx = 1
             if (idx < 10):
                 idx = "0" + str(idx)
 
@@ -61,7 +66,7 @@ if __name__=="__main__":
             for image in images:
                 images_ordered.append( int(image.replace(".jpg", "")) )
             images_ordered.sort()
-            print("Number of images in the sequence ", len(images_ordered))
+            #print("Number of images in the sequence ", len(images_ordered))
 
             for img_no in images_ordered:
                 img_name = str(img_no)
@@ -69,7 +74,7 @@ if __name__=="__main__":
                 img = cv.imread(imgFolder+"/"+img_name)
                 height, width, layers = img.shape
                 size = (width,height)
-                print(size)
+                #print(size)
                 annotations = read_annotations(img_no)
                 img = draw_rectangles(img, annotations)
                 window_name = rootDir + img_name
