@@ -35,9 +35,9 @@ public class fixingBoundingBoxes : MonoBehaviour
         public bool save;
     }
 
-    Vector2 numFishMinMax = new Vector2(1, 5);
+    Vector2 numFishMinMax = new Vector2(1, 1);
     int numberOfFish;
-    int numberOfSwarms = 3;
+    int numberOfSwarms = 1;
     Camera mainCam;
 
     int FPS = 15;
@@ -129,6 +129,8 @@ public class fixingBoundingBoxes : MonoBehaviour
 
     //bool moveOtherWay;
     Vector3 fishCenter;
+
+    GameObject targetGo;
 
     public Vector3 GetRandomPositionInCamera(Camera cam)
     {
@@ -297,24 +299,42 @@ public class fixingBoundingBoxes : MonoBehaviour
                 Debug.DrawRay(b_i.go.transform.position, steering, Color.green);
             }
 
-            if (!b_i.renderer.isVisible)
-            {
-                b_i.go.transform.rotation = Quaternion.RotateTowards(
-                    b_i.go.transform.rotation, 
-                    Quaternion.LookRotation(simAreaBounds.center), 
-                    b_i.steeringSpeed * time);
-                b_i.go.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;
+            Vector3 targetDirection = simAreaBounds.center - b_i.go.transform.position;
+            float distanceToCenter = Vector3.Distance(simAreaBounds.center, b_i.go.transform.position);
+            print("DistanceToCenter " + distanceToCenter.ToString());
+            //b_i.go.transform.position = Vector3.MoveTowards(b_i.go.transform.position, simAreaBounds.center, b_i.speed*time);
+            //b_i.go.transform.up = simAreaBounds.center - b_i.go.transform.position;
+            Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+            b_i.go.transform.rotation = targetRotation;
+            
+            //b_i.go.transform.rotation = Quaternion.RotateTowards(b_i.go.transform.rotation, targetRotation, 7500 * time);
+            //b_i.go.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;
 
+
+            /*Vector3 targetDirection = simAreaBounds.center - b_i.go.transform.position;
+            Vector3 newDirection = Vector3.RotateTowards(b_i.go.transform.forward, targetDirection, b_i.steeringSpeed*time*10, 0.0f);
+            Debug.DrawRay(b_i.go.transform.position, newDirection, Color.blue);
+            b_i.go.transform.rotation = Quaternion.LookRotation(newDirection);
+            b_i.go.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;*/
+
+            //b_i.go.SetActive(true);
+            /*if (!b_i.renderer.isVisible)
+            {
+                Vector3 targetDirection = simAreaBounds.center - b_i.go.transform.position;
+                Vector3 newDirection = Vector3.RotateTowards(b_i.go.transform.forward, targetDirection, b_i.steeringSpeed*time, 0.0f);
+                Debug.DrawRay(b_i.go.transform.position, newDirection, Color.blue);
+                b_i.go.transform.rotation = Quaternion.LookRotation(newDirection);
             }
             else 
             {
+                //b_i.go.SetActive(true);
                 b_i.go.transform.rotation = Quaternion.RotateTowards(
                     b_i.go.transform.rotation, 
                     Quaternion.LookRotation(steering), 
                     b_i.steeringSpeed * time);
             
                 b_i.go.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;
-            }
+            }*/
         }
     }
 
@@ -330,7 +350,7 @@ public class fixingBoundingBoxes : MonoBehaviour
             boidController b = new boidController();
             b.go = Instantiate(fishPrefab);
             b.go.transform.position = GetRandomPositionInCamera(mainCam);
-            b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
+            //b.go.transform.rotation = Quaternion.Euler(0, Random.Range(-180f, 180f), 0);
             //b.go.transform.localScale = Vector3.one * Random.Range(0.5f, 1f);
             b.go.GetComponent<Animator>().SetFloat("SpeedFish", animationSpeed);
             b.go.name = "fish_" + fishId.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
@@ -533,10 +553,41 @@ public class fixingBoundingBoxes : MonoBehaviour
         boidLocalArea = Random.Range(15f, 25f);
     }
     
-    void followFlock()
+    void rotateTowardsCenter(List<boidController> boids, float time)
     {
-        mainCam.transform.position = fishCenter + new Vector3(0, 0, -40);
-    }
+        for (int i = 0; i < boids.Count; i++)
+        {
+            boidController b_i = boids[i];
+            Vector3 targetDirection = targetGo.transform.position - b_i.go.transform.position;
+            Debug.DrawRay(b_i.go.transform.position, targetDirection, Color.red);
+            //targetDirection = Vector3.Cross(targetDirection, new Vector3(0, 0, 1)).normalized;
+            targetDirection = Vector3.Cross(targetDirection, b_i.go.transform.right).normalized;
+            //targetDirection = Vector3.Cross(targetDirection, Vector3.right).normalized;
+            b_i.go.transform.rotation = Quaternion.LookRotation(targetDirection,  Vector3.right);
+            
+            
+            //float hyp = Vector3.Distance(targetGo.transform.position, b_i.go.transform.position);
+            //float deltaZ = targetGo.transform.position.z - b_i.go.transform.position.z;
+            //float yaw = - Mathf.Asin(deltaZ/hyp) * Mathf.Rad2Deg;
+            //print("yaw " + yaw.ToString());
+
+            //float distanceToCenter = Vector3.Distance(simAreaBounds.center, b_i.go.transform.position);
+            //print("DistanceToCenter " + distanceToCenter.ToString());
+            //b_i.go.transform.position = Vector3.MoveTowards(b_i.go.transform.position, simAreaBounds.center, b_i.speed*time);
+            //b_i.go.transform.up = simAreaBounds.center - b_i.go.transform.position;
+            //Quaternion targetRotation = Quaternion.LookRotation(targetDirection, new Vector3(1, 0, 0));
+            //b_i.go.transform.rotation = targetRotation;
+            //b_i.go.transform.LookAt(targetGo.transform);
+            //Quaternion toRotation = Quaternion.FromToRotation(b_i.go.transform.right, targetDirection);
+            //b_i.go.transform.rotation = Quaternion.Lerp(b_i.go.transform.rotation, toRotation, b_i.steeringSpeed * time);
+
+            //Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+            //Quaternion rotation = Quaternion.LookRotation(relativePos, Vector3.up);
+            //b_i.go.transform.rotation = Quaternion.FromToRotation(b_i.go.transform.right, targetDirection);
+
+            //b_i.go.transform.rotation = Quaternion.FromToRotation(Vector3.up, Vector3.forward);
+        }
+    }   
 
     void Awake()
     {
@@ -569,6 +620,8 @@ public class fixingBoundingBoxes : MonoBehaviour
         deltaTime = (float) 1/FPS;
 
         getNewBoidParameters();
+
+        targetGo = GameObject.Find("testTarget");
     }
 
     // Start is called before the first frame update
@@ -589,6 +642,7 @@ public class fixingBoundingBoxes : MonoBehaviour
     void Update()
     {
         deltaTime = Time.deltaTime;
+        
         /*//print("control background " + control.background.ToString());
         //print("control fog " + control.fog.ToString());
         //print("control distractors " + control.distractors.ToString());
@@ -611,8 +665,10 @@ public class fixingBoundingBoxes : MonoBehaviour
             simulateMovement(boidsList, deltaTime);
         }*/
         
-        simulateMovement(boidsList, deltaTime);
+        //simulateMovement(boidsList, deltaTime);
         //followFlock();
+        
+        rotateTowardsCenter(boidsList, deltaTime);
         
     }
 
