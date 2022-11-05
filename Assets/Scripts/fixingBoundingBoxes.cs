@@ -5,6 +5,8 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.Video;
 
+//https://www.youtube.com/watch?v=33hoa_OpjHs
+
 public class fixingBoundingBoxes : MonoBehaviour
 {
     [SerializeField] GameObject fishPrefab;
@@ -35,7 +37,7 @@ public class fixingBoundingBoxes : MonoBehaviour
         public bool save;
     }
 
-    Vector2 numFishMinMax = new Vector2(1, 1);
+    Vector2 numFishMinMax = new Vector2(10, 15);
     int numberOfFish;
     int numberOfSwarms = 1;
     Camera mainCam;
@@ -55,10 +57,10 @@ public class fixingBoundingBoxes : MonoBehaviour
     int numberOfRandomFish = 0;
 
     //default boids values
-    float boidSpeed = 10f; //10f
+    float boidSpeed = 2.5f; //10f
     float boidSteeringSpeed = 100f; //100
     float boidNoClumpingArea = 10f;
-    float boidLocalArea = 20f;
+    float boidLocalArea = 10f;
     //default behaviour weights
     float K = 1f;
     float S = 1f;
@@ -67,6 +69,7 @@ public class fixingBoundingBoxes : MonoBehaviour
     //boid class
     public class boidController
     {
+        public GameObject parentGo;
         public GameObject go;
         public SkinnedMeshRenderer renderer;
 
@@ -258,14 +261,14 @@ public class fixingBoundingBoxes : MonoBehaviour
             
                 if (separationCount > 0) separationDirection /= separationCount;
                 separationDirection = -separationDirection;
-                separationDirection = separationDirection.normalized;
+                //separationDirection = separationDirection.normalized;
 
                 if (alignmentCount > 0) alignmentDirection /= alignmentCount;
-                alignmentDirection = alignmentDirection.normalized;
+                //alignmentDirection = alignmentDirection.normalized;
 
                 if (cohesionCount > 0) cohesionDirection /= cohesionCount;
                 cohesionDirection -= b_i.go.transform.position;
-                cohesionDirection = cohesionDirection.normalized;
+                //cohesionDirection = cohesionDirection.normalized;
 
                 if (leaderBoid != null) 
                 {
@@ -291,11 +294,11 @@ public class fixingBoundingBoxes : MonoBehaviour
                 //boundsDirection = simAreaBounds.center - b_i.go.transform.position;
                 //boundsDirection = boundsDirection.normalized;
                 //steering += boundsDirection;
-                steering += cameraDirection;
+                //steering += cameraDirection;
                 steering += separationDirection*S;
                 steering += alignmentDirection*M;
                 steering += cohesionDirection*K;
-                steering += leaderDirection*X;
+                //steering += leaderDirection*X;
                 Debug.DrawRay(b_i.go.transform.position, steering, Color.green);
             }
 
@@ -338,6 +341,220 @@ public class fixingBoundingBoxes : MonoBehaviour
         }
     }
 
+    Vector3 getBoundsVector(boidController b)
+    {
+        Vector3 diffMax = simAreaBounds.max - b.parentGo.transform.position;
+        Vector3 diffMin = simAreaBounds.min - b.parentGo.transform.position;
+        Vector3 boundsDirection = Vector3.zero;
+
+        if (Mathf.Abs(diffMax.x) > Mathf.Abs(diffMin.x)) boundsDirection.x = -diffMin.x;
+        if (Mathf.Abs(diffMax.x) < Mathf.Abs(diffMin.x)) boundsDirection.x = -diffMax.x;
+
+        if (Mathf.Abs(diffMax.y) > Mathf.Abs(diffMin.y)) boundsDirection.y = -diffMin.y;
+        if (Mathf.Abs(diffMax.y) < Mathf.Abs(diffMin.y)) boundsDirection.y = -diffMax.y;
+
+        if (Mathf.Abs(diffMax.z) > Mathf.Abs(diffMin.z)) boundsDirection.z = -diffMin.z;
+        if (Mathf.Abs(diffMax.z) < Mathf.Abs(diffMin.z)) boundsDirection.z = -diffMax.z;
+
+        boundsDirection = boundsDirection.normalized;
+
+        return boundsDirection;
+    }
+
+    void simulateMovementV2(List<boidController> boids, float time)
+    {
+        int maxNumOfRandomFish = (int) Random.Range(1f, numberOfFish/2f);
+
+        for (int i = 0; i < boids.Count; i++)
+        {
+            boidController b_i = boids[i];
+
+            
+            Vector3 boundsDirection = simAreaBounds.center - b_i.go.transform.position;
+            boundsDirection = boundsDirection.normalized;
+            //Vector3 centerDirection = boundsDirection;
+            //float centerDistance = Vector3.Distance(simAreaBounds.center, b_i.go.transform.position);
+
+
+            //float cameraDistance = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
+            //Vector3 cameraDirection = mainCam.transform.position - b_i.go.transform.position;
+
+            /*if (centerDistance > 75f)
+            {
+                
+                Vector3 targetDirection = boundsDirection;
+                Debug.DrawRay(b_i.go.transform.position, targetDirection, Color.blue);
+                b_i.parentGo.transform.rotation = Quaternion.RotateTowards(
+                    b_i.parentGo.transform.rotation, 
+                    Quaternion.LookRotation(targetDirection.normalized), 
+                    b_i.steeringSpeed * time);
+                b_i.parentGo.transform.Translate(Vector3.forward * b_i.speed * Time.deltaTime);
+            } 
+            else if (centerDistance < 10f)
+            {
+                
+                Vector3 targetDirection = - boundsDirection;
+                Debug.DrawRay(b_i.go.transform.position, targetDirection, Color.blue);
+                b_i.parentGo.transform.rotation = Quaternion.RotateTowards(
+                    b_i.parentGo.transform.rotation, 
+                    Quaternion.LookRotation(targetDirection.normalized), 
+                    b_i.steeringSpeed * time);
+                b_i.parentGo.transform.Translate(Vector3.forward * b_i.speed * Time.deltaTime);
+            }*/
+            if (!simAreaBounds.Contains(b_i.parentGo.transform.position))
+            {
+                /*Vector3 targetDirection = targetGo.transform.position - b_i.go.transform.position;
+                Debug.DrawRay(b_i.go.transform.position, targetDirection, Color.yellow);
+                b_i.parentGo.transform.rotation = Quaternion.RotateTowards(
+                    b_i.parentGo.transform.rotation, 
+                    Quaternion.LookRotation(targetDirection.normalized), 
+                    b_i.steeringSpeed * time);
+                //b_i.parentGo.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;
+                b_i.parentGo.transform.Translate(Vector3.forward * b_i.speed * Time.deltaTime);*/
+                b_i.parentGo.transform.position = simAreaBounds.center;
+            }
+            else 
+            {
+                Vector3 steering = Vector3.zero;
+
+                Vector3 separationDirection = Vector3.zero;
+                int separationCount = 0;
+                Vector3 alignmentDirection = Vector3.zero;
+                int alignmentCount = 0;
+                Vector3 cohesionDirection = Vector3.zero;
+                int cohesionCount = 0;
+                Vector3 leaderDirection = Vector3.zero;
+                boidController leaderBoid = boids[0];
+                float leaderAngle = 180f;
+                Vector3 randomDirection = Vector3.zero;
+                float randomWeight = 0;
+
+                if (!b_i.randomBehaviour && Random.value > 1.1f && numberOfRandomFish < maxNumOfRandomFish)
+                {
+                    numberOfRandomFish += 1;
+                    b_i.randomBehaviour = true;
+
+                    b_i.elapsedTime = 0f;
+                    b_i.goalTime = Random.Range(1f, 2f);
+                    b_i.timeToMaxSpeed = Random.Range(0.1f, 0.5f);
+
+                    b_i.randomDirection = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
+                    b_i.randomDirection = b_i.randomDirection.normalized;
+
+                    b_i.randomWeight = Random.Range(1f, 10f);
+                    b_i.randomSteeringSpeed = Random.Range(2f, 5f)*b_i.steeringSpeed;
+                    //b_i.randomSpeed = b_i.randomSteeringSpeed/10f;
+                    b_i.originalSpeed = b_i.speed;
+                    b_i.originalSteeringSpeed = b_i.steeringSpeed;
+                }
+
+                if (b_i.randomBehaviour)
+                {
+                    //if (b_i.elapsedFrames == b_i.goalFrames)
+                    if (b_i.elapsedTime > b_i.goalTime)
+                    {
+                        numberOfRandomFish -= 1;
+                        b_i.randomBehaviour = false;
+                        b_i.speed = b_i.originalSpeed;
+                        b_i.steeringSpeed = b_i.originalSteeringSpeed;
+                    }
+                    else
+                    {
+                        randomDirection = b_i.randomDirection;
+                        randomWeight = b_i.randomWeight;
+                        //b_i.speed = updateSpeedTime(b_i, b_i.randomSpeed, b_i.originalSpeed);
+                        b_i.steeringSpeed = updateSpeed(b_i, b_i.randomSteeringSpeed, b_i.originalSteeringSpeed);
+                        b_i.elapsedTime += time;
+                    }
+                } 
+
+                if (!b_i.randomBehaviour)
+                {
+                    for (int j = 0; j < boids.Count; j++)
+                    {
+                        boidController b_j = boids[j];
+                        if (b_i == b_j) continue;
+
+                        float distance = Vector3.Distance(b_j.go.transform.position, b_i.go.transform.position);
+                        if (distance < boidNoClumpingArea)
+                        {
+                            separationDirection += b_j.parentGo.transform.position - b_i.parentGo.transform.position;
+                            separationCount++;
+                        }
+
+                        if (distance < boidLocalArea && b_j.swarmIndex == b_i.swarmIndex)
+                        {
+                            alignmentDirection += b_j.parentGo.transform.forward;
+                            alignmentCount++;
+
+                            cohesionDirection += b_j.go.transform.position - b_i.go.transform.position;
+                            cohesionCount++;
+
+                            //identify leader
+                            float angle = Vector3.Angle(b_j.go.transform.position - b_i.go.transform.position, b_i.parentGo.transform.forward);
+                            if (angle < leaderAngle && angle < 90f)
+                            {
+                                leaderBoid = b_j;
+                                leaderAngle = angle;
+                            }
+                        }
+                    }
+
+                    if (separationCount > 0) separationDirection /= separationCount;
+                    separationDirection = -separationDirection;
+                    separationDirection = separationDirection.normalized;
+
+                    if (alignmentCount > 0) alignmentDirection /= alignmentCount;
+                    alignmentDirection = alignmentDirection.normalized;
+
+                    if (cohesionCount > 0) cohesionDirection /= cohesionCount;
+                    cohesionDirection -= b_i.go.transform.position;
+                    cohesionDirection = cohesionDirection.normalized;
+
+                    if (leaderBoid != null) 
+                    {
+                        leaderDirection = leaderBoid.go.transform.position - b_i.go.transform.position;
+                        leaderDirection = leaderDirection.normalized;
+                    }
+                }
+
+
+                if (randomDirection != Vector3.zero)
+                {
+                    Vector3 cameraDirection = mainCam.transform.position - b_i.go.transform.position;
+                    cameraDirection = -cameraDirection.normalized;
+                    float cameraDistance = Vector3.Distance(mainCam.transform.position, b_i.go.transform.position);
+                    steering += cameraDirection*cameraDistance;
+                    steering += randomDirection*randomWeight;
+                    
+                    Debug.DrawRay(b_i.go.transform.position, steering, Color.red);
+                } 
+                else
+                {
+                    //steering += centerDirection * centerDistance;
+                    //teering += getBoundsVector(b_i);
+                    //steering += cameraDirection;
+                    Vector3 targetDirection = targetGo.transform.position - b_i.parentGo.transform.position;
+                    targetDirection = targetDirection.normalized;
+                    steering += targetDirection;
+                    steering += separationDirection*S;
+                    steering += alignmentDirection*M;
+                    steering += cohesionDirection*K;
+                    steering += leaderDirection*X;
+                    Debug.DrawRay(b_i.go.transform.position, steering, Color.green);
+                }
+                
+                b_i.parentGo.transform.rotation = Quaternion.RotateTowards(
+                    b_i.parentGo.transform.rotation, 
+                    Quaternion.LookRotation(steering), 
+                    b_i.steeringSpeed * time);
+                //b_i.parentGo.transform.RotateAround(simAreaBounds.center, Vector3.up, b_i.speed*time);
+
+                b_i.parentGo.transform.Translate(Vector3.forward * b_i.speed * Time.deltaTime);
+            }
+        }
+    }
+
     void instantiateFish(int swarmIdx)
     { 
         fishId = 1;
@@ -355,6 +572,12 @@ public class fixingBoundingBoxes : MonoBehaviour
             b.go.GetComponent<Animator>().SetFloat("SpeedFish", animationSpeed);
             b.go.name = "fish_" + fishId.ToString();//Name the prefab clone and then access the fishName script and give the same name to it so this way the cild containing the mesh will have the proper ID
             b.go.GetComponentInChildren<fishName>().fishN = "fish_" + fishId.ToString();
+            
+            b.parentGo = new GameObject();
+            b.parentGo.name = b.go.name + "_parent";
+            b.parentGo.transform.position = b.go.transform.position;
+            b.parentGo.transform.eulerAngles = new Vector3(0, 90f, 0);
+            b.go.transform.parent  = b.parentGo.transform;
 
             //Visual randomisation
             SkinnedMeshRenderer renderer = b.go.GetComponentInChildren<SkinnedMeshRenderer>();
@@ -547,8 +770,8 @@ public class fixingBoundingBoxes : MonoBehaviour
         M = Random.Range(0.75f, 1.25f);
         X = Random.Range(0.75f, 1.25f);
         
-        boidSpeed = 10f*Random.Range(0.5f, 1.5f); //10f
-        boidSteeringSpeed = 100f*Random.Range(0.5f, 1.5f); //100
+        //boidSpeed = 10f*Random.Range(0.5f, 1.5f); //10f
+        //boidSteeringSpeed = 100f*Random.Range(0.5f, 1.5f); //100
         boidNoClumpingArea = Random.Range(7.5f, 12.5f);
         boidLocalArea = Random.Range(15f, 25f);
     }
@@ -560,10 +783,23 @@ public class fixingBoundingBoxes : MonoBehaviour
             boidController b_i = boids[i];
             Vector3 targetDirection = targetGo.transform.position - b_i.go.transform.position;
             Debug.DrawRay(b_i.go.transform.position, targetDirection, Color.red);
+            //b_i.parentGo.transform.rotation = Quaternion.LookRotation(targetDirection.normalized);
+            //b_i.parentGo.transform.rotation = Quaternion.FromToRotation(Vector3.right, targetDirection.normalized);
+
+            if (!simAreaBounds.Contains(b_i.go.transform.position))
+            {  
+                b_i.parentGo.transform.rotation = Quaternion.RotateTowards(
+                    b_i.parentGo.transform.rotation, 
+                    Quaternion.LookRotation(targetDirection.normalized), 
+                    b_i.steeringSpeed * time);
+            }
+            
+
+            b_i.parentGo.transform.position += b_i.go.transform.TransformDirection(new Vector3(b_i.speed, 0, 0))* time;
             //targetDirection = Vector3.Cross(targetDirection, new Vector3(0, 0, 1)).normalized;
-            targetDirection = Vector3.Cross(targetDirection, b_i.go.transform.right).normalized;
+            //targetDirection = Vector3.Cross(targetDirection, b_i.go.transform.right).normalized;
             //targetDirection = Vector3.Cross(targetDirection, Vector3.right).normalized;
-            b_i.go.transform.rotation = Quaternion.LookRotation(targetDirection,  Vector3.right);
+            //b_i.parentGo.transform.rotation = Quaternion.LookRotation(targetDirection,  Vector3.forward);
             
             
             //float hyp = Vector3.Distance(targetGo.transform.position, b_i.go.transform.position);
@@ -585,7 +821,7 @@ public class fixingBoundingBoxes : MonoBehaviour
             //Quaternion rotation = Quaternion.LookRotation(relativePos, Vector3.up);
             //b_i.go.transform.rotation = Quaternion.FromToRotation(b_i.go.transform.right, targetDirection);
 
-            //b_i.go.transform.rotation = Quaternion.FromToRotation(Vector3.up, Vector3.forward);
+            
         }
     }   
 
@@ -619,9 +855,10 @@ public class fixingBoundingBoxes : MonoBehaviour
         //Set delta time used for animating
         deltaTime = (float) 1/FPS;
 
-        getNewBoidParameters();
+        //getNewBoidParameters();
 
         targetGo = GameObject.Find("testTarget");
+        targetGo.transform.position = simAreaBounds.center;
     }
 
     // Start is called before the first frame update
@@ -665,10 +902,10 @@ public class fixingBoundingBoxes : MonoBehaviour
             simulateMovement(boidsList, deltaTime);
         }*/
         
-        //simulateMovement(boidsList, deltaTime);
+        simulateMovementV2(boidsList, deltaTime);
         //followFlock();
         
-        rotateTowardsCenter(boidsList, deltaTime);
+        //rotateTowardsCenter(boidsList, deltaTime);
         
     }
 
