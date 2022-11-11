@@ -23,7 +23,6 @@ All the scripts can be found on:
  The fish animation is generated with the special Inverse Kinematic Animation library in Unity, so the stickback fish prefab is build in a specific way to enable the animation to be constructed. If you need to change it please let me know so I can give an overview.
 
 # Overview of randomized parameters 
-<center>
 |              **Fish**              |                                                                                    | Data type/Unity encoding  |
 |:----------------------------------:|:----------------------------------------------------------------------------------:|---------------------------|
 | Number of fish                     |                                       <4, 50>                                      | int                       |
@@ -51,4 +50,3 @@ All the scripts can be found on:
 | Distractor scale                   |                                [1, 1, 1] * <0.01, 1>                               | Vector3                   |
 | Distractor colour                  |                 [<171, 191>, <192, 212>, <137, 157>, <151,   171>]                 | RGBA colour encoding      |
 | Distractor transparency            |                                       <0, 1>                                       | float                     |
-<\center>
