@@ -43,7 +43,7 @@ All the scripts can be found on:
 | Random weight                      | <1, 10>                                                                            | float                     |
 |           **Environment**          |                                                                                    |                           |
 | Video background                   | <background_1.mp4, background_152.mp4>                                             | NA                        |
-| Fog/Plain background colour        | [<171, 191>, <192, 212>, <137, 157>, <151, 171>]   \|\| [[1, 1, 1] * <75, 225>, 1] | RGBA colour encoding      |
+| Fog/Plain background colour        | [<171, 191>, <192, 212>, <137, 157>, <151, 171>]  <br> \|\| [[1, 1, 1] * <75, 225>, 1] | RGBA colour encoding      |
 | Fog intensity                      | <0.1, 0.8>                                                                         | float                     |
 | Number of distractors              | <50, 500>                                                                          | int                       |
 | Initial distractor position        | [<0, 1>, <0, 1>, <10, 50>]                                                         | Camera viewport encoding  |
