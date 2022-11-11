@@ -34,6 +34,7 @@ All the scripts can be found on:
 | Fish material - Metalic\Glossiness | <0.1, 0.5>                                                                         | float                     |
 <br/>
 |           **Boid behaviour**       |                                                                                    | Data type/Unity encoding  |
+|:----------------------------------:|------------------------------------------------------------------------------------|---------------------------|
 | K                                  | <0.75, 1.25>                                                                       | float                     |
 | S                                  | <0.75, 1.25>                                                                       | float                     |
 | M                                  | <0.75, 1.25>                                                                       | float                     |
@@ -44,6 +45,7 @@ All the scripts can be found on:
 | Random weight                      | <1, 10>                                                                            | float                     |
 <br/>
 |             **Environment**        |                                                                                    | Data type/Unity encoding  |
+|:----------------------------------:|------------------------------------------------------------------------------------|---------------------------|
 | Video background                   | <background_1.mp4, background_152.mp4>                                             | NA                        |
 | Fog/Plain background colour        | [<171, 191>, <192, 212>, <137, 157>, <151, 171>]   \|\| [[1, 1, 1] * <75, 225>, 1] | RGBA colour encoding      |
 | Fog intensity                      | <0.1, 0.8>                                                                         | float                     |
