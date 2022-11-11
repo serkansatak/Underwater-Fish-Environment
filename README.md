@@ -23,7 +23,7 @@ All the scripts can be found on:
  The fish animation is generated with the special Inverse Kinematic Animation library in Unity, so the stickback fish prefab is build in a specific way to enable the animation to be constructed. If you need to change it please let me know so I can give an overview.
 
 # Overview of randomized parameters 
-|              **Fish**              |                                                                                    | Data type/Unity encoding  |
+|      <font size=2> **Fish** <\font>|                                                                                    | Data type/Unity encoding  |
 |:----------------------------------:|:----------------------------------------------------------------------------------:|---------------------------|
 | Number of fish                     |                                       <4, 50>                                      | int                       |
 | Initial fish position              |                             [<0, 1>, <0, 1>, <20, 60>]                             | Camera viewport encoding  |
