@@ -32,7 +32,7 @@ All the scripts can be found on:
 | Fish material - Albedo             | [[1, 1, 1] * <75, 225>, 1]                                                         | RGBA encoding             |
 | Fish material - Metalic            | <0.1, 0.5>                                                                         | float                     |
 | Fish material - Metalic\Glossiness | <0.1, 0.5>                                                                         | float                     |
-<br/>
+
 |           **Boid behaviour**       |                                                                                    | Data type/Unity encoding  |
 |:----------------------------------:|------------------------------------------------------------------------------------|---------------------------|
 | K                                  | <0.75, 1.25>                                                                       | float                     |
@@ -43,7 +43,7 @@ All the scripts can be found on:
 | Local area                         | <15, 25>                                                                           | float                     |
 | Random direction                   | [<-1, 1>, <-1, 1>, <-1, 1>]                                                        | Vector3                   |
 | Random weight                      | <1, 10>                                                                            | float                     |
-<br/>
+
 |             **Environment**        |                                                                                    | Data type/Unity encoding  |
 |:----------------------------------:|------------------------------------------------------------------------------------|---------------------------|
 | Video background                   | <background_1.mp4, background_152.mp4>                                             | NA                        |
