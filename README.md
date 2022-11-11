@@ -1,7 +1,7 @@
 ## Underwater-Fish-Environment
  TODO: 
-SpawnerBoids.cs -> Replace X with L
-ADD zip with video background
+- SpawnerBoids.cs -> Replace X with L
+- ADD zip with video background
 
 # Overview
 
