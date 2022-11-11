@@ -32,7 +32,8 @@ All the scripts can be found on:
 | Fish material - Albedo             | [[1, 1, 1] * <75, 225>, 1]                                                         | RGBA encoding             |
 | Fish material - Metalic            | <0.1, 0.5>                                                                         | float                     |
 | Fish material - Metalic\Glossiness | <0.1, 0.5>                                                                         | float                     |
-|           **Boid behaviour**       |                                                                                    |                           |
+<br/>
+|           **Boid behaviour**       |                                                                                    | Data type/Unity encoding  |
 | K                                  | <0.75, 1.25>                                                                       | float                     |
 | S                                  | <0.75, 1.25>                                                                       | float                     |
 | M                                  | <0.75, 1.25>                                                                       | float                     |
@@ -41,7 +42,8 @@ All the scripts can be found on:
 | Local area                         | <15, 25>                                                                           | float                     |
 | Random direction                   | [<-1, 1>, <-1, 1>, <-1, 1>]                                                        | Vector3                   |
 | Random weight                      | <1, 10>                                                                            | float                     |
-|             **Environment**        |                                                                                    |                           |
+<br/>
+|             **Environment**        |                                                                                    | Data type/Unity encoding  |
 | Video background                   | <background_1.mp4, background_152.mp4>                                             | NA                        |
 | Fog/Plain background colour        | [<171, 191>, <192, 212>, <137, 157>, <151, 171>]   \|\| [[1, 1, 1] * <75, 225>, 1] | RGBA colour encoding      |
 | Fog intensity                      | <0.1, 0.8>                                                                         | float                     |
