@@ -48,5 +48,5 @@ All the scripts can be found on:
 | Number of distractors              |                                      <50, 500>                                     | int                       |
 | Initial distractor position        |                             [<0, 1>, <0, 1>, <10, 50>]                             | Camera viewport encoding  |
 | Distractor scale                   |                                [1, 1, 1] * <0.01, 1>                               | Vector3                   |
-| Distractor colour                  |                 [<171, 191>, <192, 212>, <137, 157>, <151,   171>]                 | RGBA colour encoding      |
-| Distractor transparency            |                                       <0, 1>                                       | float                     |
+| Distractor material - Albedo       |                 [<171, 191>, <192, 212>, <137, 157>, <151,   171>]                 | RGBA colour encoding      |
+| Distractor material - Transparency |                                       <0, 1>                                       | float                     |
