@@ -32,7 +32,7 @@ All the scripts can be found on:
 ## void getNewBoidParameters()
 ## void instantiateFish()
 ## void addNewSequence()
-## void simulateMovement(List<boidController> boids, float time)
+## void simulateMovement(List\<boidController> boids, float time)
 ## void updateDistractors()
 ## boundingBox GetBoundingBoxInCamera(GameObject go, Camera cam)
 ## void SaveAnnotation(boundingBox bbox, int go_id)
