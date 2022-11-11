@@ -22,7 +22,22 @@ All the scripts can be found on:
  
  The fish animation is generated with the special Inverse Kinematic Animation library in Unity, so the stickback fish prefab is build in a specific way to enable the animation to be constructed. If you need to change it please let me know so I can give an overview.
  
-# Main functions
+# Important functions
+## void generateControlList()
+## void setupFolderStructure()
+## void randomizeVideo()
+## void generateFogColor()
+## void randomizeFog()
+## void generateDistractors()
+## void getNewBoidParameters()
+## void instantiateFish()
+## void addNewSequence()
+## void simulateMovement(List<boidController> boids, float time)
+## void updateDistractors()
+## boundingBox GetBoundingBoxInCamera(GameObject go, Camera cam)
+## void SaveAnnotation(boundingBox bbox, int go_id)
+## void SaveCameraView()
+## void CleanUp()
 
 # Overview of randomized parameters 
 |**Fish**                            |                     ######                                                         | Data type/Unity encoding  |
@@ -52,3 +67,6 @@ All the scripts can be found on:
 | Distractor scale                   |                                [1, 1, 1] * <0.01, 1>                               | Vector3                   |
 | Distractor material - Albedo       |                 [<171, 191>, <192, 212>, <137, 157>, <151,   171>]                 | RGBA colour encoding      |
 | Distractor material - Transparency |                                       <0, 1>                                       | float                     |
+
+# Contract information
+
