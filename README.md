@@ -156,3 +156,32 @@ All the scripts can be found on:
   </tr>
 </tbody>
 </table>
+
+
+|                Fish                |                                                                                    | Data type/Unity encoding  |
+|:----------------------------------:|------------------------------------------------------------------------------------|---------------------------|
+| Number of fish                     | <4, 50>                                                                            | int                       |
+| Initial fish position              | [<0, 1>, <0, 1>, <20, 60>]                                                         | Camera viewport encoding  |
+| Initial fish rotation              | [0, <-180, 180>, 0]                                                                | RPY encoding              |
+| Fish scale                         | [1, 1, 1] * <0.5, 1>                                                               | Vector3                   |
+| Fish material - Albedo             | [[1, 1, 1] * <75, 225>, 1]                                                         | RGBA encoding             |
+| Fish material - Metalic            | <0.1, 0.5>                                                                         | float                     |
+| Fish material - Metalic\Glossiness | <0.1, 0.5>                                                                         | float                     |
+|           Boid behaviour           |                                                                                    |                           |
+| K                                  | <0.75, 1.25>                                                                       | float                     |
+| S                                  | <0.75, 1.25>                                                                       | float                     |
+| M                                  | <0.75, 1.25>                                                                       | float                     |
+| L                                  | <0.75, 1.25>                                                                       | float                     |
+| No clumping area                   | <7.5, 12.5>                                                                        | float                     |
+| Local area                         | <15, 25>                                                                           | float                     |
+| Random direction                   | [<-1, 1>, <-1, 1>, <-1, 1>]                                                        | Vector3                   |
+| Random weight                      | <1, 10>                                                                            | float                     |
+|             Environment            |                                                                                    |                           |
+| Video background                   | <background_1.mp4, background_152.mp4>                                             | NA                        |
+| Fog/Plain background colour        | [<171, 191>, <192, 212>, <137, 157>, <151, 171>]   \|\| [[1, 1, 1] * <75, 225>, 1] | RGBA colour encoding      |
+| Fog intensity                      | <0.1, 0.8>                                                                         | float                     |
+| Number of distractors              | <50, 500>                                                                          | int                       |
+| Initial distractor position        | [<0, 1>, <0, 1>, <10, 50>]                                                         | Camera viewport encoding  |
+| Distractor scale                   | [1, 1, 1] * <0.01, 1>                                                              | Vector3                   |
+| Distractor colour                  | [<171, 191>, <192, 212>, <137, 157>, <151,   171>]                                 | RGBA colour encoding      |
+| Distractor transparency            | <0, 1>                                                                             | float                     |
