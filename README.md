@@ -22,6 +22,9 @@ All the scripts can be found on:
  
  The fish animation is generated with the special Inverse Kinematic Animation library in Unity, so the stickback fish prefab is build in a specific way to enable the animation to be constructed. If you need to change it please let me know so I can give an overview.
  
+# How to use
+
+ 
 # Important functions
 ## void generateControlList()
 ## void setupFolderStructure()
