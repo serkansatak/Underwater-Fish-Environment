@@ -21,9 +21,11 @@ All the scripts can be found on:
  - In the Prefab folder, the stickleback fish prefab has some of the other scripts - Rig builder script on the top object and on the FishMeshHolder - GetScreenSpaceBounds, FishName and GetFishBounds (Daniel's script)
  
  The fish animation is generated with the special Inverse Kinematic Animation library in Unity, so the stickback fish prefab is build in a specific way to enable the animation to be constructed. If you need to change it please let me know so I can give an overview.
+ 
+# Main functions
 
 # Overview of randomized parameters 
-|                           **Fish** |                                                                                    | Data type/Unity encoding  |
+|**Fish**                            |                     ######                                                         | Data type/Unity encoding  |
 |:----------------------------------:|:----------------------------------------------------------------------------------:|---------------------------|
 | Number of fish                     |                                       <4, 50>                                      | int                       |
 | Initial fish position              |                             [<0, 1>, <0, 1>, <20, 60>]                             | Camera viewport encoding  |
@@ -32,7 +34,7 @@ All the scripts can be found on:
 | Fish material - Albedo             |                             [[1, 1, 1] * <75, 225>, 1]                             | RGBA encoding             |
 | Fish material - Metalic            |                                     <0.1, 0.5>                                     | float                     |
 | Fish material - Metalic\Glossiness |                                     <0.1, 0.5>                                     | float                     |
-|         **Boid behaviour**         |                                                                                    |                           |
+|         **Boid behaviour**         |                                     ######                                         |                           |
 | K                                  |                                    <0.75, 1.25>                                    | float                     |
 | S                                  |                                    <0.75, 1.25>                                    | float                     |
 | M                                  |                                    <0.75, 1.25>                                    | float                     |
@@ -41,7 +43,7 @@ All the scripts can be found on:
 | Local area                         |                                      <15, 25>                                      | float                     |
 | Random direction                   |                             [<-1, 1>, <-1, 1>, <-1, 1>]                            | Vector3                   |
 | Random weight                      |                                       <1, 10>                                      | float                     |
-|           **Environment**          |                                                                                    |                           |
+|           **Environment**          |                            ######                                                  |                           |
 | Video background                   |                       <background_1.mp4, background_152.mp4>                       | NA                        |
 | Fog/Plain background colour        | [<171, 191>, <192, 212>, <137, 157>, <151, 171>]<br> OR [[1, 1, 1] * <75, 225>, 1] | RGBA colour encoding      |
 | Fog intensity                      |                                     <0.1, 0.8>                                     | float                     |
