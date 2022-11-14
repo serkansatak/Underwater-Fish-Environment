@@ -1,1 +1,37 @@
-<mxfile host="app.diagrams.net" modified="2022-11-14T13:44:53.199Z" agent="5.0 (X11; Ubuntu)" etag="w82V64Y9ZXOHEf7Ty6-M" version="20.2.4" type="github"><diagram id="um49nD1CCODFLEtQZjCy" name="Page-1">1VfLcpswFP0aLz3Dw3acZZukj0WzySIz3XQEuoCmQiJCGKdf36sHYEzc2Jm0Q1fAkXR1dc6RdFnEN+X+syJV8U1S4IsooPtFfLuIouhqu8WHQZ4dEq7XsUNyxajHBuCB/QIPBh5tGIV61FFLyTWrxmAqhYBUjzCilGzH3TLJx7NWJPczBgPwkBIOk26PjOrCodv1Qe8vwPKimzkMfEtJus4eqAtCZXsAxXeL+EZJqd1bub8BbtjreHHjPp1o7RNTIPQ5Ax7V5r74Ad/lU8bvRbETelUsvRg7whu/4EW04RjvYyYxLGatnz0Vm6dGdg3L2gr1ATvEmwrV/ji041tunreQMQHYA8SOKSlKzJNwJxVlmklRWzGNyCBAEW06U6KJ1UlhHFJWGEgkdWXjBl1uuEiXnpvJ89tnGinZCApm3QE2twXT8FCR1LS26FPECl1y/Ar70TtQGvYnqQ17wdDqIEvQ6hm7+AHLq05kb/Nl1NmgHUxzvfJYcWCYrceI92neBx+kxBev5gXKrk4qS9nuHGGjaCJsQDjLxWgQh0xPte+mavgxwlmH1KCbCmPaHeB2JiibmGpS3Sg4EDxRx3GQkyHUNPilLn5hsS4QywyJeAYZnyYk/Zlbcxn2a+ttknAwn8verz6BQBFBZWmm6COcsO+/XdLBbstkbjckt9ttDslZvitOmLiYbzSUOVAKOB7p1+fOmpku2aV1kafskFms4KtZAWW4c0mqpart3QuvyVWRVhyPOz7yZ7G8Q9ITyai7Gwie02BznkOOHZsZq4uZpESoYUpAa/fmUwMCb+A/HehnJ4vg9GZB0N5s71ETdPecvd3eqUSIJyXCpEJYb1+oEOLN3yoR1rMvEVjZcH9TWV8HpdyBKSTP9DJ7y8HUVNTXoqOT6ZJC5H80aBjOzqBhOHHofVMmtkyURlpW4v+XUdWWC+7qH46aY4ILWSZN/Tq5xuX+TzQM3ofd1fWY3NWU22jzArfRG7jFz+Gv0rYd/JzHd78B</diagram></mxfile>
+<mxfile host="app.diagrams.net" modified="2022-11-14T13:57:45.145Z" agent="5.0 (X11; Ubuntu)" etag="fFVsUS4R2nSpLyaBqGqM" version="20.2.4" type="github">
+  <diagram id="um49nD1CCODFLEtQZjCy" name="Page-1">
+    <mxGraphModel dx="2788" dy="1953" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Wr6Nh_eZoqflNnhvnt4h-3" value="Generate list of environmental conditions for which to generate data" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="-730" y="-310" width="940" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Wr6Nh_eZoqflNnhvnt4h-4" value="&lt;div style=&quot;font-size: 22px;&quot; align=&quot;left&quot;&gt;&lt;ul&gt;&lt;li&gt;&lt;font style=&quot;font-size: 22px;&quot;&gt;if video background is enabled -&amp;gt; randomize video&lt;/font&gt;&lt;/li&gt;&lt;li&gt;&lt;font style=&quot;font-size: 22px;&quot;&gt;generate fog color&lt;/font&gt;&lt;/li&gt;&lt;li&gt;&lt;font style=&quot;font-size: 22px;&quot;&gt;if plain background is enabled -&amp;gt; set the background color to fog color&lt;/font&gt;&lt;/li&gt;&lt;li&gt;&lt;font style=&quot;font-size: 22px;&quot;&gt;if fog is enabled -&amp;gt; randomize fog&lt;/font&gt;&lt;/li&gt;&lt;li&gt;&lt;font style=&quot;font-size: 22px;&quot;&gt;If distractors are enabled -&amp;gt; spawn distractors&amp;nbsp;&lt;/font&gt;&lt;/li&gt;&lt;li&gt;&lt;font style=&quot;font-size: 22px;&quot;&gt;randomize boid parameters&lt;/font&gt;&lt;/li&gt;&lt;li&gt;&lt;font style=&quot;font-size: 22px;&quot;&gt;spawn fish&lt;/font&gt;&lt;/li&gt;&lt;li&gt;&lt;font style=&quot;font-size: 22px;&quot;&gt;add new sequence&lt;br&gt;&lt;/font&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;" parent="1" vertex="1">
+          <mxGeometry x="-730" y="-20" width="580" height="360" as="geometry" />
+        </mxCell>
+        <mxCell id="Wr6Nh_eZoqflNnhvnt4h-5" value="&lt;div style=&quot;font-size: 22px;&quot; align=&quot;left&quot;&gt;&lt;ul&gt;&lt;li&gt;simulate fish movement&lt;/li&gt;&lt;li&gt;if distractors are enabled -&amp;gt; update distractors poses &lt;br&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;" parent="1" vertex="1">
+          <mxGeometry x="-110" y="-20" width="580" height="360" as="geometry" />
+        </mxCell>
+        <mxCell id="Wr6Nh_eZoqflNnhvnt4h-11" value="Number of images in the sequence" style="rhombus;whiteSpace=wrap;html=1;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="490" y="40" width="260" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="pAQo-eV-7nVf51DoNilM-1" value="Number of sequences" style="rhombus;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="790" y="40" width="260" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="pAQo-eV-7nVf51DoNilM-2" value="Start" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="-320" y="-460" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pAQo-eV-7nVf51DoNilM-3" value="&lt;div&gt;End&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="-700" y="570" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="pAQo-eV-7nVf51DoNilM-4" value="&lt;div&gt;Is data for all defined environmental conditions generatted?&lt;/div&gt;" style="rhombus;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="40" width="260" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="pAQo-eV-7nVf51DoNilM-5" value="Setup root folder structure" style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="-340" y="-200" width="120" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
