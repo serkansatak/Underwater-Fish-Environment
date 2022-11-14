@@ -488,8 +488,7 @@ public class SpawnerBoids : MonoBehaviour
                 + height + ","
                 + confidence + ","
                 + class_id + ","
-                + visibility + ","
-                + "\n";
+                + visibility + "\n";
 
             //string line = maskObjects[i].name.Split('_')[0] + " " + bboxs[i].x.ToString() + " " + bboxs[i].y.ToString() + " " + bboxs[i].z.ToString() + " " + bboxs[i].w.ToString() + "\n";
             using (StreamWriter writer = new StreamWriter(gtFile, true))
