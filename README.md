@@ -25,13 +25,12 @@ All the scripts can be found on:
  The fish animation is generated with the special Inverse Kinematic Animation library in Unity, so the stickback fish prefab is build in a specific way to enable the animation to be constructed. If you need to change it please let me know so I can give an overview.
  
 # How to use
-Tested on Ubuntu 22.04, Unity Editor XXX. To install Unity on Ubuntu 22.04, follow this guide - https://dev.to/brenomfviana/my-experience-using-unity3d-on-manjaro-i3-40ad.
+Tested on Ubuntu 22.04, Unity Editor XXX. To install Unity Hub on Ubuntu 22.04, follow this guide - https://dev.to/brenomfviana/my-experience-using-unity3d-on-manjaro-i3-40ad.
 
  
 # High-level flowchart and important functions
 
-
-
+![flowchart](flowchart.jpg)
 
 ## void generateControlList()
 Creates a list of environmental conditions to be used for data generation. Here you can define if you want to use fog, distractors, and a plain or a video background. The data generator runs until all sequences for all defined environment conditions are generated. For every environmental condition defined, 50 sequence are generated, with every sequence containing 150 annotated images.  
