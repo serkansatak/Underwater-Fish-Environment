@@ -8,6 +8,11 @@ using UnityEngine.Video;
 public class SpawnerBoids : MonoBehaviour
 {
     [SerializeField] GameObject fishPrefab;
+    [SerializeField] Material distractorMaterial;
+
+    public bool useBackground;
+    public bool useFog;
+    public bool useDistractors;
 
     struct conditionsControl{
         public int background;
@@ -35,7 +40,7 @@ public class SpawnerBoids : MonoBehaviour
     }
 
 
-    Vector2 numFishMinMax = new Vector2(4, 50);
+    public Vector2 numFishMinMax = new Vector2(4, 50);
     int numberOfSwarms = 1;
     int numberOfFish;
 
@@ -107,8 +112,8 @@ public class SpawnerBoids : MonoBehaviour
     string gtFile;
     int sequence_number = 0;
     int sequence_image;
-    int sequence_goal = 5;
-    int sequence_length = 25;
+    public int sequence_goal = 5;
+    public int sequence_length = 25;
 
     int img_height = 544;
     int img_width = 960;
@@ -119,7 +124,6 @@ public class SpawnerBoids : MonoBehaviour
 
     int number_of_distractors;
     List<GameObject> distractors_list = new List<GameObject>(); 
-    [SerializeField] Material mat;
 
     string normalizedFogIntensity;
     string numberOfDistractors;
@@ -144,7 +148,7 @@ public class SpawnerBoids : MonoBehaviour
             sphere.transform.parent = transform;
             sphere.transform.localScale = Vector3.one * Random.Range(0.01f, 1f);
             Renderer rend = sphere.GetComponent<Renderer>();
-            rend.material = mat;
+            rend.material = distractorMaterial;
             Color rnd_albedo = new Color(
                 Random.Range(171f, 191f)/255,  
                 Random.Range(192f, 212f)/255, 
@@ -233,7 +237,7 @@ public class SpawnerBoids : MonoBehaviour
     {
         simArea.SetActive(true);
         Renderer simAreaRenderer = simArea.GetComponent<Renderer>();
-        simAreaRenderer.material = mat;
+        simAreaRenderer.material = distractorMaterial;
         simAreaRenderer.material.color = fogColor;
         float fogIntensityMax = 0.1f;
         float fogIntensityMin = 0.8f;
@@ -673,49 +677,72 @@ public class SpawnerBoids : MonoBehaviour
         controlVariant.distractors = 0;
         controlList.Add(controlVariant);
         
-        //001
-        controlVariant.background = 0; 
-        controlVariant.fog = 0;
-        controlVariant.distractors = 1;
-        controlList.Add(controlVariant);
-        
-        //010
-        controlVariant.background = 0; 
-        controlVariant.fog = 1;
-        controlVariant.distractors = 0;
-        controlList.Add(controlVariant);
-        
-        //011
-        controlVariant.background = 0; 
-        controlVariant.fog = 1;
-        controlVariant.distractors = 1;
-        controlList.Add(controlVariant);
+        if (useDistractors)
+        {
+            //001
+            controlVariant.background = 0; 
+            controlVariant.fog = 0;
+            controlVariant.distractors = 1;
+            controlList.Add(controlVariant);
+        }
 
-        /*
-        //100
-        controlVariant.background = 1; 
-        controlVariant.fog = 0;
-        controlVariant.distractors = 0;
-        controlList.Add(controlVariant);
         
-        //101
-        controlVariant.background = 1; 
-        controlVariant.fog = 0;
-        controlVariant.distractors = 1;
-        controlList.Add(controlVariant);
+        if (useFog)
+        {
+            //010
+            controlVariant.background = 0; 
+            controlVariant.fog = 1;
+            controlVariant.distractors = 0;
+            controlList.Add(controlVariant);
+        }
+
+        if (useFog && useDistractors)
+        {
+            //011
+            controlVariant.background = 0; 
+            controlVariant.fog = 1;
+            controlVariant.distractors = 1;
+            controlList.Add(controlVariant);
+        }        
+
+
+        if (useBackground)
+        {
+            //100
+            controlVariant.background = 1; 
+            controlVariant.fog = 0;
+            controlVariant.distractors = 0;
+            controlList.Add(controlVariant);
+        }
+
         
-        //110
-        controlVariant.background = 1; 
-        controlVariant.fog = 1;
-        controlVariant.distractors = 0;
-        controlList.Add(controlVariant);
+        if (useBackground && useDistractors)
+        {
+            //101
+            controlVariant.background = 1; 
+            controlVariant.fog = 0;
+            controlVariant.distractors = 1;
+            controlList.Add(controlVariant);
+        }
+
+        if (useBackground && useFog)
+        {
+            //110
+            controlVariant.background = 1; 
+            controlVariant.fog = 1;
+            controlVariant.distractors = 0;
+            controlList.Add(controlVariant);
+        }
         
-        //111
-        controlVariant.background = 1; 
-        controlVariant.fog = 1;
-        controlVariant.distractors = 1;
-        controlList.Add(controlVariant);
-        */
+        if (useBackground && useFog && useDistractors)
+        {
+            //111
+            controlVariant.background = 1; 
+            controlVariant.fog = 1;
+            controlVariant.distractors = 1;
+            controlList.Add(controlVariant);
+        }
+
     }
 
     void setupFolderStructure()

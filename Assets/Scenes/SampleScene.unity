@@ -153,7 +153,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
-  mat: {fileID: 2100000, guid: 57cb8209be86bd249aab3f39532926c5, type: 2}
+  distractorMaterial: {fileID: 2100000, guid: 57cb8209be86bd249aab3f39532926c5, type: 2}
+  useBackground: 0
+  useFog: 0
+  useDistractors: 0
+  numFishMinMax: {x: 4, y: 50}
+  sequence_goal: 2
+  sequence_length: 50
 --- !u!4 &25331122
 Transform:
   m_ObjectHideFlags: 0
@@ -167,7 +173,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &104356237
 GameObject:
@@ -423,7 +429,7 @@ Transform:
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &963194225
 GameObject:
