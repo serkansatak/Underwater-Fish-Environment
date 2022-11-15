@@ -95,7 +95,7 @@ GameObject:
   - component: {fileID: 9097812421038103056}
   - component: {fileID: 7715635917251796386}
   m_Layer: 6
-  m_Name: stickleback_fixed
+  m_Name: stickleback
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -129,7 +129,7 @@ Animator:
   m_GameObject: {fileID: 1383244955902989187}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 4f420987d8f47fb48a920f50fb8caf8e, type: 2}
+  m_Controller: {fileID: 9100000, guid: bcd698e61c18b7de4b9ace353e6dfecd, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
