@@ -1,12 +1,12 @@
 ## Underwater-Fish-Environment
  TODO: 
-- ADD zip with video background
+- Change download link to the zip with video background
 - Add download link for the data
 
 # Overview
 This repository contains Unity project for generating synthetic MOT underwater data. The data can be generated in 8 different environmental conditions, presented bellow. The repository is affiliated with the following project - XXX (link here). Generated data can be downloaded from XXX (link here).
 
-![flowchart](images/titleImg.png)
+![titleImage](images/titleImg.png)
 
 (a) Plain background, no fog, no distractors. (b) Video background, no fog, no distractors. (c) Plain background, fog, no distractors. (d) Plain background, no fog, with distractors. (e) Plain background, with fog and distractors. (f) Video background with fog, but without distractors. (g) Video
 background with distractor, but without fog. (h) Video background with fog and distractors.
@@ -14,10 +14,16 @@ background with distractor, but without fog. (h) Video background with fog and d
 # How to use
 Tested on Windows 10, Unity Editor 2021.3.13f1. While it is possible to use this generator on Ubuntu 22.04, due to the limited capabilities of the Unity video player on Linux, see https://docs.unity3d.com/Manual/VideoSources-FileCompatibility.html, the option to generate data with a video background is not available. If you are still interested in using this repo on Ubuntu 22.04, you can install Unity Hub on Ubuntu 22.04 by following this guide - https://dev.to/brenomfviana/my-experience-using-unity3d-on-manjaro-i3-40ad.
 
-1. Git clone this badass repo
-2. Download a zip file with video backgrounds and extract it into _Assets/Videos_
-3. Open a repo via Unity Hub 
-4. R
+1. Download Unity Hub and install Unity Editor.
+1. Git clone this repo 
+2. Download a zip file with video backgrounds from https://drive.google.com/file/d/1R4XtAwGW42zEthiPyNR_vGTOmtZVVyRx/view?usp=share_link, and extract it into _Assets_
+3. Open this repo via Unity Hub, select _Open/Add project from disk_. Depending on your hardware, this might take some time. 
+![openProject](images/openProjectUnityHub.png)
+4. Load the scene from _Assets/Scene_.
+5. Clink on the _Generator_ game object, and choose parameters for data generator. 
+![dataGeneration](images/dataGeneration.png)
+6. Run by clicking the _Play_ symbol at the top (see the green square in the figure above). 
+7. After all data was generated, the generator will automatically stop. You should now have a folder _synthData_ in your project folder i.e., _PATH/TO/THE/PROJECT/Underwater-Fish-Environment/synthData_. All generated data is saved here.
 
  
 # High-level flowchart and important functions
@@ -89,7 +95,7 @@ Resets/Clears sequence variables.
 | Random direction                   |                             [<-1, 1>, <-1, 1>, <-1, 1>]                            | Vector3                   |
 | Random weight                      |                                       <1, 10>                                      | float                     |
 |           **Environment**          |                            ######                                                  |          ######           |
-| Video background                   |                       <background_1.mp4, background_152.mp4>                       | NA                        |
+| Video background                   |                       <background_1.mp4, background_154.mp4>                       | NA                        |
 | Fog/Plain background colour        | [<171, 191>, <192, 212>, <137, 157>, <151, 171>]<br> OR [[1, 1, 1] * <75, 225>, 1] | RGBA colour encoding      |
 | Fog intensity                      |                                     <0.1, 0.8>                                     | float                     |
 | Number of distractors              |                                      <50, 500>                                     | int                       |
