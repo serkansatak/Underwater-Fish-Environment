@@ -15,12 +15,12 @@ background with distractor, but without fog. (h) Video background with fog and d
 Tested on Windows 10, Unity Editor 2021.3.13f1. While it is possible to use this generator on Ubuntu 22.04, due to the limited capabilities of the Unity video player on Linux, see https://docs.unity3d.com/Manual/VideoSources-FileCompatibility.html, the option to generate data with a video background is not available. If you are still interested in using this repo on Ubuntu 22.04, you can install Unity Hub on Ubuntu 22.04 by following this guide - https://dev.to/brenomfviana/my-experience-using-unity3d-on-manjaro-i3-40ad.
 
 1. Download Unity Hub and install Unity Editor.
-1. Git clone this repo 
-2. Download a zip file with video backgrounds from https://drive.google.com/file/d/1R4XtAwGW42zEthiPyNR_vGTOmtZVVyRx/view?usp=share_link, and extract it into _Assets_
-3. Open this repo via Unity Hub, select _Open/Add project from disk_. Then open a newly added project namde _Underwater-Fish-Environment_. Depending on your hardware, the first import might take some time. 
+1. Git clone this repo. 
+2. On Windows, download a zip file with video backgrounds from https://drive.google.com/file/d/1R4XtAwGW42zEthiPyNR_vGTOmtZVVyRx/view?usp=share_link, and extract it into _Assets_.
+3. Open this repo via Unity Hub, select _Open/Add project from disk_. Then open a newly added project named _Underwater-Fish-Environment_. Depending on your hardware, the first import might take some time. 
 ![openProject](images/openProjectUnityHub.png)
-4. Load the scene from _Assets/Scene_.
-5. Clink on the _Generator_ game object, and choose parameters for data generator. 
+4. Load the scene called _scene_ from _Assets/Scene_.
+5. Clink on the _Generator_ game object, and choose parameters for data generator. _sequence\_goal_ defines the number of sequences generated for each selected environmnetal conditions. _sequence\_length_ defines number of images in each generated sequence. 
 ![dataGeneration](images/dataGeneration.png)
 6. Run by clicking the _Play_ symbol at the top (see the green square in the figure above). 
 7. After all data was generated, the generator will automatically stop. You should now have a folder _synthData_ in your project folder i.e., _PATH/TO/THE/PROJECT/Underwater-Fish-Environment/synthData_. All generated data is saved here.
