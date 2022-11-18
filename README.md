@@ -17,7 +17,7 @@ Tested on Windows 10, Unity Editor 2021.3.13f1. While it is possible to use this
 1. Download Unity Hub and install Unity Editor.
 1. Git clone this repo 
 2. Download a zip file with video backgrounds from https://drive.google.com/file/d/1R4XtAwGW42zEthiPyNR_vGTOmtZVVyRx/view?usp=share_link, and extract it into _Assets_
-3. Open this repo via Unity Hub, select _Open/Add project from disk_. Depending on your hardware, this might take some time. 
+3. Open this repo via Unity Hub, select _Open/Add project from disk_. Then open a newly added project namde _Underwater-Fish-Environment_. Depending on your hardware, the first import might take some time. 
 ![openProject](images/openProjectUnityHub.png)
 4. Load the scene from _Assets/Scene_.
 5. Clink on the _Generator_ game object, and choose parameters for data generator. 
