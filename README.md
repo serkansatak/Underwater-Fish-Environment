@@ -3,6 +3,7 @@
 - Change download link to the zip with video background
 - Add download link for the data and other links (search XXX)
 - Add python script to generate annotated videos
+- Add source - https://www.dawn-studio.de/tutorials/boids/
 
 # Overview
 This repository contains Unity project for generating synthetic MOT underwater data. The data can be generated in 8 different environmental conditions, presented bellow. The repository is affiliated with the following project - XXX (link here). Generated data can be downloaded from XXX (link here).
