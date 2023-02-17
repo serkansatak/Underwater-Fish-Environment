@@ -2,6 +2,8 @@ import numpy as np
 import cv2 as cv
 import os 
 import random as rnd
+from configparser import ConfigParser
+
 
 dataFolder = "../synthData/"
 
@@ -44,15 +46,16 @@ def orderImages(imageFiles):
 def getRootFolders():
     return os.listdir(dataFolder)
 
-def generateColors(noOfColors):
+def generateColors(_noOfColors):
     colors = []
-    for i in range(int (noOfColors)):
+    for i in range(int (_noOfColors)):
         colors.append((rnd.randint(0,255), rnd.randint(0,255), rnd.randint(0,255)))
     return colors
 
 
 if __name__=="__main__":
     fourcc = cv.VideoWriter_fourcc(*'mp4v')
+    config = ConfigParser()
 
     roots = getRootFolders()
     for root in roots:
@@ -63,7 +66,11 @@ if __name__=="__main__":
             imagesSorted = orderImages(imageFiles)
             gtFile = dataFolder + root + "/train/" + sequence + "/gt/gt.txt"
             sequenceVideo = dataFolder + root + "/train/" + sequence + "/video.mp4"
+            print("Savind video to", sequenceVideo)
             out = cv.VideoWriter(sequenceVideo, fourcc, 15.0, (960,544))
+            iniFile = dataFolder + root + "/train/" + sequence + "/seqinfo.ini"
+            config.read(iniFile)
+            noOfColors = config.getint('Sequence', 'spawnedFish')
 
             idColors = []
             for img_no in imagesSorted:
@@ -75,7 +82,7 @@ if __name__=="__main__":
                 #print(size)
                 annotations = read_annotations(img_no)
                 if (img_no == 1):
-                    idColors = generateColors(annotations[-1, 1])
+                    idColors = generateColors(noOfColors)
                 img = draw_rectangles(img, annotations, idColors)
                 out.write(img)
 
