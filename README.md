@@ -1,10 +1,6 @@
 ## Underwater-Fish-Environment
- TODO: 
-- Change download link to the zip with video background
-- Add links (search XXX)
-
 # Overview
-This repository contains Unity project for generating synthetic MOT underwater data. The data can be generated in 8 different environmental conditions, presented bellow. The repository is affiliated with the following project - XXX (link here). Generated data can be downloaded from XXX (link here).
+This repository contains Unity project for generating synthetic MOT underwater data. The data can be generated in 8 different environmental conditions, presented bellow. The repository is affiliated with the following project - https://vap.aau.dk/brackishmot/. Both real and synthetic data can be downloaded from https://www.kaggle.com/datasets/maltepedersen/brackishmot.
 
 ![titleImage](images/titleImg.png)
 
@@ -16,7 +12,7 @@ Tested on Windows 10, Unity Editor 2021.3.13f1. While it is possible to use this
 
 1. Download Unity Hub and install Unity Editor.
 1. Git clone this repo. 
-2. On Windows, download a zip file with video backgrounds from https://drive.google.com/file/d/1R4XtAwGW42zEthiPyNR_vGTOmtZVVyRx/view?usp=share_link, and extract it into _Assets_.
+2. On Windows, download a zip file with video backgrounds from https://www.kaggle.com/datasets/maltepedersen/brackishmot, and extract it into _Assets_.
 3. Open this repo via Unity Hub, select _Open/Add project from disk_. Then open a newly added project named _Underwater-Fish-Environment_. Depending on your hardware, the first import might take some time. 
 ![openProject](images/openProjectUnityHub.png)
 4. Load the scene called _scene_ from _Assets/Scene_.
