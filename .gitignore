@@ -83,3 +83,6 @@ fish_synth_BurstDebugInformation_DoNotShip
 fish_synth.x86_64
 synthData*
 Assets/Videos*
+Assets/BrackishMOT*
+Assets/background_videos/**
+Assets/background_videos/background*

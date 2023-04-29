@@ -1,3 +1,4 @@
+/*
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -230,3 +231,4 @@ public class generateImages : MonoBehaviour
         printConditios();
     }
 }
+*/
