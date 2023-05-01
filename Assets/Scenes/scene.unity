@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
-  distractorMaterial: {fileID: 2100000, guid: 57cb8209be86bd249aab3f39532926c5, type: 2}
+  distractorMaterial: {fileID: 2100000, guid: f97ac7fa4f1be44cdb25a015bc9a372b, type: 2}
   useBackground: 1
   useFog: 0
   useDistractors: 1

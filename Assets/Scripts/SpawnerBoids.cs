@@ -4,6 +4,10 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Video;
+using UnityEditor.Media;
+using UnityEditor;
+
+
 
 public class SpawnerBoids : MonoBehaviour
 {
@@ -108,6 +112,15 @@ public class SpawnerBoids : MonoBehaviour
     string rootDir;
     string datasetDir = "brackishMOTSynth";
     string imageFolder;
+
+
+    // Video 
+    string videoFileName;
+    private MediaEncoder videoEncoder;
+    private int bitrate = 345678;
+    private VideoTrackEncoderAttributes videoAttributes;
+    //
+
     string gtFolder;
     string gtFile;
     int sequence_number = 0;
@@ -121,7 +134,7 @@ public class SpawnerBoids : MonoBehaviour
     Texture2D screenshotTex;
 
     Mesh bakedMesh;
-
+ 
     int number_of_distractors;
     List<GameObject> distractors_list = new List<GameObject>(); 
 
@@ -222,12 +235,32 @@ public class SpawnerBoids : MonoBehaviour
         mainCam.targetTexture = screenRenderTexture;
         mainCam.Render();
         RenderTexture.active = screenRenderTexture;
-        screenshotTex.ReadPixels(new Rect(0, 0, img_width, img_height), 0, 0);
 
+        screenshotTex.ReadPixels(new Rect(0, 0, img_width, img_height), 0, 0);
         RenderTexture.active = null; // JC: added to avoid errors
         RenderTexture.ReleaseTemporary(screenRenderTexture);
         screenRenderTexture = null;
         Destroy(screenRenderTexture);
+
+        // Video -- add frame.
+        
+        Texture2D videoTex = new Texture2D(screenshotTex.width, screenshotTex.height, TextureFormat.RGBA32, false);
+
+        Color[] pixels = screenshotTex.GetPixels();
+        Color[] newPixels = new Color[pixels.Length];
+
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            Color pixel = pixels[i];
+            newPixels[i] = new Color(pixel.r, pixel.g, pixel.b, 1.0f); // set alpha channel to 1.0
+        }
+
+        videoTex.SetPixels(newPixels);
+        videoTex.Apply();
+        
+        videoEncoder.AddFrame(videoTex);
+
+        //
 
         byte[] byteArray = screenshotTex.EncodeToJPG();
         System.IO.File.WriteAllBytes(filename, byteArray);
@@ -440,6 +473,7 @@ public class SpawnerBoids : MonoBehaviour
 
     void addNewSequence()
     {   
+
         sequence_number += 1;
         if (sequence_number != sequence_goal + 1){
             sequence_image = 0;
@@ -492,7 +526,52 @@ public class SpawnerBoids : MonoBehaviour
             {
                 writer.Write(seqInfo);
             }
+
+
+
+            Debug.Log($"Sequence name : {new_sequence}");
+            // Video -- initialize encoder while initializing new sequenceW
+            if (videoEncoder != null) 
+            {
+                videoEncoder.Dispose();
+                videoEncoder = null;
+            }
+
+            
+            
+            H264EncoderAttributes h264Attr = new H264EncoderAttributes
+            {
+                gopSize = 25,
+                numConsecutiveBFrames = 2,
+                profile = VideoEncodingProfile.H264High
+            };
+            
+            
+            videoAttributes = new VideoTrackEncoderAttributes(h264Attr)
+            {
+                frameRate = new MediaRational(FPS),
+                width = (uint)img_width,
+                height = (uint)img_height,
+                targetBitRate = (uint)bitrate,
+            };
+
+            videoFileName = new_sequence + "/output.mp4";
+            videoEncoder = new MediaEncoder(videoFileName, videoAttributes);
         } 
+    }
+
+    void setVideoProperties()
+    {
+        img_height = (int)vp.height;
+        img_width = (int)vp.width;
+        FPS = (int)vp.frameRate;
+
+        long fileSize = new System.IO.FileInfo(vp.clip.originalPath).Length;
+        float duration = (float)vp.frameCount / vp.frameRate;
+        float bitrate_ = fileSize / duration * 8.0f / 1000000.0f; // in Mbps
+        this.bitrate = (int)bitrate_ * 1000000;
+
+       // videoAttributes = vp.GetVideoTrackAttributes(0);
     }
 
     void randomizeVideo()
@@ -504,6 +583,8 @@ public class SpawnerBoids : MonoBehaviour
         backgroundSequence = backgroundSequence.Replace(".mp4", "");
         
         vp.Prepare();
+        //setVideoProperties();
+
     }
 
     float updateSpeed(boidController b, float rndSpeed, float initSpeed)
@@ -803,6 +884,9 @@ public class SpawnerBoids : MonoBehaviour
 
         videoFiles = System.IO.Directory.GetFiles(videoDir,"*.mp4");
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
+        setVideoProperties();
+
+        Debug.Log($"Video Height: {img_height} -- Width: {img_width} -- FPS: {FPS} -- BitRate: {bitrate}");
 
         bakedMesh = new Mesh();
 
@@ -867,6 +951,8 @@ public class SpawnerBoids : MonoBehaviour
             {
                 Debug.Log("All sequences were generated");
                 UnityEditor.EditorApplication.isPlaying = false;
+                videoEncoder.Dispose();
+                videoEncoder = null;
             }
             else
             {
@@ -909,4 +995,6 @@ public class SpawnerBoids : MonoBehaviour
         }
 
     }
+
 }
+
