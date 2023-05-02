@@ -6,8 +6,8 @@ using UnityEngine;
 using UnityEngine.Video;
 using UnityEditor.Media;
 using UnityEditor;
-
-
+using System;
+using Random = UnityEngine.Random;
 
 public class SpawnerBoids : MonoBehaviour
 {
@@ -57,6 +57,7 @@ public class SpawnerBoids : MonoBehaviour
     int fishId;
 
     GameObject simArea;
+    System.Random sysRand = new System.Random();
     Renderer simAreaRenderer;
     Bounds simAreaBounds;
     Vector3 simAreaSize = new Vector3(150, 60, 180);
@@ -145,7 +146,7 @@ public class SpawnerBoids : MonoBehaviour
 
     public void generateDistractors()
     {
-        number_of_distractors = (int) Random.Range(50, 500);
+        number_of_distractors = (int) Random.Range(500, 5000);
         numberOfDistractors = number_of_distractors.ToString();
 
         for (int i = 0; i < number_of_distractors; i++)
@@ -159,19 +160,59 @@ public class SpawnerBoids : MonoBehaviour
             sphere.name = "distractor_" + i.ToString();
 
             sphere.transform.parent = transform;
-            sphere.transform.localScale = Vector3.one * Random.Range(0.01f, 1f);
+            sphere.transform.localScale = Vector3.one * GetRandomLogNormal(0.01f, 0.4f);
             Renderer rend = sphere.GetComponent<Renderer>();
             rend.material = distractorMaterial;
+            Color rnd_white = new Color(
+                GetRandomLogNormal(220f, 225f)/255,
+                GetRandomLogNormal(220f, 255f)/255,
+                GetRandomLogNormal(220f, 255f)/255,
+                GetRandomLogNormal(151f, 220f)/255 
+            );
+            rend.material.color = rnd_white;
+            /*
             Color rnd_albedo = new Color(
                 Random.Range(171f, 191f)/255,  
                 Random.Range(192f, 212f)/255, 
                 Random.Range(137f, 157f)/255,
                 Random.Range(151f, 171f)/255);  
+            
             rend.material.color = rnd_albedo;
+            */
             rend.material.SetFloat("_TranspModify", Random.Range(0f, 1f));
             distractors_list.Add(sphere);
         }
     }
+
+    public static float NextLogNormal(double mu = 0.0001, double sigma = 0.5, bool scaleToOne = true)
+    {
+        double x = (double)Random.Range((float)0.0001, (float)5);
+        double lnx = System.Math.Log(x);
+        double exp_part = System.Math.Exp( -(System.Math.Pow((lnx-mu), 2) / (2*System.Math.Pow(sigma,2)) ) );
+        double reg_part = 1 / (x * sigma * System.Math.Sqrt(2 * System.Math.PI) );
+        double y = exp_part * reg_part;
+
+        if (scaleToOne) 
+        {
+            y /= 0.904;
+            y = System.Math.Min(y, 1);
+        }
+
+        return (float)y;
+    }
+
+    public float GetRandomLogNormal(float lowerBound, float upperBound, bool reversed = false, double mean = 0.001, double stdDev = 0.5)
+    {
+        float randLN = NextLogNormal((double)mean, (double)stdDev, true);
+        if (reversed)
+        {
+            return upperBound - (randLN * (upperBound - lowerBound));
+        } else 
+        {
+            return randLN * (upperBound - lowerBound) + lowerBound;
+        }
+    }
+
 
     void updateDistractors()
     {
@@ -570,6 +611,7 @@ public class SpawnerBoids : MonoBehaviour
         float duration = (float)vp.frameCount / vp.frameRate;
         float bitrate_ = fileSize / duration * 8.0f / 1000000.0f; // in Mbps
         this.bitrate = (int)bitrate_ * 1000000;
+        sequence_length = (int)vp.frameCount;
 
        // videoAttributes = vp.GetVideoTrackAttributes(0);
     }
