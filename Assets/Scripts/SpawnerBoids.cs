@@ -11,6 +11,7 @@ using Random = UnityEngine.Random;
 
 public class SpawnerBoids : MonoBehaviour
 {
+    System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
     [SerializeField] GameObject fishPrefab;
     [SerializeField] Material distractorMaterial;
 
@@ -272,6 +273,9 @@ public class SpawnerBoids : MonoBehaviour
             filename = imageFolder + "/00000" + sequence_image.ToString() + ".jpg";
         }
         
+        vp.frame = sequence_image-1;
+        vp.Pause();
+
         screenRenderTexture = RenderTexture.GetTemporary(img_width, img_height, 24);
         mainCam.targetTexture = screenRenderTexture;
         mainCam.Render();
@@ -305,6 +309,7 @@ public class SpawnerBoids : MonoBehaviour
 
         byte[] byteArray = screenshotTex.EncodeToJPG();
         System.IO.File.WriteAllBytes(filename, byteArray);
+        vp.Play();
     }
 
     void randomizeFog()
@@ -612,6 +617,7 @@ public class SpawnerBoids : MonoBehaviour
         float bitrate_ = fileSize / duration * 8.0f / 1000000.0f; // in Mbps
         this.bitrate = (int)bitrate_ * 1000000;
         sequence_length = (int)vp.frameCount;
+        vp.Prepare();
 
        // videoAttributes = vp.GetVideoTrackAttributes(0);
     }
@@ -910,7 +916,7 @@ public class SpawnerBoids : MonoBehaviour
 
     void Awake()
     {
-
+        watch.Start();
         generateControlList();
         control = controlList[controlIdx];
         setupFolderStructure();
@@ -927,6 +933,8 @@ public class SpawnerBoids : MonoBehaviour
         videoFiles = System.IO.Directory.GetFiles(videoDir,"*.mp4");
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
         setVideoProperties();
+
+        vp.Play();
 
         Debug.Log($"Video Height: {img_height} -- Width: {img_width} -- FPS: {FPS} -- BitRate: {bitrate}");
 
@@ -974,14 +982,19 @@ public class SpawnerBoids : MonoBehaviour
                 instantiateFish(i);
             }
             addNewSequence();
+            vp.Pause();
         } 
-        
-        if(vp.isPlaying || control.background == 0)
+        if (vp.isPrepared) 
         {
-            sequence_image += 1;
-            //vp.Pause();
-            simulateMovement(boidsList, deltaTime);
-            if (control.distractors == 1) updateDistractors();
+            if(vp.isPlaying || control.background == 0)
+            {
+                vp.Pause();
+                sequence_image += 1;
+                //vp.Pause();
+                simulateMovement(boidsList, deltaTime);
+                if (control.distractors == 1) updateDistractors();
+                vp.Play();
+            }
         }
     }
 
@@ -991,6 +1004,7 @@ public class SpawnerBoids : MonoBehaviour
         if (sequence_number == sequence_goal+1)
         {  
             controlIdx++;
+            //Debug.Log($"Control Idx {controlIdx} Execution Time : {watch.Elapsed} seconds");
             if (controlIdx == controlList.Count)
             {
                 Debug.Log("All sequences were generated");
@@ -1021,24 +1035,27 @@ public class SpawnerBoids : MonoBehaviour
             }
 
         } else {
-
-            if(vp.isPlaying || control.background == 0)
+            if (vp.isPrepared) 
             {
-                foreach (boidController b in boidsList)
+                if(vp.isPlaying || control.background == 0)
                 {
-                    boundingBox bb = GetBoundingBoxInCamera(b.go, mainCam);
-                    SaveAnnotation(bb, b.id);
+                    vp.Pause();
+                    vp.frame = sequence_image-1;
+                    foreach (boidController b in boidsList)
+                    {
+                        boundingBox bb = GetBoundingBoxInCamera(b.go, mainCam);
+                        SaveAnnotation(bb, b.id);
+                    }
+
+                    SaveCameraView();
+                    //Debug.Log($"Video Time : {vp.clockTime}");
+                    Debug.Log("Sequence Number " + sequence_number.ToString() 
+                    + " Sequence Image " + sequence_image.ToString() 
+                    + "/" + sequence_length.ToString());
+                    vp.Play();
                 }
-
-                SaveCameraView();
-
-                Debug.Log("Sequence Number " + sequence_number.ToString() 
-                + " Sequence Image " + sequence_image.ToString() 
-                + "/" + sequence_length.ToString());
             }
         }
-
     }
-
 }
 
