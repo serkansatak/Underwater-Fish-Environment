@@ -1,3 +1,4 @@
+
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -144,6 +145,8 @@ public class SpawnerBoids : MonoBehaviour
     string spawnedFish;
     string backgroundSequence;
 
+    System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+
     public void generateDistractors()
     {
         number_of_distractors = (int) Random.Range(500, 5000);
@@ -170,7 +173,7 @@ public class SpawnerBoids : MonoBehaviour
                 GetRandomLogNormal(151f, 220f)/255 
             );
             rend.material.color = rnd_white;
-            /*
+            
             Color rnd_albedo = new Color(
                 Random.Range(171f, 191f)/255,  
                 Random.Range(192f, 212f)/255, 
@@ -178,7 +181,7 @@ public class SpawnerBoids : MonoBehaviour
                 Random.Range(151f, 171f)/255);  
             
             rend.material.color = rnd_albedo;
-            */
+            
             rend.material.SetFloat("_TranspModify", Random.Range(0f, 1f));
             distractors_list.Add(sphere);
         }
@@ -301,6 +304,7 @@ public class SpawnerBoids : MonoBehaviour
         
         videoEncoder.AddFrame(videoTex);
 
+        Debug.Log("Video Time : " + vp.clockTime);
         //
 
         byte[] byteArray = screenshotTex.EncodeToJPG();
@@ -910,7 +914,7 @@ public class SpawnerBoids : MonoBehaviour
 
     void Awake()
     {
-
+        watch.Start();
         generateControlList();
         control = controlList[controlIdx];
         setupFolderStructure();
@@ -991,6 +995,8 @@ public class SpawnerBoids : MonoBehaviour
         if (sequence_number == sequence_goal+1)
         {  
             controlIdx++;
+            Debug.Log($"Execution time: {watch.Elapsed} seconds");
+            watch.Restart();
             if (controlIdx == controlList.Count)
             {
                 Debug.Log("All sequences were generated");
@@ -1004,7 +1010,6 @@ public class SpawnerBoids : MonoBehaviour
                 control = controlList[controlIdx];
                 sequence_number = 0;
                 setupFolderStructure();
-               
                 //Set up a new scene with new control conditions
                 CleanUp();
                 if (control.background == 1) randomizeVideo();
