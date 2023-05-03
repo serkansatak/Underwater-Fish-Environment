@@ -133,6 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 25331122}
   - component: {fileID: 25331121}
+  - component: {fileID: 25331123}
   m_Layer: 0
   m_Name: Generator
   m_TagString: Untagged
@@ -147,13 +148,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 25331120}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 51e1a7bf067a4c5859ed32fe0d98ff88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
-  distractorMaterial: {fileID: 2100000, guid: 57cb8209be86bd249aab3f39532926c5, type: 2}
+  distractorMaterial: {fileID: 2100000, guid: f97ac7fa4f1be44cdb25a015bc9a372b, type: 2}
   useBackground: 0
   useFog: 0
   useDistractors: 1
@@ -175,6 +176,24 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &25331123
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 25331120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1feb183d46e6546d3aa2fc315d8947f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
+  distractorMaterial: {fileID: 2100000, guid: f97ac7fa4f1be44cdb25a015bc9a372b, type: 2}
+  useTurbidity: 0
+  useDistractors: 1
+  numFishMinMax: {x: 4, y: 50}
+  numDistractorMinMax: {x: 250, y: 2500}
 --- !u!1 &104356237
 GameObject:
   m_ObjectHideFlags: 0
@@ -264,7 +283,7 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
@@ -600,7 +619,7 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1324348501}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 10
   m_Type: 0
   m_Shape: 0

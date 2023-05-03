@@ -76,7 +76,7 @@ public class SpawnerBoids : MonoBehaviour
     float S = 1f;
     float M = 1f;
     float L = 1f;
-
+ 
     public class boidController
     {
         public GameObject go;
@@ -582,8 +582,8 @@ public class SpawnerBoids : MonoBehaviour
             
             H264EncoderAttributes h264Attr = new H264EncoderAttributes
             {
-                gopSize = 25,
-                numConsecutiveBFrames = 2,
+                //gopSize = 25,
+                //numConsecutiveBFrames = 2,
                 profile = VideoEncodingProfile.H264High
             };
             
@@ -939,6 +939,7 @@ public class SpawnerBoids : MonoBehaviour
     
     void Start()
     {
+        Application.targetFrameRate = 25;
         //Set up a first scene
         if (control.background == 1) randomizeVideo();
         generateFogColor();
@@ -978,6 +979,7 @@ public class SpawnerBoids : MonoBehaviour
         if(vp.isPlaying || control.background == 0)
         {
             sequence_image += 1;
+            //vp.Pause();
             simulateMovement(boidsList, deltaTime);
             if (control.distractors == 1) updateDistractors();
         }
