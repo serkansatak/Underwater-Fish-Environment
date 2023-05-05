@@ -156,7 +156,8 @@ public class ExtractFrames : MonoBehaviour
 
     void Start()
     {   Application.runInBackground = true;
-        Application.targetFrameRate = 2;
+        Application.targetFrameRate = 30;
+        Debug.Log($"FPS : {vpAttr.FPS * vp.playbackSpeed}");
         vp.Play();
         vp.Pause();
         StartCoroutine(FrameUpdate());
@@ -165,7 +166,8 @@ public class ExtractFrames : MonoBehaviour
     void OnFrameReady(VideoPlayer vp_, long frameIdx)
     {
         vp_.frame = frameIdx;
-        string filename = imageFolder + "/" + frameIdx.ToString().PadLeft(4,'0') + ".jpg";
+        int tmpIdx = (int)frameIdx + 1;
+        string filename = imageFolder + "/" + tmpIdx.ToString().PadLeft(4,'0') + ".jpg";
 
         screenRenderTexture = RenderTexture.GetTemporary((int)vpAttr.width, (int)vpAttr.height, 24);
         mainCam.targetTexture = screenRenderTexture;
@@ -198,8 +200,11 @@ public class ExtractFrames : MonoBehaviour
         System.IO.File.WriteAllBytes(filename, byteArray);
 
         Debug.Log("Control Number " + System.Convert.ToString(controlIdx, 2).PadLeft(2,'0')
-        + " Sequence Image " + sequence_image.ToString() 
+        + " Sequence Image " + tmpIdx.ToString() 
         + "/" + sequence_length.ToString());
+        if (tmpIdx == sequence_length){
+            vp_.Stop();
+        }
         //frameIdx++;
         //sequence_image++;
     }
@@ -317,7 +322,7 @@ public class ExtractFrames : MonoBehaviour
 
         bool tmpBool = false;
         
-        vp.frameReady += OnFrameReady;
+        //vp.frameReady += OnFrameReady;
         vp.Play();
         //vp.frame = sequence_image;   // Activate to get even number frames
         Debug.Log("SeqImage After : " + sequence_image);
