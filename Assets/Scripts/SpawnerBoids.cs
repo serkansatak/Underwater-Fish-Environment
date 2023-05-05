@@ -77,7 +77,7 @@ public class SpawnerBoids : MonoBehaviour
     float S = 1f;
     float M = 1f;
     float L = 1f;
- 
+
     public class boidController
     {
         public GameObject go;
@@ -144,6 +144,8 @@ public class SpawnerBoids : MonoBehaviour
     string numberOfDistractors;
     string spawnedFish;
     string backgroundSequence;
+    bool isUpdateDone_ = false;
+    bool frame_ready_ = false;
 
     public void generateDistractors()
     {
@@ -256,24 +258,45 @@ public class SpawnerBoids : MonoBehaviour
         return world_pos;
     }
 
+    IEnumerator waitABit(float aBit){
+        yield return new WaitForSeconds(aBit);
+    }
+
+    IEnumerator checkFrameIdx()
+    {
+        while (vp.frame != sequence_image)
+        {
+            yield return null;
+        }
+    }
+
+    IEnumerator checkFrameReady()
+    {
+        frame_ready_ = true;
+        yield return new WaitUntil(() => vp.isPrepared);
+    }
+
     void SaveCameraView()
     {
+        
+
+        //Debug.Log(sequence_image.ToString());        
+        frame_ready_ = false;
+        vp.frame = sequence_image;
+        StartCoroutine(checkFrameReady());
+        StartCoroutine(checkFrameIdx());
         string filename;
-        if (sequence_image > 99999){
-            filename = imageFolder + "/" + sequence_image.ToString() + ".jpg";
-        } else if (sequence_image > 9999) {
-            filename = imageFolder + "/0" + sequence_image.ToString() + ".jpg";
-        } else if (sequence_image > 999) {
-            filename = imageFolder + "/00" + sequence_image.ToString() + ".jpg";
-        } else if (sequence_image > 99) {
-            filename = imageFolder + "/000" + sequence_image.ToString() + ".jpg";
-        } else if (sequence_image > 9) {
-            filename = imageFolder + "/0000" + sequence_image.ToString() + ".jpg";
+        if ((vp.frame + 1) > 999) {
+            filename = imageFolder + "/" + (vp.frame + 1).ToString() + ".jpg";
+        } else if ((vp.frame + 1) > 99) {
+            filename = imageFolder + "/0" + (vp.frame + 1).ToString() + ".jpg";
+        } else if ((vp.frame + 1) > 9) {
+            filename = imageFolder + "/00" + (vp.frame + 1).ToString() + ".jpg";
         } else {
-            filename = imageFolder + "/00000" + sequence_image.ToString() + ".jpg";
+            filename = imageFolder + "/000" + (vp.frame + 1).ToString() + ".jpg";
         }
         
-        vp.frame = sequence_image-1;
+        Debug.Log("Modified " + vp.frame.ToString());
         vp.Pause();
 
         screenRenderTexture = RenderTexture.GetTemporary(img_width, img_height, 24);
@@ -304,8 +327,6 @@ public class SpawnerBoids : MonoBehaviour
         videoTex.Apply();
         
         videoEncoder.AddFrame(videoTex);
-
-        //
 
         byte[] byteArray = screenshotTex.EncodeToJPG();
         System.IO.File.WriteAllBytes(filename, byteArray);
@@ -367,7 +388,6 @@ public class SpawnerBoids : MonoBehaviour
             b.noClumpingArea = boidNoClumpingArea;
             
             boidsList.Add(b);
-
             b.go.SetActive(true);
         }
     }
@@ -412,7 +432,6 @@ public class SpawnerBoids : MonoBehaviour
             viewPosHead.y >= maxViewPos && viewPosTail.y >= maxViewPos ){
             return false;
         }
-
         return true;
     }
 
@@ -522,17 +541,18 @@ public class SpawnerBoids : MonoBehaviour
 
         sequence_number += 1;
         if (sequence_number != sequence_goal + 1){
-            sequence_image = 0;
+            sequence_image = 1;
 
-            string seq_name;
-            if (sequence_number < 10)
-            {
-                seq_name = datasetDir + "-0" + sequence_number.ToString();
-            }
-            else
-            {
-                seq_name = datasetDir + "-" + sequence_number.ToString();
-            }
+            string seq_name = "";
+            
+            //if (sequence_number < 10)
+            //{
+            //    seq_name = datasetDir + "-0" + sequence_number.ToString();
+            //}
+            //else
+            //{
+            //    seq_name = datasetDir + "-" + sequence_number.ToString();
+            //}
 
             string new_sequence = rootDir + "/" + seq_name;
 
@@ -573,8 +593,6 @@ public class SpawnerBoids : MonoBehaviour
                 writer.Write(seqInfo);
             }
 
-
-
             Debug.Log($"Sequence name : {new_sequence}");
             // Video -- initialize encoder while initializing new sequenceW
             if (videoEncoder != null) 
@@ -583,16 +601,13 @@ public class SpawnerBoids : MonoBehaviour
                 videoEncoder = null;
             }
 
-            
-            
             H264EncoderAttributes h264Attr = new H264EncoderAttributes
             {
                 //gopSize = 25,
                 //numConsecutiveBFrames = 2,
                 profile = VideoEncodingProfile.H264High
             };
-            
-            
+                        
             videoAttributes = new VideoTrackEncoderAttributes(h264Attr)
             {
                 frameRate = new MediaRational(FPS),
@@ -606,8 +621,21 @@ public class SpawnerBoids : MonoBehaviour
         } 
     }
 
+    void Prepared(VideoPlayer vidPlayer)
+    { 
+        vidPlayer.Pause(); 
+        StartCoroutine(waitABit(0.5f));
+        Debug.Log("papapapa");
+    }
+
     void setVideoProperties()
     {
+        // vp.sendFrameReadyEvents = true;
+        // vp.frameReady += OnFrameReady;
+        // vp.prepareCompleted += Prepared;
+        Debug.Log("Can I set playback speed : " + vp.canSetPlaybackSpeed);
+        vp.playbackSpeed = 0.1f;
+
         img_height = (int)vp.height;
         img_width = (int)vp.width;
         FPS = (int)vp.frameRate;
@@ -618,6 +646,9 @@ public class SpawnerBoids : MonoBehaviour
         this.bitrate = (int)bitrate_ * 1000000;
         sequence_length = (int)vp.frameCount;
         vp.Prepare();
+        //vp.Play();
+        vp.Stop();
+        vp.Pause();
 
        // videoAttributes = vp.GetVideoTrackAttributes(0);
     }
@@ -649,9 +680,7 @@ public class SpawnerBoids : MonoBehaviour
         {
             speedIncrement = b.elapsedTime/b.goalTime*deltaSpeed*-1f;
         }
-
         newSpeed = initSpeed + speedIncrement;
-        
         return newSpeed;
     }
 
@@ -814,8 +843,6 @@ public class SpawnerBoids : MonoBehaviour
             controlVariant.distractors = 1;
             controlList.Add(controlVariant);
         }
-
-        
         if (useFog)
         {
             //010
@@ -824,7 +851,6 @@ public class SpawnerBoids : MonoBehaviour
             controlVariant.distractors = 0;
             controlList.Add(controlVariant);
         }
-
         if (useFog && useDistractors)
         {
             //011
@@ -833,8 +859,6 @@ public class SpawnerBoids : MonoBehaviour
             controlVariant.distractors = 1;
             controlList.Add(controlVariant);
         }        
-
-
         if (useBackground)
         {
             //100
@@ -843,8 +867,6 @@ public class SpawnerBoids : MonoBehaviour
             controlVariant.distractors = 0;
             controlList.Add(controlVariant);
         }
-
-        
         if (useBackground && useDistractors)
         {
             //101
@@ -853,7 +875,6 @@ public class SpawnerBoids : MonoBehaviour
             controlVariant.distractors = 1;
             controlList.Add(controlVariant);
         }
-
         if (useBackground && useFog)
         {
             //110
@@ -862,7 +883,6 @@ public class SpawnerBoids : MonoBehaviour
             controlVariant.distractors = 0;
             controlList.Add(controlVariant);
         }
-        
         if (useBackground && useFog && useDistractors)
         {
             //111
@@ -871,29 +891,20 @@ public class SpawnerBoids : MonoBehaviour
             controlVariant.distractors = 1;
             controlList.Add(controlVariant);
         }
-
     }
 
     void setupFolderStructure()
     {
+        datasetDir = Path.GetFileNameWithoutExtension(vp.clip.originalPath) + "/";
         string controlString = "";
-        rootDir = "synthData/" + datasetDir;
+        rootDir = "synthData/" + datasetDir + "Synth";
 
         if (control.background != 0 || control.fog != 0 || control.distractors != 0) controlString += "_";
+        if (control.background == 1){ controlString += "B"; } 
+        if (control.fog == 1){ controlString += "F"; }
+        if (control.distractors == 1){ controlString += "D"; }
 
-        if (control.background == 1){
-            controlString += "B";
-        } 
-
-        if (control.fog == 1){
-            controlString += "F";
-        }
-
-        if (control.distractors == 1){
-            controlString += "D";
-        }
-        rootDir = rootDir + controlString + "/train/";
-
+        rootDir = rootDir + controlString;
         if (System.IO.Directory.Exists(rootDir))
         {
             System.IO.Directory.Delete(rootDir, true);
@@ -901,7 +912,6 @@ public class SpawnerBoids : MonoBehaviour
         } else {
              System.IO.Directory.CreateDirectory(rootDir);
         }
-
     }
 
     void getNewBoidParameters()
@@ -919,35 +929,29 @@ public class SpawnerBoids : MonoBehaviour
         watch.Start();
         generateControlList();
         control = controlList[controlIdx];
-        setupFolderStructure();
 
         mainCam = GameObject.Find("Fish Camera").GetComponent<Camera>();
-    
         simArea = GameObject.Find("Simulation area");
         simArea.transform.position = new Vector3(0, 0, simAreaSize.z/2f);
         simArea.transform.localScale = simAreaSize;
         UnityEngine.Physics.SyncTransforms();
         simAreaBounds = simArea.GetComponent<Collider>().bounds;
-        simArea.SetActive(false);
+        simArea.SetActive(false); 
 
         videoFiles = System.IO.Directory.GetFiles(videoDir,"*.mp4");
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
         setVideoProperties();
-
-        vp.Play();
+        setupFolderStructure();
 
         Debug.Log($"Video Height: {img_height} -- Width: {img_width} -- FPS: {FPS} -- BitRate: {bitrate}");
-
         bakedMesh = new Mesh();
-
         screenshotTex = new Texture2D(img_width, img_height, TextureFormat.RGB24, false);
-
         deltaTime = (float) 1/FPS;
     }
-    
+     
     void Start()
     {
-        Application.targetFrameRate = 25;
+        Application.targetFrameRate = 1;
         //Set up a first scene
         if (control.background == 1) randomizeVideo();
         generateFogColor();
@@ -962,12 +966,25 @@ public class SpawnerBoids : MonoBehaviour
         addNewSequence();
     }
 
+    IEnumerator WaitForFirstFrame()
+    {
+        yield return new WaitUntil(() => vp.isPrepared);
+        isUpdateDone_ = true;
+    }
+
+    void OnFrameReady(VideoPlayer source, long frameIdx)
+    {
+        frame_ready_ = true;
+        Debug.Log("tatatata");
+        StartCoroutine(waitABit(1f));
+    }
+
     void Update()
     {   
         print("control background " + control.background.ToString());
         print("control fog " + control.fog.ToString());
         print("control distractors " + control.distractors.ToString());
-        if (sequence_image == sequence_length)
+        if (sequence_image == sequence_length+1)
         {      
             CleanUp();
 
@@ -984,12 +1001,18 @@ public class SpawnerBoids : MonoBehaviour
             addNewSequence();
             vp.Pause();
         } 
-        if (vp.isPrepared) 
+        if (!isUpdateDone_)
+        {
+            StartCoroutine(WaitForFirstFrame());
+            vp.Pause();
+            vp.Play();
+        }
+
+        if (vp.isPrepared && isUpdateDone_) 
         {
             if(vp.isPlaying || control.background == 0)
             {
                 vp.Pause();
-                sequence_image += 1;
                 //vp.Pause();
                 simulateMovement(boidsList, deltaTime);
                 if (control.distractors == 1) updateDistractors();
@@ -1035,12 +1058,11 @@ public class SpawnerBoids : MonoBehaviour
             }
 
         } else {
-            if (vp.isPrepared) 
+            if (vp.isPrepared && isUpdateDone_) 
             {
                 if(vp.isPlaying || control.background == 0)
                 {
                     vp.Pause();
-                    vp.frame = sequence_image-1;
                     foreach (boidController b in boidsList)
                     {
                         boundingBox bb = GetBoundingBoxInCamera(b.go, mainCam);
@@ -1049,9 +1071,10 @@ public class SpawnerBoids : MonoBehaviour
 
                     SaveCameraView();
                     //Debug.Log($"Video Time : {vp.clockTime}");
-                    Debug.Log("Sequence Number " + sequence_number.ToString() 
-                    + " Sequence Image " + sequence_image.ToString() 
-                    + "/" + sequence_length.ToString());
+                    // Debug.Log("Sequence Number " + sequence_number.ToString() 
+                    // + " Sequence Image " + sequence_image.ToString() 
+                    // + "/" + sequence_length.ToString());
+                    sequence_image += 1;
                     vp.Play();
                 }
             }

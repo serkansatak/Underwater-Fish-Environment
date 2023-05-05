@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657815, g: 0.49641192, b: 0.57481617, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657844, g: 0.49641222, b: 0.57481676, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -132,8 +132,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 25331122}
-  - component: {fileID: 25331121}
   - component: {fileID: 25331123}
+  - component: {fileID: 25331124}
   m_Layer: 0
   m_Name: Generator
   m_TagString: Untagged
@@ -141,26 +141,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &25331121
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 25331120}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e1a7bf067a4c5859ed32fe0d98ff88, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
-  distractorMaterial: {fileID: 2100000, guid: f97ac7fa4f1be44cdb25a015bc9a372b, type: 2}
-  useBackground: 0
-  useFog: 0
-  useDistractors: 1
-  numFishMinMax: {x: 0, y: 0}
-  sequence_goal: 1
-  sequence_length: 300
 --- !u!4 &25331122
 Transform:
   m_ObjectHideFlags: 0
@@ -185,13 +165,33 @@ MonoBehaviour:
   m_GameObject: {fileID: 25331120}
   m_Enabled: 0
   m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51e1a7bf067a4c5859ed32fe0d98ff88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
+  distractorMaterial: {fileID: 2100000, guid: f97ac7fa4f1be44cdb25a015bc9a372b, type: 2}
+  useBackground: 0
+  useFog: 1
+  useDistractors: 1
+  numFishMinMax: {x: 0, y: 0}
+  sequence_goal: 1
+  sequence_length: 25
+--- !u!114 &25331124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 25331120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1feb183d46e6546d3aa2fc315d8947f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
   distractorMaterial: {fileID: 2100000, guid: f97ac7fa4f1be44cdb25a015bc9a372b, type: 2}
   useTurbidity: 0
-  useDistractors: 1
+  useDistractors: 0
   numFishMinMax: {x: 4, y: 50}
   numDistractorMinMax: {x: 250, y: 2500}
 --- !u!1 &104356237
@@ -230,7 +230,7 @@ VideoPlayer:
   m_RenderMode: 0
   m_AspectRatio: 0
   m_DataSource: 0
-  m_PlaybackSpeed: 1
+  m_PlaybackSpeed: 0.2
   m_AudioOutputMode: 2
   m_TargetAudioSources: []
   m_DirectAudioVolumes: []
@@ -238,8 +238,8 @@ VideoPlayer:
   m_EnabledAudioTracks: 
   m_DirectAudioMutes: 
   m_ControlledAudioTrackCount: 0
-  m_PlayOnAwake: 1
-  m_SkipOnDrop: 1
+  m_PlayOnAwake: 0
+  m_SkipOnDrop: 0
   m_Looping: 1
   m_WaitForFirstFrame: 1
   m_FrameReadyEventEnabled: 0
@@ -486,7 +486,7 @@ Camera:
   m_GameObject: {fileID: 963194225}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 2
+  m_ClearFlags: 4
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
