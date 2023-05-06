@@ -304,6 +304,7 @@ public class ExtractFrames : MonoBehaviour
         {
             if (controlIdx == controlList.Count)
             {
+                CleanUp();
                 Debug.Log("All sequences were generated");
                 UnityEditor.EditorApplication.isPlaying = false;
             }
