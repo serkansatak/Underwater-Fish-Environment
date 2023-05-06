@@ -67,38 +67,6 @@ public class ExtractFrames : MonoBehaviour
     }
     #endregion
 
-    /*
-    // Artificial fish related attributes
-    #region Fish generator attributes
-    int numberOfSwarms = 1;
-    int numberOfFish;
-
-    GameObject simArea;
-    System.Random sysRand = new System.Random();
-    Renderer simAreaRenderer;
-    Bounds simAreaBounds;
-    Vector3 simAreaSize = new Vector3(150, 60, 180);
-
-    float animationSpeed = 1f;   
-    int numberOfRandomFish;
- 
-    //default boids values
-    float boidSpeed = 10f;
-    float boidSteeringSpeed = 100f; 
-    float boidNoClumpingArea = 20f;
-    float boidLocalArea = 10f;
-    
-    string spawnedFish;
-
-
-    //default weights
-    float K = 1f;
-    float S = 1f;
-    float M = 1f;
-    float L = 1f;
-    #endregion
-    */
-
     // Camera related attributes
     #region Camera Attributes
     Camera mainCam;
@@ -117,6 +85,8 @@ public class ExtractFrames : MonoBehaviour
     Texture2D screenshotTex;
     #endregion
     
+    // Other public attributes 
+    #region Public Attr Dump
     string[] videoFiles;
     string rootDir;
     string datasetDir;
@@ -143,8 +113,10 @@ public class ExtractFrames : MonoBehaviour
     bool vpSet = false;
     bool distractorsSet = false;
     bool sequenceDone = false;
+    #endregion
 
-    
+    // Unity Native function overrides
+    #region Unity Functions (Awake - Start - Update)
     void Awake()
     {
         generateControlList();
@@ -176,12 +148,95 @@ public class ExtractFrames : MonoBehaviour
             controlIdx++;  
         }
     }
+    #endregion
 
-    IEnumerator waitUntilSeqDone()
+    // New sequence starter and CleanUp
+    #region Sequence and Clean-Up
+    void CleanUp()
     {
-        yield return new WaitUntil(() => sequenceDone);
+        // Encoder boşaltılacak, vp başa sarılacak, distractor list boşaltılacak
+        foreach (GameObject go in distractors_list)
+        {
+            Destroy(go);
+        }
+        distractors_list.Clear();
+        if (videoEncoder != null)
+        {
+            videoEncoder.Dispose();
+            videoEncoder = null;
+        }
+        sequence_image = 0;
     }
 
+    void addNewSequence()
+    {   
+        sequence_image = 0;
+        string new_sequence = rootDir;
+
+        if (System.IO.Directory.Exists(new_sequence))
+        {
+            System.IO.Directory.Delete(new_sequence, true);
+            System.IO.Directory.CreateDirectory(new_sequence);
+        } else {
+            System.IO.Directory.CreateDirectory(new_sequence);
+        }
+
+        imageFolder = new_sequence + "/img";
+        gtFolder = new_sequence + "/gt";
+        System.IO.Directory.CreateDirectory(imageFolder);
+        System.IO.Directory.CreateDirectory(gtFolder);
+        gtFile = gtFolder + "/gt.txt";
+        string iniFile = new_sequence + "/seqinfo.ini";
+        
+        if (control.distractors == 0) numberOfDistractors = "0";
+        if (control.turbidity == 0) normalizedTurbidIntensity = "0";
+
+        string seqInfo = "[Sequence]\n" + 
+            "name=" + datasetDir.ToString() +"\n" +
+            "imDir=img\n" +
+            "frameRate=" + vpAttr.FPS.ToString() + "\n" +
+            "seqLength=" + sequence_length.ToString() + "\n" +
+            "imWidth=" + vpAttr.width.ToString() + "\n" +
+            "imHeight=" + vpAttr.height.ToString() + "\n" +
+            "imExt=.jpg\n" +
+            "turbidIntensity=" + normalizedTurbidIntensity + "\n" +
+            "numberOfDistractors=" + numberOfDistractors + "\n" ;
+        
+        using (StreamWriter writer = new StreamWriter(iniFile, true))
+        {
+            writer.Write(seqInfo);
+        }
+
+        Debug.Log($"Sequence name : {new_sequence}");
+        // Video -- initialize encoder while initializing new sequenceW
+        if (videoEncoder != null) 
+        {
+            videoEncoder.Dispose();
+            videoEncoder = null;
+        }
+
+        H264EncoderAttributes h264Attr = new H264EncoderAttributes
+        {
+            //gopSize = 25,
+            //numConsecutiveBFrames = 2,
+            profile = VideoEncodingProfile.H264High
+        };
+        
+        encoderAttributes = new VideoTrackEncoderAttributes(h264Attr)
+        {
+            frameRate = new MediaRational((int)vpAttr.FPS),
+            width = (uint)vpAttr.width,
+            height = (uint)vpAttr.height,
+            targetBitRate = (uint)vpAttr.bitrate,
+        };
+
+        videoFileName = new_sequence + "/output.mp4";
+        videoEncoder = new MediaEncoder(videoFileName, encoderAttributes);
+    }
+    #endregion
+
+    // Functions related to frame extraction
+    #region Frame Extraction
     void OnFrameReady(VideoPlayer vp_, long frameIdx)
     {
         if (control.distractors == 1){ updateDistractors();}
@@ -274,24 +329,9 @@ public class ExtractFrames : MonoBehaviour
         Debug.Log("TmpBool " + tmpBool);
     
     }
+    #endregion
 
-
-    void CleanUp()
-    {
-        // Encoder boşaltılacak, vp başa sarılacak, distractor list boşaltılacak
-        foreach (GameObject go in distractors_list)
-        {
-            Destroy(go);
-        }
-        distractors_list.Clear();
-        if (videoEncoder != null)
-        {
-            videoEncoder.Dispose();
-            videoEncoder = null;
-        }
-        sequence_image = 0;
-    }
-
+    // Functions Related to VideoPlayer and Video Player Attributes
     #region VideoPlayer Settings and vpAttr
     void Prepared(VideoPlayer vp_) => vp_.Pause();
 
@@ -310,74 +350,6 @@ public class ExtractFrames : MonoBehaviour
         this.vpAttr = new VideoPlayerAttr((uint)vp.frameRate, vp.height, vp.width, bitrate);
     }
     #endregion
-
-    void addNewSequence()
-    {   
-        sequence_image = 0;
-        string new_sequence = rootDir;
-
-        if (System.IO.Directory.Exists(new_sequence))
-        {
-            System.IO.Directory.Delete(new_sequence, true);
-            System.IO.Directory.CreateDirectory(new_sequence);
-        } else {
-            System.IO.Directory.CreateDirectory(new_sequence);
-        }
-
-        imageFolder = new_sequence + "/img";
-        gtFolder = new_sequence + "/gt";
-        System.IO.Directory.CreateDirectory(imageFolder);
-        System.IO.Directory.CreateDirectory(gtFolder);
-        gtFile = gtFolder + "/gt.txt";
-        string iniFile = new_sequence + "/seqinfo.ini";
-        
-        if (control.distractors == 0) numberOfDistractors = "0";
-        if (control.turbidity == 0) normalizedTurbidIntensity = "0";
-
-        string seqInfo = "[Sequence]\n" + 
-            "name=" + datasetDir.ToString() +"\n" +
-            "imDir=img\n" +
-            "frameRate=" + vpAttr.FPS.ToString() + "\n" +
-            "seqLength=" + sequence_length.ToString() + "\n" +
-            "imWidth=" + vpAttr.width.ToString() + "\n" +
-            "imHeight=" + vpAttr.height.ToString() + "\n" +
-            "imExt=.jpg\n" +
-            "turbidIntensity=" + normalizedTurbidIntensity + "\n" +
-            "numberOfDistractors=" + numberOfDistractors + "\n" ;
-        
-        using (StreamWriter writer = new StreamWriter(iniFile, true))
-        {
-            writer.Write(seqInfo);
-        }
-
-        Debug.Log($"Sequence name : {new_sequence}");
-        // Video -- initialize encoder while initializing new sequenceW
-        if (videoEncoder != null) 
-        {
-            videoEncoder.Dispose();
-            videoEncoder = null;
-        }
-
-        H264EncoderAttributes h264Attr = new H264EncoderAttributes
-        {
-            //gopSize = 25,
-            //numConsecutiveBFrames = 2,
-            profile = VideoEncodingProfile.H264High
-        };
-        
-        encoderAttributes = new VideoTrackEncoderAttributes(h264Attr)
-        {
-            frameRate = new MediaRational((int)vpAttr.FPS),
-            width = (uint)vpAttr.width,
-            height = (uint)vpAttr.height,
-            targetBitRate = (uint)vpAttr.bitrate,
-        };
-
-        videoFileName = new_sequence + "/output.mp4";
-        videoEncoder = new MediaEncoder(videoFileName, encoderAttributes);
-    }
-
-    
 
     // Statistical Distribution Functions
     #region Distribution Functions
