@@ -142,6 +142,7 @@ public class ExtractFrames : MonoBehaviour
     bool sequenceSet = false;
     bool vpSet = false;
     bool distractorsSet = false;
+    bool sequenceDone = false;
 
     
     void Awake()
@@ -156,15 +157,35 @@ public class ExtractFrames : MonoBehaviour
 
     void Start()
     {   Application.runInBackground = true;
-        Application.targetFrameRate = 30;
+        Application.targetFrameRate = 10;
         Debug.Log($"FPS : {vpAttr.FPS * vp.playbackSpeed}");
         vp.Play();
         vp.Pause();
-        StartCoroutine(FrameUpdate());
+        //StartCoroutine(FrameUpdate());
+    }
+
+    void Update()
+    {
+        if (!sequenceDone){
+            StartCoroutine(FrameUpdate());
+        }
+        else {
+            sequenceDone = false;
+            Debug.Log("Control Idx : " + controlIdx);
+            vpSet = false;
+            sequenceSet = false;
+            controlIdx++;  
+        }
+    }
+
+    IEnumerator waitUntilSeqDone()
+    {
+        yield return new WaitUntil(() => sequenceDone);
     }
 
     void OnFrameReady(VideoPlayer vp_, long frameIdx)
     {
+        if (control.distractors == 1){ updateDistractors();}
         vp_.frame = frameIdx;
         int tmpIdx = (int)frameIdx + 1;
         string filename = imageFolder + "/" + tmpIdx.ToString().PadLeft(4,'0') + ".jpg";
@@ -204,6 +225,7 @@ public class ExtractFrames : MonoBehaviour
         + "/" + sequence_length.ToString());
         if (tmpIdx == sequence_length){
             vp_.Stop();
+            sequenceDone=true;
         }
         //frameIdx++;
         //sequence_image++;
@@ -276,6 +298,7 @@ public class ExtractFrames : MonoBehaviour
 
     public IEnumerator FrameUpdate() 
     {
+        sequenceDone = false;
         Debug.Log("come on");
         if (!sequenceSet)
         {
@@ -318,7 +341,7 @@ public class ExtractFrames : MonoBehaviour
         // }
         // distractorsSet = false;
 
-        if (control.distractors == 1){ updateDistractors();}
+        //if (control.distractors == 1){ updateDistractors();}
 
         bool tmpBool = false;
         
@@ -330,13 +353,15 @@ public class ExtractFrames : MonoBehaviour
 
         Debug.Log("TmpBool " + tmpBool);
         
-        if (sequence_image == sequence_length)
-        {
-            Debug.Log("Not that*******************");
-            vpSet = false;
-            sequenceSet = false;
-            controlIdx++;
-        }
+        // if (!sequenceDone)
+        // {
+        //     Debug.Log("Not that*******************");
+        //     vpSet = false;
+        //     sequenceSet = false;
+        //     controlIdx++;
+        //     sequenceDone = false;
+        // }
+    
     }
 
 
@@ -491,7 +516,7 @@ public class ExtractFrames : MonoBehaviour
 
     public void generateDistractors()
     {
-        number_of_distractors = (int) Random.Range(numberOfDistractors[0], numberOfDistractors[1]);
+        number_of_distractors = (int) Random.Range(numDistractorMinMax[0], numDistractorMinMax[1]);
         numberOfDistractors = number_of_distractors.ToString();
 
         for (int i = 0; i < number_of_distractors; i++)
