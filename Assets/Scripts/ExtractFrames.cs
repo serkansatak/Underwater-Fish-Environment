@@ -161,7 +161,6 @@ public class ExtractFrames : MonoBehaviour
         Debug.Log($"FPS : {vpAttr.FPS * vp.playbackSpeed}");
         vp.Play();
         vp.Pause();
-        //StartCoroutine(FrameUpdate());
     }
 
     void Update()
@@ -227,73 +226,7 @@ public class ExtractFrames : MonoBehaviour
             vp_.Stop();
             sequenceDone=true;
         }
-        //frameIdx++;
-        //sequence_image++;
     }
-
-    // void Update()
-    // {
-    //     Debug.Log("On Update");
-    //     if (!sequenceSet)
-    //     {
-    //         if (controlIdx == controlList.Count)
-    //         {
-    //             Debug.Log("All sequences were generated");
-    //             UnityEditor.EditorApplication.isPlaying = false;
-    //         }
-    //         else
-    //         {
-    //             control = controlList[controlIdx];
-    //             setupFolderStructure();
-    //             CleanUp();
-    //             generateTurbidColor();
-    //             if (control.turbidity == 1) {mainCam.backgroundColor=turbidColor; randomizeTurbid();};         
-    //             if (control.distractors == 1) generateDistractors();
-    //             addNewSequence();
-    //             sequenceSet = true;
-    //         }
-    //     }
-
-    //     // if (!vpSet)
-    //     // {
-    //     //     yield return new WaitForSeconds(2f);
-    //     //     Debug.Log("Waiting for VideoPlayer...");
-    //     //     vpSet = true;
-    //     // }
-
-    //     // if (!vp.isPrepared){
-    //     //     yield return null;
-    //     // }
-
-    //     bool distractorCheck = control.distractors==1 ? true : false;
-    //     // while ((!distractorsSet) && distractorCheck)
-    //     // {
-    //     //     Debug.Log("Fuck");
-    //     //     updateDistractors();
-    //     //     yield return null;
-    //     // }
-    //     updateDistractors();
-    //     distractorsSet = false;
-    // }
-
-
-
-    // void LateUpdate()
-    // {
-    //     Debug.Log("On Late Update");
-    //     //vp.frameReady += OnFrameReady;
-    //     //vp.Play();
-    //     //vp.frame = sequence_image;
-    //     OnFrameReady(vp, sequence_image);
-
-    //     if (sequence_image == sequence_length)
-    //     {
-    //         Debug.Log("Not that*******************");
-    //         vpSet = false;
-    //         sequenceSet = false;
-    //         controlIdx++;
-    //     }
-    // }
 
 
     public IEnumerator FrameUpdate() 
@@ -334,34 +267,11 @@ public class ExtractFrames : MonoBehaviour
         }
 
         bool distractorCheck = control.distractors==1 ? true : false;
-        // while ((!distractorsSet) && distractorCheck)
-        // {
-        //     Debug.Log("Fuck");
-        //     updateDistractors();
-        //     yield return null;
-        // }
-        // distractorsSet = false;
-
-        //if (control.distractors == 1){ updateDistractors();}
-
         bool tmpBool = false;
         
-        //vp.frameReady += OnFrameReady;
         vp.Play();
-        //vp.frame = sequence_image;   // Activate to get even number frames
         Debug.Log("SeqImage After : " + sequence_image);
-        
-
         Debug.Log("TmpBool " + tmpBool);
-        
-        // if (!sequenceDone)
-        // {
-        //     Debug.Log("Not that*******************");
-        //     vpSet = false;
-        //     sequenceSet = false;
-        //     controlIdx++;
-        //     sequenceDone = false;
-        // }
     
     }
 
@@ -541,15 +451,6 @@ public class ExtractFrames : MonoBehaviour
                 GetRandomLogNormal(151f, 220f)/255 
             );
             rend.material.color = rnd_white;
-            /*
-            Color rnd_albedo = new Color(
-                Random.Range(171f, 191f)/255,  
-                Random.Range(192f, 212f)/255, 
-                Random.Range(137f, 157f)/255,
-                Random.Range(151f, 171f)/255);  
-            
-            rend.material.color = rnd_albedo;
-            */
             rend.material.SetFloat("_TranspModify", Random.Range(0f, 1f));
             distractors_list.Add(sphere);
         }
@@ -658,61 +559,3 @@ public class ExtractFrames : MonoBehaviour
     }
     #endregion
 }
-
-
-// bool SaveCameraView()
-//     {
-//         string filename;
-//         if (sequence_image > 99999){
-//             filename = imageFolder + "/" + sequence_image.ToString() + ".jpg";
-//         } else if (sequence_image > 9999) {
-//             filename = imageFolder + "/0" + sequence_image.ToString() + ".jpg";
-//         } else if (sequence_image > 999) {
-//             filename = imageFolder + "/00" + sequence_image.ToString() + ".jpg";
-//         } else if (sequence_image > 99) {
-//             filename = imageFolder + "/000" + sequence_image.ToString() + ".jpg";
-//         } else if (sequence_image > 9) {
-//             filename = imageFolder + "/0000" + sequence_image.ToString() + ".jpg";
-//         } else {
-//             filename = imageFolder + "/00000" + sequence_image.ToString() + ".jpg";
-//         }
-        
-//         //vp.frame = sequence_image;
-//         //vp.Pause();
-
-//         screenRenderTexture = RenderTexture.GetTemporary((int)vpAttr.width, (int)vpAttr.height, 24);
-//         mainCam.targetTexture = screenRenderTexture;
-//         mainCam.Render();
-//         RenderTexture.active = screenRenderTexture;
-
-//         screenshotTex.ReadPixels(new Rect(0, 0, (int)vpAttr.width, (int)vpAttr.height), 0, 0);
-//         RenderTexture.active = null; // JC: added to avoid errors
-//         screenRenderTexture = null;
-//         RenderTexture.ReleaseTemporary(screenRenderTexture);
-//         Destroy(screenRenderTexture);
-
-//         // Video -- add frame.
-        
-//         Texture2D videoTex = new Texture2D(screenshotTex.width, screenshotTex.height, TextureFormat.RGBA32, false);
-//         Color[] pixels = screenshotTex.GetPixels();
-//         Color[] newPixels = new Color[pixels.Length];
-
-//         for (int i = 0; i < pixels.Length; i++)
-//         {
-//             Color pixel = pixels[i];
-//             newPixels[i] = new Color(pixel.r, pixel.g, pixel.b, 1.0f); // set alpha channel to 1.0
-//         }
-
-//         videoTex.SetPixels(newPixels);
-//         videoTex.Apply();
-//         videoEncoder.AddFrame(videoTex);
-
-//         byte[] byteArray = screenshotTex.EncodeToJPG();
-//         System.IO.File.WriteAllBytes(filename, byteArray);
-
-//         Debug.Log("Control Number " + System.Convert.ToString(controlIdx, 2).PadLeft(2,'0')
-//         + " Sequence Image " + sequence_image.ToString() 
-//         + "/" + sequence_length.ToString());
-//         sequence_image++;
-//         return true;
-//     }
