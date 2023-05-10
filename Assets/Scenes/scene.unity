@@ -191,7 +191,7 @@ MonoBehaviour:
   fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
   distractorMaterial: {fileID: 2100000, guid: f97ac7fa4f1be44cdb25a015bc9a372b, type: 2}
   useTurbidity: 1
-  useDistractors: 0
+  useDistractors: 1
   numFishMinMax: {x: 4, y: 50}
   numDistractorMinMax: {x: 1500, y: 2500}
 --- !u!1 &104356237
