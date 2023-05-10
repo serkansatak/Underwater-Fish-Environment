@@ -190,10 +190,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
   distractorMaterial: {fileID: 2100000, guid: f97ac7fa4f1be44cdb25a015bc9a372b, type: 2}
-  useTurbidity: 0
+  useTurbidity: 1
   useDistractors: 0
   numFishMinMax: {x: 4, y: 50}
-  numDistractorMinMax: {x: 250, y: 2500}
+  numDistractorMinMax: {x: 1500, y: 2500}
 --- !u!1 &104356237
 GameObject:
   m_ObjectHideFlags: 0
@@ -219,7 +219,7 @@ VideoPlayer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 104356237}
   m_Enabled: 1
-  m_VideoClip: {fileID: 32900000, guid: a4a8f7e2ee7cc48738fa881ee4565b94, type: 3}
+  m_VideoClip: {fileID: 32900000, guid: a7d9ed8baf9e74592aa9c87e31fcedc5, type: 3}
   m_TargetCameraAlpha: 1
   m_TargetCamera3DLayout: 0
   m_TargetCamera: {fileID: 963194227}
@@ -366,7 +366,7 @@ GameObject:
   - component: {fileID: 733369421}
   - component: {fileID: 733369420}
   m_Layer: 0
-  m_Name: Simulation area
+  m_Name: SimulationArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

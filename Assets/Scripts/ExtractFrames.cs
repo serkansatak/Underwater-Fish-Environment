@@ -95,8 +95,10 @@ public class ExtractFrames : MonoBehaviour
     float deltaTime;
 
     // Simulation Area
-    GameObject simArea;
+
     System.Random sysRand = new System.Random();
+    
+    GameObject simArea;
     Renderer simAreaRenderer;
     Bounds simAreaBounds;
     Vector3 simAreaSize = new Vector3(150, 60, 180);
@@ -121,8 +123,17 @@ public class ExtractFrames : MonoBehaviour
     {
         generateControlList();
         mainCam = GameObject.Find("Fish Camera").GetComponent<Camera>();
+        
+        simArea = GameObject.Find("SimulationArea");
+        simArea.transform.position = new Vector3(0, 0, simAreaSize.z/2f);
+        simArea.transform.localScale = simAreaSize;
+        UnityEngine.Physics.SyncTransforms();
+        simAreaBounds = simArea.GetComponent<Collider>().bounds;
+        simArea.SetActive(false);
+
         vp = GameObject.Find("Video player").GetComponent<VideoPlayer>();
         setVideoProperties();
+
         screenshotTex = new Texture2D((int)vpAttr.width, (int)vpAttr.height, TextureFormat.RGB24, false);
         deltaTime = (float) 1/vpAttr.FPS;
     }
@@ -283,7 +294,6 @@ public class ExtractFrames : MonoBehaviour
         }
     }
 
-
     public IEnumerator FrameUpdate() 
     {
         sequenceDone = false;
@@ -308,14 +318,12 @@ public class ExtractFrames : MonoBehaviour
                 sequenceSet = true;
             }
         }
-
         if (!vpSet)
         {
             Debug.Log("Waiting for VideoPlayer...");
             yield return new WaitForSeconds(2f);
             vpSet = true;
         }
-
         if (!vp.isPrepared){
             Debug.Log("isPrepared ??");
             yield return null;
@@ -327,7 +335,6 @@ public class ExtractFrames : MonoBehaviour
         vp.Play();
         Debug.Log("SeqImage After : " + sequence_image);
         Debug.Log("TmpBool " + tmpBool);
-    
     }
     #endregion
 
@@ -345,6 +352,9 @@ public class ExtractFrames : MonoBehaviour
         float duration = (float)vp.frameCount / vp.frameRate;
         float bitrate_ = fileSize / duration * 8.0f / 1000000.0f; // in Mbps
         uint bitrate = (uint)bitrate_ * 1000000;
+
+        Debug.Log("Main Cam Height : " + mainCam.orthographicSize * 2f);
+        Debug.Log("Main Cam Width : " + mainCam.orthographicSize * mainCam.aspect * 2f);
 
         this.sequence_length = (int)vp.frameCount;
         this.vpAttr = new VideoPlayerAttr((uint)vp.frameRate, vp.height, vp.width, bitrate);
@@ -366,7 +376,6 @@ public class ExtractFrames : MonoBehaviour
             y /= 0.904;
             y = System.Math.Min(y, 1);
         }
-
         return (float)y;
     }
 
@@ -389,12 +398,40 @@ public class ExtractFrames : MonoBehaviour
     {
         foreach (GameObject go in distractors_list)
         {
-            go.transform.position = mainCam.ViewportToWorldPoint( new Vector3(
-            UnityEngine.Random.Range(0.0f, 1f), 
-            UnityEngine.Random.Range(0.0f, 1f),
-            UnityEngine.Random.Range(10f, 50f)));
+            go.transform.position += new Vector3(
+                UnityEngine.Random.Range(-1f, -1f),
+                UnityEngine.Random.Range(-0.01f, 0.01f),
+                0
+            );
+
+            getDistractorsBackToScene(go);
+
+            // go.transform.position += mainCam.ViewportToWorldPoint( new Vector3(
+            // UnityEngine.Random.Range(0.0f, 0.00001f), 
+            // UnityEngine.Random.Range(0.0f, 0.00001f),
+            // UnityEngine.Random.Range(0, 0)));
         }
         distractorsSet = true;
+    }
+
+    void getDistractorsBackToScene(GameObject go)
+    {
+        float camHeight = mainCam.orthographicSize * 2f;
+        float camWidth = camHeight * mainCam.aspect;
+
+        float camLeft = mainCam.transform.position.x - (camWidth / 2f);
+        float camRight = mainCam.transform.position.x + (camWidth / 2f);
+        float camTop = mainCam.transform.position.y + (camHeight / 2f);
+        float camBottom = mainCam.transform.position.y - (camHeight / 2f);
+
+        Bounds objectBounds = new Bounds(go.transform.position, go.transform.localScale);
+
+        if (objectBounds.min.x < camLeft * 2) 
+        {
+            // Move object to the right side of the screen
+            float newX = go.transform.position.x + camWidth *2;
+            go.transform.position = new Vector3(newX, go.transform.position.y, go.transform.position.z);
+        }
     }
 
     public void generateDistractors()
@@ -413,14 +450,14 @@ public class ExtractFrames : MonoBehaviour
             sphere.name = "distractor_" + i.ToString();
 
             sphere.transform.parent = transform;
-            sphere.transform.localScale = Vector3.one * GetRandomLogNormal(0.01f, 0.4f);
+            sphere.transform.localScale = Vector3.one * GetRandomLogNormal(0.07f, 0.3f);
             Renderer rend = sphere.GetComponent<Renderer>();
             rend.material = distractorMaterial;
             Color rnd_white = new Color(
                 GetRandomLogNormal(220f, 225f)/255,
                 GetRandomLogNormal(220f, 255f)/255,
                 GetRandomLogNormal(220f, 255f)/255,
-                GetRandomLogNormal(151f, 220f)/255 
+                GetRandomLogNormal(100f, 150f)/255 
             );
             rend.material.color = rnd_white;
             rend.material.SetFloat("_TranspModify", Random.Range(0f, 1f));
