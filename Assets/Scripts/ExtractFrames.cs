@@ -115,6 +115,7 @@ public class ExtractFrames : MonoBehaviour
     bool vpSet = false;
     bool distractorsSet = false;
     bool sequenceDone = false;
+    bool setVidEncoder = false;
     #endregion
 
     // Unity Native function overrides
@@ -219,30 +220,35 @@ public class ExtractFrames : MonoBehaviour
         }
 
         Debug.Log($"Sequence name : {new_sequence}");
-        // Video -- initialize encoder while initializing new sequenceW
-        if (videoEncoder != null) 
+
+        if (setVidEncoder) 
         {
-            videoEncoder.Dispose();
-            videoEncoder = null;
+            // Video -- initialize encoder while initializing new sequenceW
+            if (videoEncoder != null) 
+            {
+                videoEncoder.Dispose();
+                videoEncoder = null;
+            }
+
+            H264EncoderAttributes h264Attr = new H264EncoderAttributes
+            {
+                //gopSize = 25,
+                //numConsecutiveBFrames = 2,
+                profile = VideoEncodingProfile.H264High
+            };
+            
+            encoderAttributes = new VideoTrackEncoderAttributes(h264Attr)
+            {
+                frameRate = new MediaRational((int)vpAttr.FPS),
+                width = (uint)vpAttr.width,
+                height = (uint)vpAttr.height,
+                targetBitRate = (uint)vpAttr.bitrate,
+            };
+
+            videoFileName = new_sequence + "/output.mp4";
+            videoEncoder = new MediaEncoder(videoFileName, encoderAttributes);
         }
-
-        H264EncoderAttributes h264Attr = new H264EncoderAttributes
-        {
-            //gopSize = 25,
-            //numConsecutiveBFrames = 2,
-            profile = VideoEncodingProfile.H264High
-        };
         
-        encoderAttributes = new VideoTrackEncoderAttributes(h264Attr)
-        {
-            frameRate = new MediaRational((int)vpAttr.FPS),
-            width = (uint)vpAttr.width,
-            height = (uint)vpAttr.height,
-            targetBitRate = (uint)vpAttr.bitrate,
-        };
-
-        videoFileName = new_sequence + "/output.mp4";
-        videoEncoder = new MediaEncoder(videoFileName, encoderAttributes);
     }
     #endregion
 
@@ -280,8 +286,10 @@ public class ExtractFrames : MonoBehaviour
 
         videoTex.SetPixels(newPixels);
         videoTex.Apply();
-        videoEncoder.AddFrame(videoTex);
-
+        if (setVidEncoder)
+        {
+            videoEncoder.AddFrame(videoTex);
+        }
         byte[] byteArray = screenshotTex.EncodeToJPG();
         System.IO.File.WriteAllBytes(filename, byteArray);
 

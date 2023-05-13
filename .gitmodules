@@ -1,0 +1,4 @@
+[submodule "VideoComposerCpp"]
+	path = VideoComposerCpp
+	url = https://github.com/serkansatak/VideoComposerCpp
+    branch = main
