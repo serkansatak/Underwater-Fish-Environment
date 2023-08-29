@@ -86,3 +86,6 @@ Assets/Videos*
 Assets/BrackishMOT*
 Assets/background_videos/**
 Assets/background_videos/background*
+pypy/blank_video.py
+pypy/blank.avi
+pypy/blank.mp4

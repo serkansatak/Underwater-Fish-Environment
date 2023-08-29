@@ -132,7 +132,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 25331122}
-  - component: {fileID: 25331123}
   - component: {fileID: 25331124}
   m_Layer: 0
   m_Name: Generator
@@ -156,26 +155,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &25331123
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 25331120}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e1a7bf067a4c5859ed32fe0d98ff88, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fishPrefab: {fileID: 1383244955902989187, guid: a56256ad4302c044e9c38e7a7359af76, type: 3}
-  distractorMaterial: {fileID: 2100000, guid: f97ac7fa4f1be44cdb25a015bc9a372b, type: 2}
-  useBackground: 0
-  useFog: 1
-  useDistractors: 1
-  numFishMinMax: {x: 0, y: 0}
-  sequence_goal: 1
-  sequence_length: 25
 --- !u!114 &25331124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -193,7 +172,7 @@ MonoBehaviour:
   useTurbidity: 1
   useDistractors: 1
   numFishMinMax: {x: 4, y: 50}
-  numDistractorMinMax: {x: 1500, y: 2500}
+  numDistractorMinMax: {x: 1000, y: 2000}
 --- !u!1 &104356237
 GameObject:
   m_ObjectHideFlags: 0
@@ -219,7 +198,7 @@ VideoPlayer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 104356237}
   m_Enabled: 1
-  m_VideoClip: {fileID: 32900000, guid: 0e5c810f0e39641b3b3f5d455844d6ba, type: 3}
+  m_VideoClip: {fileID: 32900000, guid: b9ce5db28e3fe460498e27d9235d051c, type: 3}
   m_TargetCameraAlpha: 1
   m_TargetCamera3DLayout: 0
   m_TargetCamera: {fileID: 963194227}
@@ -232,14 +211,12 @@ VideoPlayer:
   m_DataSource: 0
   m_PlaybackSpeed: 0.2
   m_AudioOutputMode: 2
-  m_TargetAudioSources:
-  - {fileID: 0}
-  m_DirectAudioVolumes:
-  - 1
+  m_TargetAudioSources: []
+  m_DirectAudioVolumes: []
   m_Url: 
-  m_EnabledAudioTracks: 01
-  m_DirectAudioMutes: 00
-  m_ControlledAudioTrackCount: 1
+  m_EnabledAudioTracks: 
+  m_DirectAudioMutes: 
+  m_ControlledAudioTrackCount: 0
   m_PlayOnAwake: 0
   m_SkipOnDrop: 0
   m_Looping: 1

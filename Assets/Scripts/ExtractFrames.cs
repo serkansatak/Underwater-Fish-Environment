@@ -115,7 +115,7 @@ public class ExtractFrames : MonoBehaviour
     bool vpSet = false;
     bool distractorsSet = false;
     bool sequenceDone = false;
-    bool setVidEncoder = false;
+    bool setVidEncoder = true;
     #endregion
 
     // Unity Native function overrides
@@ -166,6 +166,7 @@ public class ExtractFrames : MonoBehaviour
     #region Sequence and Clean-Up
     void CleanUp()
     {
+        vp.Stop();
         // Encoder boşaltılacak, vp başa sarılacak, distractor list boşaltılacak
         foreach (GameObject go in distractors_list)
         {
@@ -245,7 +246,12 @@ public class ExtractFrames : MonoBehaviour
                 targetBitRate = (uint)vpAttr.bitrate,
             };
 
-            videoFileName = new_sequence + "/output.mp4";
+            string vidName = this.generateVideoName();
+
+            videoFileName = new_sequence + $"/{vidName}.mp4";
+
+            Debug.Log(videoFileName);
+            Debug.Log(datasetDir);
             videoEncoder = new MediaEncoder(videoFileName, encoderAttributes);
         }
         
@@ -371,25 +377,66 @@ public class ExtractFrames : MonoBehaviour
 
     // Statistical Distribution Functions
     #region Distribution Functions
-    public static float NextLogNormal(double mu = 0.0001, double sigma = 0.5, bool scaleToOne = true)
-    {
-        double x = (double)Random.Range((float)0.0001, (float)5);
-        double lnx = System.Math.Log(x);
-        double exp_part = System.Math.Exp( -(System.Math.Pow((lnx-mu), 2) / (2*System.Math.Pow(sigma,2)) ) );
-        double reg_part = 1 / (x * sigma * System.Math.Sqrt(2 * System.Math.PI) );
-        double y = exp_part * reg_part;
 
-        if (scaleToOne) 
+    public float NextExp(double lamda, bool reversed = false)
+    {
+        double x = (double)sysRand.Next(0,5000) / (double)1000;
+        double y;
+        if (reversed)
         {
-            y /= 0.904;
-            y = System.Math.Min(y, 1);
+            y = lamda * Math.Exp((x-5)*lamda);
+            y = System.Math.Min(y,1);
+            y = System.Math.Max(y,0);
+        }
+        else
+        {   
+            y = lamda * Math.Exp(-x * lamda);
+            y = System.Math.Min(y,1);
+            y = System.Math.Max(y,0);
         }
         return (float)y;
     }
 
-    public float GetRandomLogNormal(float lowerBound, float upperBound, bool reversed = false, double mean = 0.001, double stdDev = 0.5)
+    public double LogNormal(double x, double mu, double sigma)
     {
-        float randLN = NextLogNormal((double)mean, (double)stdDev, true);
+        double lnx = System.Math.Log(x);
+        double exp_part = System.Math.Exp( -(System.Math.Pow((lnx-mu), 2) / (2*System.Math.Pow(sigma,2)) ) );
+        double reg_part = 1 / (x * sigma * System.Math.Sqrt(2 * System.Math.PI) );
+        double y = exp_part * reg_part;
+        return y;
+    }
+
+    public float NextLogNormal(double mu = 0.25, double sigma = 1, bool scaleToOne = true, double cutoff = 0)
+    {
+        //double x = (double)Random.Range((float)0.0001, (float)5);
+        if (cutoff == 0) cutoff = 0.01;
+        
+        Tuple<double, double> cutoffValues = getBoundaryValues(cutoff, mu, sigma);
+
+        //int val1 = (int)(cutoffValues.Item1*1000);
+        //int val2 = (int)(cutoffValues.Item2*1000);
+
+        //double x = (double)sysRand.Next(val1, val2) / (double)1000;
+
+
+        double x = (double)sysRand.NextDouble() * (cutoffValues.Item2 - cutoffValues.Item1) + cutoffValues.Item1;
+
+        if (x == 0) x = 0.0001;
+        double y = LogNormal(x, mu, sigma);
+
+        Tuple<double,double> peaks = getPeakValue(mu, sigma, 0.01);
+
+        if (scaleToOne) 
+        {
+            y = (y-cutoff) / (peaks.Item2-cutoff);
+            //y = System.Math.Min(y, 1);
+        }
+        return (float)y;
+    }
+
+    public float GetRandomLogNormal(float lowerBound, float upperBound, bool reversed = false, double mean = 0.25, double stdDev = 1, double cutoff = 0)
+    {
+        float randLN = NextLogNormal((double)mean, (double)stdDev, true, cutoff);
         if (reversed)
         {
             return upperBound - (randLN * (upperBound - lowerBound));
@@ -398,6 +445,63 @@ public class ExtractFrames : MonoBehaviour
             return randLN * (upperBound - lowerBound) + lowerBound;
         }
     }
+
+    public Tuple<double,double> getPeakValue(double mean, double stdDev, double step=0.01)
+    {
+        double peakValue = 0;
+        double peak = 0;
+        int counter = 0;
+        double i = 0;
+        while(true)
+        {
+            double y = LogNormal(i, mean, stdDev);
+            if (y > peak)
+            {
+                peak = y;
+                peakValue = i;
+                counter = 0;
+            }
+            else {
+                counter+= 1;
+            }
+            i += step;
+            if (counter > 50) break;
+        }
+        return Tuple.Create(peakValue, peak);
+    }
+
+    public Tuple<double, double> getBoundaryValues(double cutoff, double mean, double stdDev, double step=0.01)
+    {
+        double i = 0;
+        List<double> values = new List<double>();
+        
+        for (int j=0; j<800; j++)
+        {
+            double y = LogNormal(i, mean, stdDev);
+
+            if (values.Count == 0){
+                if (y>cutoff) values.Add(i);
+            }
+            else if (values.Count == 1){
+                if (y<cutoff) values.Add(i);
+            }
+            else {
+                break;
+            }
+
+            i += step;
+        }
+
+        if (values.Count == 0) {
+            Debug.Log("No values found");
+            Debug.Log("Cutoff : " + cutoff);
+            Debug.Log("Mean : " + mean);
+            Debug.Log("StdDev : " + stdDev);
+        }
+
+        return Tuple.Create(values[0], values[1]);
+    }
+
     #endregion
 
     // Distractor related functions
@@ -421,6 +525,8 @@ public class ExtractFrames : MonoBehaviour
         }
         distractorsSet = true;
     }
+
+    
 
     void getDistractorsBackToScene(GameObject go)
     {
@@ -452,20 +558,20 @@ public class ExtractFrames : MonoBehaviour
             GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphere.transform.position = mainCam.ViewportToWorldPoint( new Vector3(
             UnityEngine.Random.Range(0.0f, 1f), 
-            UnityEngine.Random.Range(0.0f, 1f),
-            UnityEngine.Random.Range(10f, 50f)));
+            GetRandomLogNormal(0,1,false,0.25,0.4,0.1),
+            UnityEngine.Random.Range(10f, 30f)));
 
             sphere.name = "distractor_" + i.ToString();
 
             sphere.transform.parent = transform;
-            sphere.transform.localScale = Vector3.one * GetRandomLogNormal(0.07f, 0.3f);
+            sphere.transform.localScale = Vector3.one * GetRandomLogNormal(0.2f, 0.5f);
             Renderer rend = sphere.GetComponent<Renderer>();
             rend.material = distractorMaterial;
             Color rnd_white = new Color(
-                GetRandomLogNormal(220f, 225f)/255,
-                GetRandomLogNormal(220f, 255f)/255,
-                GetRandomLogNormal(220f, 255f)/255,
-                GetRandomLogNormal(100f, 150f)/255 
+                Random.Range(220f, 225f)/255,
+                Random.Range(220f, 255f)/255,
+                Random.Range(220f, 255f)/255,
+                Random.Range(100f, 200f)/255 
             );
             rend.material.color = rnd_white;
             rend.material.SetFloat("_TranspModify", Random.Range(0f, 1f));
@@ -483,8 +589,8 @@ public class ExtractFrames : MonoBehaviour
         Renderer simAreaRenderer = simArea.GetComponent<Renderer>();
         simAreaRenderer.material = distractorMaterial;
         simAreaRenderer.material.color = turbidColor;
-        float turbidIntensityMin = 0.1f;
-        float turbidIntensityMax = 0.8f;
+        float turbidIntensityMin = 0.3f;
+        float turbidIntensityMax = 0.5f;
         float turbidIntensity = Random.Range(turbidIntensityMin, turbidIntensityMax);
         simAreaRenderer.material.SetFloat("_TranspModify", turbidIntensity);
         float normalizedIntensity = (turbidIntensity - turbidIntensityMin)/(turbidIntensityMax-turbidIntensityMin);
@@ -575,4 +681,19 @@ public class ExtractFrames : MonoBehaviour
 
     }
     #endregion
+
+    string generateVideoName()
+    {
+        string controlString = "";
+        if (control.turbidity != 0 || control.distractors != 0) controlString += "_";
+
+        if (control.turbidity == 1){
+            controlString += "T";
+        }
+
+        if (control.distractors == 1){
+            controlString += "D";
+        }
+        return datasetDir.Remove(datasetDir.Length - 1, 1) + controlString;
+    }
 }
